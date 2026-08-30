@@ -99,8 +99,8 @@ async function seedDatabase() {
 
     await SystemSetting.upsert({
       key: 'GCASH_ACCOUNT_NUMBER',
-      value: '+63 977 013 ••••',
-      description: 'Merchant GCash Mobile / User ID'
+      value: '0977-013-5041',
+      description: 'Merchant GCash Mobile Number'
     });
 
     console.log('[Seed] 3KS Pickleball Playground synchronized with 4 courts @ ₱350/hr and official GCash QR.');
