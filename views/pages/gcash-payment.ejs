@@ -77,12 +77,12 @@
               <input type="hidden" name="reference_number" value="<%= reservation.reference_number %>">
               
               <div class="mb-3">
-                <label class="form-label small fw-bold text-dark">GCash Reference No. <span class="text-danger">*</span></label>
+                <label class="form-label small fw-bold text-dark">GCash Reference No. <span class="text-muted small">(Optional)</span></label>
                 <div class="input-group">
                   <span class="input-group-text bg-light"><i class="bi bi-receipt"></i></span>
-                  <input type="text" name="gcash_reference_no" class="form-control" placeholder="e.g. 1002 8394 1928" required autofocus>
+                  <input type="text" name="gcash_reference_no" class="form-control" placeholder="e.g. 1002 8394 1928 (Optional)">
                 </div>
-                <div class="form-text small">Found on your GCash transaction confirmation receipt.</div>
+                <div class="form-text small">Optional reference number from your GCash confirmation receipt.</div>
               </div>
 
               <div class="mb-4">
