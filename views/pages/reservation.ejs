@@ -3,7 +3,7 @@
     <div class="text-center mb-4">
       <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold mb-2">3KS Court Booking</span>
       <h1 class="fw-bold text-dark">Reserve Your 3KS Court</h1>
-      <p class="text-secondary">Select your court, pick an open time slot, and pay via official GCash QR Code</p>
+      <p class="text-secondary">Click one or multiple available time slots to book and pay via GCash QR Code</p>
     </div>
 
     <form id="reservationForm" action="/reservations" method="POST" class="needs-validation" novalidate>
@@ -13,7 +13,7 @@
           <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
             <h5 class="fw-bold text-dark mb-3 d-flex align-items-center">
               <span class="badge bg-success me-2 rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">1</span>
-              Select Court & Schedule
+              Select Court & Time Slots
             </h5>
 
             <!-- Court Selection -->
@@ -32,42 +32,35 @@
             </div>
 
             <!-- Date Selection -->
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label for="dateSelect" class="form-label fw-semibold text-dark">Reservation Date <span class="text-danger">*</span></label>
-                <input type="date" class="form-control form-control-lg rounded-3" id="dateSelect" name="reservation_date" value="<%= selectedDate %>" min="<%= today %>" required>
-              </div>
-              <div class="col-md-6">
-                <label for="durationSelect" class="form-label fw-semibold text-dark">Duration (Hours) <span class="text-danger">*</span></label>
-                <select class="form-select form-select-lg rounded-3" id="durationSelect" name="total_hours" required>
-                  <option value="1" selected>1 Hour</option>
-                  <option value="2">2 Hours</option>
-                  <option value="3">3 Hours</option>
-                  <option value="4">4 Hours</option>
-                </select>
-              </div>
+            <div class="mb-3">
+              <label for="dateSelect" class="form-label fw-semibold text-dark">Reservation Date <span class="text-danger">*</span></label>
+              <input type="date" class="form-control form-control-lg rounded-3" id="dateSelect" name="reservation_date" value="<%= selectedDate %>" min="<%= today %>" required>
             </div>
 
             <!-- Time Slots Matrix -->
             <div class="mb-3">
               <div class="d-flex justify-content-between align-items-center mb-2">
-                <label class="form-label fw-semibold text-dark mb-0">Select Start Time <span class="text-danger">*</span></label>
-                <span class="small text-muted" id="slotLoadingText"><i class="bi bi-arrow-repeat spin me-1"></i>Loading slots...</span>
+                <div>
+                  <label class="form-label fw-semibold text-dark mb-0">Select Time Slots <span class="text-danger">*</span></label>
+                  <span class="small text-muted d-block" style="font-size: 12px;">(Click any slots you want to book)</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="small text-muted" id="slotLoadingText"><i class="bi bi-arrow-repeat spin me-1"></i>Loading slots...</span>
+                  <button type="button" id="clearSlotsBtn" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2 small" style="display: none;">
+                    Clear All
+                  </button>
+                </div>
               </div>
               
-              <div id="slotsGrid" class="row g-2 p-2 border rounded-3 bg-light" style="max-height: 280px; overflow-y: auto;">
+              <div id="slotsGrid" class="row g-2 p-2 border rounded-3 bg-light" style="max-height: 320px; overflow-y: auto;">
                 <!-- Dynamically populated via JavaScript -->
               </div>
-              <input type="hidden" name="start_time" id="selectedStartTime" value="<%= initialSlot %>" required>
+              <input type="hidden" name="selected_slots" id="selectedSlotsInput" value="[]" required>
+              <input type="hidden" name="start_time" id="selectedStartTime" value="<%= initialSlot %>">
+              <input type="hidden" name="total_hours" id="totalHoursInput" value="1">
               
-              <!-- Conflict Warning Alert -->
-              <div id="conflictAlert" class="alert alert-danger py-2 px-3 small mt-3 rounded-3" style="display: none;">
-                <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                <span id="conflictMessage">One or more slots in this duration are already booked.</span>
-              </div>
-
               <div class="invalid-feedback d-block" id="slotFeedback" style="display: none;">
-                Please select an available start time slot.
+                Please select at least one available time slot.
               </div>
             </div>
           </div>
@@ -126,13 +119,15 @@
                 <span class="text-secondary small">Date:</span>
                 <span class="fw-bold text-dark small" id="summaryDate">-</span>
               </div>
-              <div class="d-flex justify-content-between mb-2">
-                <span class="text-secondary small">Time Slot:</span>
-                <span class="fw-bold text-dark small" id="summaryTimeSlot">-</span>
+              <div class="mb-2">
+                <span class="text-secondary small d-block mb-1">Selected Slots:</span>
+                <div id="summarySlotsList" class="d-flex flex-wrap gap-1">
+                  <span class="text-muted small">None selected</span>
+                </div>
               </div>
               <div class="d-flex justify-content-between mb-2">
-                <span class="text-secondary small">Duration:</span>
-                <span class="fw-bold text-dark small" id="summaryDuration">1 Hour</span>
+                <span class="text-secondary small">Total Duration:</span>
+                <span class="fw-bold text-dark small" id="summaryDuration">0 Hours</span>
               </div>
               <div class="d-flex justify-content-between mb-2">
                 <span class="text-secondary small">Rate / hr:</span>
@@ -141,16 +136,16 @@
               <hr class="my-2">
               <div class="d-flex justify-content-between align-items-center">
                 <span class="fw-bold text-dark">Total Amount:</span>
-                <span class="fs-4 fw-extrabold text-success" id="summaryTotal">₱350.00</span>
+                <span class="fs-4 fw-extrabold text-success" id="summaryTotal">₱0.00</span>
               </div>
             </div>
 
             <div class="alert alert-warning py-2 px-3 small rounded-3 mb-3">
               <i class="bi bi-qr-code-scan me-1"></i>
-              <strong>GCash QR Payment:</strong> You will scan the official 3KS QR code and submit your reference number.
+              <strong>GCash QR Payment:</strong> All selected slots are held in 1 order.
             </div>
 
-            <button type="submit" id="submitBtn" class="btn btn-success btn-lg w-100 fw-bold py-3 rounded-pill shadow d-flex align-items-center justify-content-center">
+            <button type="submit" id="submitBtn" class="btn btn-success btn-lg w-100 fw-bold py-3 rounded-pill shadow d-flex align-items-center justify-content-center" disabled>
               <i class="bi bi-wallet2 me-2"></i>Proceed to GCash
             </button>
 

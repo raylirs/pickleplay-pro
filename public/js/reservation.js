@@ -1,18 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
   const courtSelect = document.getElementById('courtSelect');
   const dateSelect = document.getElementById('dateSelect');
-  const durationSelect = document.getElementById('durationSelect');
   const slotsGrid = document.getElementById('slotsGrid');
+  const selectedSlotsInput = document.getElementById('selectedSlotsInput');
   const selectedStartTimeInput = document.getElementById('selectedStartTime');
+  const totalHoursInput = document.getElementById('totalHoursInput');
   const slotLoadingText = document.getElementById('slotLoadingText');
+  const clearSlotsBtn = document.getElementById('clearSlotsBtn');
   const submitBtn = document.getElementById('submitBtn');
-  const conflictAlert = document.getElementById('conflictAlert');
-  const conflictMessage = document.getElementById('conflictMessage');
+  const slotFeedback = document.getElementById('slotFeedback');
 
   // Summary elements
   const summaryCourtName = document.getElementById('summaryCourtName');
   const summaryDate = document.getElementById('summaryDate');
-  const summaryTimeSlot = document.getElementById('summaryTimeSlot');
+  const summarySlotsList = document.getElementById('summarySlotsList');
   const summaryDuration = document.getElementById('summaryDuration');
   const summaryRate = document.getElementById('summaryRate');
   const summaryTotal = document.getElementById('summaryTotal');
@@ -20,26 +21,22 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!courtSelect || !slotsGrid) return;
 
   let currentSlots = [];
+  const selectedSlots = new Set();
 
   function formatTime12(time24) {
     if (!time24) return '';
     const [hStr, mStr] = time24.split(':');
     let hour = parseInt(hStr, 10);
+    if (hour === 24 || hour === 0) return `12:${mStr} AM`;
     const ampm = hour >= 12 ? 'PM' : 'AM';
     hour = hour % 12;
     hour = hour ? hour : 12;
     return `${hour}:${mStr} ${ampm}`;
   }
 
-  function addHoursToTime(timeStr, hours) {
-    const [h, m] = timeStr.split(':').map(Number);
-    const newHour = h + parseInt(hours, 10);
-    return `${String(newHour).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-  }
-
   function formatCurrency(amount) {
     const num = parseFloat(amount) || 0;
-    return '₱' + num.toLocaleString('en-PH', {
+    return '\u20B1' + num.toLocaleString('en-PH', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
@@ -60,7 +57,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (data.success && data.data && data.data.slots) {
         currentSlots = data.data.slots;
+        
+        // Remove any previously selected slots that are no longer available on this date/court
+        const availableStartTimes = new Set(currentSlots.filter(s => s.isAvailable).map(s => s.startTime));
+        for (const slotTime of selectedSlots) {
+          if (!availableStartTimes.has(slotTime)) {
+            selectedSlots.delete(slotTime);
+          }
+        }
+
         renderSlots();
+        updateSummary();
       } else {
         slotsGrid.innerHTML = '<div class="col-12 text-center text-danger small py-3">Could not load slots.</div>';
       }
@@ -70,25 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function checkRangeAvailability(startIndex, duration) {
-    let conflictingSlot = null;
-    for (let i = 0; i < duration; i++) {
-      const nextSlot = currentSlots[startIndex + i];
-      if (!nextSlot || !nextSlot.isAvailable) {
-        conflictingSlot = nextSlot || { startLabel: 'Beyond closing time' };
-        break;
-      }
-    }
-    return {
-      isAvailable: !conflictingSlot,
-      conflictingSlot
-    };
-  }
-
   function renderSlots() {
-    const selectedStart = selectedStartTimeInput.value;
-    const duration = parseInt(durationSelect.value, 10) || 1;
-
     slotsGrid.innerHTML = '';
 
     if (!currentSlots || currentSlots.length === 0) {
@@ -96,10 +85,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    currentSlots.forEach((slot, index) => {
-      const check = checkRangeAvailability(index, duration);
-      const isAvailable = check.isAvailable;
-      const isSelected = selectedStart === slot.startTime;
+    currentSlots.forEach((slot) => {
+      const isAvailable = slot.isAvailable;
+      const isSelected = selectedSlots.has(slot.startTime);
 
       const col = document.createElement('div');
       col.className = 'col-6 col-md-4 col-lg-3';
@@ -108,23 +96,21 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.className = `slot-btn text-center ${isAvailable ? 'available' : 'booked'} ${isSelected ? 'selected' : ''}`;
       
       btn.innerHTML = `
-        <div class="fw-bold">${slot.startLabel}</div>
-        <div class="small opacity-75">${isAvailable ? 'Available' : 'Booked'}</div>
+        <div class="d-flex flex-column align-items-center">
+          <div class="fw-bold">${slot.startLabel}</div>
+          <div class="small opacity-75">${isSelected ? '✓ Selected' : (isAvailable ? 'Available' : 'Booked')}</div>
+        </div>
       `;
 
       if (isAvailable) {
         btn.addEventListener('click', () => {
-          selectedStartTimeInput.value = slot.startTime;
-          if (conflictAlert) conflictAlert.style.display = 'none';
+          if (selectedSlots.has(slot.startTime)) {
+            selectedSlots.delete(slot.startTime);
+          } else {
+            selectedSlots.add(slot.startTime);
+          }
           renderSlots();
           updateSummary();
-        });
-      } else {
-        btn.addEventListener('click', () => {
-          if (conflictAlert && conflictMessage) {
-            conflictAlert.style.display = 'block';
-            conflictMessage.textContent = `Cannot book from ${slot.startLabel} for ${duration} hour(s): Conflict at ${check.conflictingSlot.startLabel || 'booked slot'}.`;
-          }
         });
       }
 
@@ -132,69 +118,75 @@ document.addEventListener('DOMContentLoaded', () => {
       slotsGrid.appendChild(col);
     });
 
-    // Check if the currently selected slot is valid for the selected duration
-    const currentIdx = currentSlots.findIndex(s => s.startTime === selectedStartTimeInput.value);
-    if (currentIdx !== -1) {
-      const check = checkRangeAvailability(currentIdx, duration);
-      if (!check.isAvailable) {
-        if (conflictAlert && conflictMessage) {
-          conflictAlert.style.display = 'block';
-          conflictMessage.textContent = `Warning: ${duration}-hour booking from ${formatTime12(selectedStartTimeInput.value)} conflicts with an already booked slot at ${check.conflictingSlot.startLabel}. Please pick another time or reduce duration.`;
-        }
-        if (submitBtn) submitBtn.disabled = true;
-      } else {
-        if (conflictAlert) conflictAlert.style.display = 'none';
-        if (submitBtn) submitBtn.disabled = false;
-      }
+    if (clearSlotsBtn) {
+      clearSlotsBtn.style.display = selectedSlots.size > 0 ? 'inline-block' : 'none';
     }
-
-    updateSummary();
   }
 
   function updateSummary() {
     const selectedOption = courtSelect.options[courtSelect.selectedIndex];
     const courtName = selectedOption ? selectedOption.getAttribute('data-name') : 'Court';
     const pricePerHour = parseFloat(selectedOption ? selectedOption.getAttribute('data-price') : 350) || 350;
-    const duration = parseInt(durationSelect.value, 10) || 1;
     const date = dateSelect.value;
-    const startTime = selectedStartTimeInput.value;
+
+    const sortedSlots = Array.from(selectedSlots).sort();
+    const count = sortedSlots.length;
 
     if (summaryCourtName) summaryCourtName.textContent = courtName;
     if (summaryDate) summaryDate.textContent = date || '-';
-    if (summaryDuration) summaryDuration.textContent = `${duration} Hour${duration > 1 ? 's' : ''}`;
+    if (summaryDuration) summaryDuration.textContent = `${count} Hour${count !== 1 ? 's' : ''}`;
     if (summaryRate) summaryRate.textContent = formatCurrency(pricePerHour);
 
-    if (startTime) {
-      const currentIdx = currentSlots.findIndex(s => s.startTime === startTime);
-      const isRangeAvailable = currentIdx !== -1 ? checkRangeAvailability(currentIdx, duration).isAvailable : false;
-
-      const endTime = addHoursToTime(startTime, duration);
-      if (summaryTimeSlot) summaryTimeSlot.textContent = `${formatTime12(startTime)} - ${formatTime12(endTime)}`;
-      const total = pricePerHour * duration;
-      if (summaryTotal) summaryTotal.textContent = formatCurrency(total);
-      
-      if (submitBtn) {
-        submitBtn.disabled = !isRangeAvailable;
+    // Update slots badges in summary
+    if (summarySlotsList) {
+      if (count > 0) {
+        summarySlotsList.innerHTML = sortedSlots.map(time => {
+          const slotObj = currentSlots.find(s => s.startTime === time);
+          const label = slotObj ? `${slotObj.startLabel} - ${slotObj.endLabel}` : formatTime12(time);
+          return `<span class="badge bg-success-subtle text-success border border-success px-2 py-1">${label}</span>`;
+        }).join(' ');
+      } else {
+        summarySlotsList.innerHTML = '<span class="text-muted small">None selected</span>';
       }
-    } else {
-      if (summaryTimeSlot) summaryTimeSlot.textContent = 'No slot selected';
-      if (summaryTotal) summaryTotal.textContent = '₱0.00';
-      if (submitBtn) submitBtn.disabled = true;
+    }
+
+    // Update hidden inputs
+    if (selectedSlotsInput) {
+      selectedSlotsInput.value = JSON.stringify(sortedSlots);
+    }
+    if (selectedStartTimeInput) {
+      selectedStartTimeInput.value = sortedSlots.length > 0 ? sortedSlots[0] : '';
+    }
+    if (totalHoursInput) {
+      totalHoursInput.value = count;
+    }
+
+    // Update total price and button state
+    const total = pricePerHour * count;
+    if (summaryTotal) summaryTotal.textContent = formatCurrency(total);
+
+    if (submitBtn) {
+      submitBtn.disabled = count === 0;
+    }
+    if (slotFeedback) {
+      slotFeedback.style.display = count === 0 ? 'block' : 'none';
     }
   }
 
+  if (clearSlotsBtn) {
+    clearSlotsBtn.addEventListener('click', () => {
+      selectedSlots.clear();
+      renderSlots();
+      updateSummary();
+    });
+  }
+
   courtSelect.addEventListener('change', () => {
-    if (conflictAlert) conflictAlert.style.display = 'none';
     fetchSlots();
   });
 
   dateSelect.addEventListener('change', () => {
-    if (conflictAlert) conflictAlert.style.display = 'none';
     fetchSlots();
-  });
-
-  durationSelect.addEventListener('change', () => {
-    renderSlots();
   });
 
   window.refreshReservationSlots = (courtId, date) => {

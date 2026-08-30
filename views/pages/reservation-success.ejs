@@ -67,8 +67,19 @@
             <strong class="text-dark"><%= reservation.reservation_date %></strong>
           </div>
           <div class="col-6">
-            <span class="small text-secondary d-block">Time Slot</span>
-            <strong class="text-dark"><%= formatTime12(reservation.start_time) %> - <%= formatTime12(reservation.end_time) %> (<%= reservation.total_hours %> hr/s)</strong>
+            <span class="small text-secondary d-block">Time Slot / Duration</span>
+            <% 
+              let slotDisplay = `${formatTime12(reservation.start_time)} - ${formatTime12(reservation.end_time)}`;
+              if (reservation.slots_json) {
+                try {
+                  const arr = JSON.parse(reservation.slots_json);
+                  if (Array.isArray(arr) && arr.length > 0) {
+                    slotDisplay = arr.map(t => formatTime12(t)).join(', ');
+                  }
+                } catch (e) {}
+              }
+            %>
+            <strong class="text-dark"><%= slotDisplay %> (<%= reservation.total_hours %> hr<%= reservation.total_hours > 1 ? 's' : '' %>)</strong>
           </div>
         </div>
 

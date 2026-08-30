@@ -32,10 +32,16 @@ async function getCourtAvailability(courtId, date) {
   const allSlots = generateTimeSlots('08:00', '24:00', 60);
 
   const slotsWithStatus = allSlots.map((slot) => {
-    // Check if slot overlaps with any active reservation
-    // A slot [slot.startTime, slot.endTime) overlaps with [res.start_time, res.end_time)
-    // if slot.startTime < res.end_time && slot.endTime > res.start_time
+    // Check if slot matches any active reservation (either via slots_json or continuous start_time/end_time)
     const conflictingRes = existingReservations.find((res) => {
+      if (res.slots_json) {
+        try {
+          const bookedArr = JSON.parse(res.slots_json);
+          if (Array.isArray(bookedArr) && bookedArr.includes(slot.startTime)) {
+            return true;
+          }
+        } catch (e) {}
+      }
       return slot.startTime < res.end_time && slot.endTime > res.start_time;
     });
 
@@ -61,7 +67,24 @@ async function getCourtAvailability(courtId, date) {
 }
 
 /**
- * Validate whether a requested time range is fully available
+ * Validate whether a list of requested slot start times is available
+ */
+async function areSlotsAvailable(courtId, date, requestedSlots = [], excludeReservationId = null) {
+  const court = await Court.findByPk(courtId);
+  if (!court || !court.is_active || !requestedSlots || requestedSlots.length === 0) {
+    return false;
+  }
+
+  const availability = await getCourtAvailability(courtId, date);
+  const availableSlotsMap = new Set(
+    availability.slots.filter(s => s.isAvailable).map(s => s.startTime)
+  );
+
+  return requestedSlots.every(slotTime => availableSlotsMap.has(slotTime));
+}
+
+/**
+ * Validate whether a requested time range is fully available (backwards-compatibility)
  */
 async function isSlotRangeAvailable(courtId, date, startTime, endTime, excludeReservationId = null) {
   const court = await Court.findByPk(courtId);
@@ -69,34 +92,15 @@ async function isSlotRangeAvailable(courtId, date, startTime, endTime, excludeRe
     return false;
   }
 
-  const now = new Date();
-  const whereClause = {
-    court_id: courtId,
-    reservation_date: date,
-    [Op.or]: [
-      { status: 'CONFIRMED' },
-      { status: 'AWAITING_CONFIRMATION' },
-      {
-        status: { [Op.in]: ['AWAITING_PAYMENT', 'PENDING'] },
-        expires_at: { [Op.gt]: now }
-      }
-    ],
-    // Overlap condition: startTime < res.end_time AND endTime > res.start_time
-    [Op.and]: [
-      { start_time: { [Op.lt]: endTime } },
-      { end_time: { [Op.gt]: startTime } }
-    ]
-  };
+  const availability = await getCourtAvailability(courtId, date);
+  const rangeSlots = availability.slots.filter(s => s.startTime >= startTime && s.startTime < endTime);
+  if (rangeSlots.length === 0) return false;
 
-  if (excludeReservationId) {
-    whereClause.id = { [Op.ne]: excludeReservationId };
-  }
-
-  const conflicting = await Reservation.findOne({ where: whereClause });
-  return !conflicting;
+  return rangeSlots.every(s => s.isAvailable);
 }
 
 module.exports = {
   getCourtAvailability,
+  areSlotsAvailable,
   isSlotRangeAvailable
 };

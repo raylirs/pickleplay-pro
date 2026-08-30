@@ -1,5 +1,5 @@
 const { Reservation, Court, CourtCategory } = require('../models');
-const { isSlotRangeAvailable, getCourtAvailability } = require('../services/availabilityService');
+const { isSlotRangeAvailable, areSlotsAvailable, getCourtAvailability } = require('../services/availabilityService');
 const paymentService = require('../services/paymentService');
 const { getIO } = require('../config/socket');
 const { generateReferenceNumber } = require('../utils/generateReference');
@@ -66,14 +66,33 @@ const reservationController = {
         reservation_date,
         start_time,
         total_hours,
+        selected_slots,
         special_requests
       } = req.body;
 
-      if (!court_id || !user_name || !user_contact || !reservation_date || !start_time) {
-        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
-          return res.status(400).json({ success: false, error: 'Please fill in all required fields.' });
+      let slotsArray = [];
+      if (selected_slots) {
+        try {
+          slotsArray = typeof selected_slots === 'string' ? JSON.parse(selected_slots) : selected_slots;
+        } catch (e) {
+          slotsArray = selected_slots.split(',').map(s => s.trim()).filter(Boolean);
         }
-        req.flash('error', 'Please fill in all required fields.');
+      }
+
+      if (!slotsArray || slotsArray.length === 0) {
+        if (start_time) {
+          const hours = Math.min(Math.max(parseInt(total_hours, 10) || 1, 1), 8);
+          for (let i = 0; i < hours; i++) {
+            slotsArray.push(addHoursToTime(start_time, i));
+          }
+        }
+      }
+
+      if (!court_id || !user_name || !user_contact || !reservation_date || slotsArray.length === 0) {
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+          return res.status(400).json({ success: false, error: 'Please select at least one time slot and fill in all required fields.' });
+        }
+        req.flash('error', 'Please select at least one time slot and fill in all required fields.');
         return res.redirect('/reservations');
       }
 
@@ -108,18 +127,21 @@ const reservationController = {
         return res.redirect('/reservations');
       }
 
-      const hours = Math.min(Math.max(parseInt(total_hours, 10) || 1, 1), 4);
-      const endTime = addHoursToTime(start_time, hours);
-
-      const isAvailable = await isSlotRangeAvailable(court_id, reservation_date, start_time, endTime);
+      // Check availability of all requested slots
+      const isAvailable = await areSlotsAvailable(court_id, reservation_date, slotsArray);
       if (!isAvailable) {
-        const errorMsg = 'Sorry, one or more selected time slots have already been booked. Please choose another time.';
+        const errorMsg = 'Sorry, one or more selected time slots have already been booked. Please choose other available times.';
         if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
           return res.status(409).json({ success: false, error: errorMsg });
         }
         req.flash('error', errorMsg);
         return res.redirect(`/reservations?court_id=${court_id}&date=${reservation_date}`);
       }
+
+      const hours = slotsArray.length;
+      const firstSlot = slotsArray[0];
+      const lastSlot = slotsArray[slotsArray.length - 1];
+      const endTime = addHoursToTime(lastSlot, 1);
 
       const pricePerHour = parseFloat(court.category.price_per_hour);
       const totalAmount = pricePerHour * hours;
@@ -133,12 +155,13 @@ const reservationController = {
         user_contact: user_contact.trim(),
         user_email: user_email ? user_email.trim().toLowerCase() : null,
         reservation_date,
-        start_time,
+        start_time: firstSlot,
         end_time: endTime,
+        slots_json: JSON.stringify(slotsArray),
         total_hours: hours,
         total_amount: totalAmount,
         status: 'AWAITING_PAYMENT',
-        payment_provider: 'GCASH',
+        payment_provider: 'GCASH_QR',
         special_requests: special_requests ? special_requests.trim() : null,
         expires_at: expiresAt
       });

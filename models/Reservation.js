@@ -33,12 +33,16 @@ const Reservation = sequelize.define('Reservation', {
     allowNull: false
   },
   start_time: {
-    type: DataTypes.STRING(10), // HH:MM
+    type: DataTypes.STRING(255),
     allowNull: false
   },
   end_time: {
-    type: DataTypes.STRING(10), // HH:MM
+    type: DataTypes.STRING(255),
     allowNull: false
+  },
+  slots_json: {
+    type: DataTypes.TEXT,
+    allowNull: true
   },
   total_hours: {
     type: DataTypes.INTEGER,

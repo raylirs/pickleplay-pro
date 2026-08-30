@@ -45,7 +45,18 @@
               </div>
               <div class="d-flex justify-content-between mb-1">
                 <span class="text-secondary">Date & Time:</span>
-                <strong class="text-dark"><%= reservation.reservation_date %> (<%= formatTime12(reservation.start_time) %>)</strong>
+                <% 
+                  let gcashTimeDisplay = formatTime12(reservation.start_time);
+                  if (reservation.slots_json) {
+                    try {
+                      const arr = JSON.parse(reservation.slots_json);
+                      if (Array.isArray(arr) && arr.length > 0) {
+                        gcashTimeDisplay = arr.map(t => formatTime12(t)).join(', ');
+                      }
+                    } catch (e) {}
+                  }
+                %>
+                <strong class="text-dark"><%= reservation.reservation_date %> (<%= gcashTimeDisplay %>)</strong>
               </div>
               <div class="d-flex justify-content-between">
                 <span class="text-secondary">Player Name:</span>
