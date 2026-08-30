@@ -1,4 +1,4 @@
-﻿const { Reservation, Court } = require('../models');
+const { Reservation, Court } = require('../models');
 const { Op } = require('sequelize');
 const { generateTimeSlots } = require('../utils/dateTimeUtils');
 
@@ -12,7 +12,7 @@ async function getCourtAvailability(courtId, date) {
   }
 
   // Active reservations that block slots:
-  // CONFIRMED, or AWAITING_PAYMENT / PENDING that haven't expired
+  // CONFIRMED, AWAITING_CONFIRMATION, or AWAITING_PAYMENT / PENDING that haven't expired
   const now = new Date();
   const existingReservations = await Reservation.findAll({
     where: {
@@ -20,6 +20,7 @@ async function getCourtAvailability(courtId, date) {
       reservation_date: date,
       [Op.or]: [
         { status: 'CONFIRMED' },
+        { status: 'AWAITING_CONFIRMATION' },
         {
           status: { [Op.in]: ['AWAITING_PAYMENT', 'PENDING'] },
           expires_at: { [Op.gt]: now }
@@ -74,6 +75,7 @@ async function isSlotRangeAvailable(courtId, date, startTime, endTime, excludeRe
     reservation_date: date,
     [Op.or]: [
       { status: 'CONFIRMED' },
+      { status: 'AWAITING_CONFIRMATION' },
       {
         status: { [Op.in]: ['AWAITING_PAYMENT', 'PENDING'] },
         expires_at: { [Op.gt]: now }

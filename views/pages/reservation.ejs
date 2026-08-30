@@ -1,9 +1,9 @@
 <div class="container py-5">
   <div class="max-w-900 mx-auto">
     <div class="text-center mb-4">
-      <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold mb-2">Instant Booking</span>
-      <h1 class="fw-bold text-dark">Reserve Your Pickleball Court</h1>
-      <p class="text-secondary">Select your court, pick an open time slot, and check out securely with GCash</p>
+      <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold mb-2">3KS Court Booking</span>
+      <h1 class="fw-bold text-dark">Reserve Your 3KS Court</h1>
+      <p class="text-secondary">Select your court, pick an open time slot, and pay via official GCash QR Code</p>
     </div>
 
     <form id="reservationForm" action="/reservations" method="POST" class="needs-validation" novalidate>
@@ -22,10 +22,10 @@
               <select class="form-select form-select-lg rounded-3" id="courtSelect" name="court_id" required>
                 <% courts.forEach(function(c) { %>
                   <option value="<%= c.id %>" 
-                    data-price="<%= c.category ? c.category.price_per_hour : 0 %>" 
+                    data-price="<%= c.category ? c.category.price_per_hour : 350 %>" 
                     data-name="<%= c.display_name %>"
                     <%= selectedCourtId === c.id ? 'selected' : '' %>>
-                    <%= c.display_name %> — ₱<%= parseFloat(c.category ? c.category.price_per_hour : 0).toFixed(2) %>/hr
+                    <%= c.display_name %> — ₱<%= parseFloat(c.category ? c.category.price_per_hour : 350).toFixed(2) %>/hr
                   </option>
                 <% }); %>
               </select>
@@ -59,6 +59,13 @@
                 <!-- Dynamically populated via JavaScript -->
               </div>
               <input type="hidden" name="start_time" id="selectedStartTime" value="<%= initialSlot %>" required>
+              
+              <!-- Conflict Warning Alert -->
+              <div id="conflictAlert" class="alert alert-danger py-2 px-3 small mt-3 rounded-3" style="display: none;">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                <span id="conflictMessage">One or more slots in this duration are already booked.</span>
+              </div>
+
               <div class="invalid-feedback d-block" id="slotFeedback" style="display: none;">
                 Please select an available start time slot.
               </div>
@@ -100,7 +107,7 @@
 
             <div class="mb-2">
               <label for="specialRequests" class="form-label fw-semibold text-dark">Special Requests / Notes</label>
-              <textarea class="form-control rounded-3" id="specialRequests" name="special_requests" rows="2" placeholder="e.g., Equipment rental, left-handed paddles, balls request..."></textarea>
+              <textarea class="form-control rounded-3" id="specialRequests" name="special_requests" rows="2" placeholder="e.g., Equipment rental, paddles, balls request..."></textarea>
             </div>
           </div>
         </div>
@@ -129,18 +136,18 @@
               </div>
               <div class="d-flex justify-content-between mb-2">
                 <span class="text-secondary small">Rate / hr:</span>
-                <span class="fw-bold text-dark small" id="summaryRate">₱0.00</span>
+                <span class="fw-bold text-dark small" id="summaryRate">₱350.00</span>
               </div>
               <hr class="my-2">
               <div class="d-flex justify-content-between align-items-center">
                 <span class="fw-bold text-dark">Total Amount:</span>
-                <span class="fs-4 fw-extrabold text-success" id="summaryTotal">₱0.00</span>
+                <span class="fs-4 fw-extrabold text-success" id="summaryTotal">₱350.00</span>
               </div>
             </div>
 
             <div class="alert alert-warning py-2 px-3 small rounded-3 mb-3">
-              <i class="bi bi-stopwatch-fill me-1"></i>
-              <strong>15-Minute Expiry:</strong> Once submitted, the court will be held for 15 minutes to complete GCash payment.
+              <i class="bi bi-qr-code-scan me-1"></i>
+              <strong>GCash QR Payment:</strong> You will scan the official 3KS QR code and submit your reference number.
             </div>
 
             <button type="submit" id="submitBtn" class="btn btn-success btn-lg w-100 fw-bold py-3 rounded-pill shadow d-flex align-items-center justify-content-center">
@@ -148,7 +155,7 @@
             </button>
 
             <div class="text-center mt-3 small text-muted">
-              <i class="bi bi-shield-lock-fill text-success me-1"></i>256-Bit Encrypted Payment Flow
+              <i class="bi bi-shield-lock-fill text-success me-1"></i>Verified 3KS Playground System
             </div>
           </div>
         </div>
