@@ -1,6 +1,6 @@
 function formatCurrency(amount) {
   const num = parseFloat(amount) || 0;
-  return '?' + num.toLocaleString('en-PH', {
+  return '\u20B1' + num.toLocaleString('en-PH', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
