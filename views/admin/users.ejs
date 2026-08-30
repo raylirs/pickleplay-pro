@@ -1,0 +1,120 @@
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-2 border-bottom">
+    <div>
+      <h2 class="fw-bold text-dark mb-1">Admin & Staff Accounts</h2>
+      <p class="text-secondary small mb-0">Manage multiple admin accounts, cashier/receptionist logins, and permissions</p>
+    </div>
+    <div class="mt-3 mt-md-0">
+      <button class="btn btn-success fw-bold rounded-pill px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#createUserModal">
+        <i class="bi bi-person-plus-fill me-1"></i>Add New Admin / Staff
+      </button>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small text-uppercase">
+              <tr>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Created Date</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% users.forEach(function(u) { %>
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="badge bg-primary-subtle text-primary rounded-circle p-2 me-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                        <i class="bi bi-person-fill fs-6"></i>
+                      </div>
+                      <div>
+                        <strong class="text-dark"><%= u.username %></strong>
+                        <% if (u.id === user.id) { %>
+                          <span class="badge bg-success-subtle text-success ms-1 small">You</span>
+                        <% } %>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge <%= u.role === 'admin' ? 'bg-primary' : 'bg-secondary' %> px-3 py-1 rounded-pill">
+                      <%= u.role.toUpperCase() %>
+                    </span>
+                  </td>
+                  <td class="small text-secondary">
+                    <%= new Date(u.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                  </td>
+                  <td class="text-end">
+                    <% if (u.id !== user.id) { %>
+                      <form action="/admin/users/<%= u.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete admin user \'<%= u.username %>\'?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3" title="Delete User">
+                          <i class="bi bi-trash me-1"></i>Delete
+                        </button>
+                      </form>
+                    <% } else { %>
+                      <span class="text-muted small">Active Session</span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Column -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-shield-check text-success me-2"></i>Multi-Admin Support</h5>
+        <p class="small text-secondary mb-3">
+          Multiple administrators and staff members can be logged in simultaneously from different computers and mobile phones.
+        </p>
+        <ul class="list-unstyled small text-dark mb-0">
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i><strong>Real-time updates:</strong> All active admins receive instant notifications for new bookings.</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i><strong>Simultaneous approval:</strong> Any logged-in admin can verify GCash references and approve reservations.</li>
+          <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>Audit logging:</strong> System tracks which admin confirmed or modified each booking.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create User Modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content rounded-4">
+      <form action="/admin/users" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Create New Admin / Staff Account</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Username <span class="text-danger">*</span></label>
+            <input type="text" name="username" class="form-control rounded-3" placeholder="e.g. manager1 or staff" required autofocus>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Password <span class="text-danger">*</span></label>
+            <input type="password" name="password" class="form-control rounded-3" placeholder="Enter secure password" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Role <span class="text-danger">*</span></label>
+            <select name="role" class="form-select rounded-3">
+              <option value="admin" selected>Administrator (Full Access)</option>
+              <option value="staff">Staff / Receptionist</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success rounded-pill fw-bold px-4">Create Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

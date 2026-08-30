@@ -32,6 +32,11 @@ router.post('/reservations/:id/confirm', requireAuth, adminController.confirmRes
 router.get('/settings', requireAuth, adminController.showSettings);
 router.post('/settings', requireAuth, upload.single('qr_image'), adminController.updateSettings);
 
+// User & Staff Accounts Management
+router.get('/users', requireAuth, adminController.showUsers);
+router.post('/users', requireAuth, adminController.createUser);
+router.post('/users/:id/delete', requireAuth, adminController.deleteUser);
+
 // Reports & CSV Export
 router.get('/reports', requireAuth, adminController.showReports);
 router.get('/reports/export-csv', requireAuth, adminController.exportReservationsCsv);

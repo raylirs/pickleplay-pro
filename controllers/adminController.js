@@ -1,3 +1,4 @@
+const bcrypt = require('bcryptjs');
 const { CourtCategory, Court, Reservation, AuditLog, User, SystemSetting, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const { getCourtAvailability } = require('../services/availabilityService');
@@ -637,6 +638,87 @@ const adminController = {
 
       req.flash('success', 'GCash QR Code & Payment settings updated successfully!');
       res.redirect('/admin/settings');
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async showUsers(req, res, next) {
+    try {
+      const users = await User.findAll({
+        order: [['created_at', 'ASC']],
+        attributes: ['id', 'username', 'role', 'created_at']
+      });
+
+      res.render('admin/users', {
+        title: 'Admin & Staff Accounts - 3KS Playground',
+        layout: 'layouts/admin',
+        user: req.session.user,
+        users,
+        error: req.flash('error'),
+        success: req.flash('success')
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async createUser(req, res, next) {
+    try {
+      const { username, password, role } = req.body;
+      if (!username || !password) {
+        req.flash('error', 'Username and password are required.');
+        return res.redirect('/admin/users');
+      }
+
+      const existing = await User.findOne({ where: { username: username.trim().toLowerCase() } });
+      if (existing) {
+        req.flash('error', `User "${username}" already exists.`);
+        return res.redirect('/admin/users');
+      }
+
+      const passwordHash = await bcrypt.hash(password, 10);
+      await User.create({
+        username: username.trim().toLowerCase(),
+        password_hash: passwordHash,
+        role: role || 'admin'
+      });
+
+      await logAudit('USER_CREATED', { createdUser: username, role }, req.session.user.id);
+      req.flash('success', `Account "${username}" created successfully.`);
+      res.redirect('/admin/users');
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async deleteUser(req, res, next) {
+    try {
+      const id = req.params.id;
+      const targetUser = await User.findByPk(id);
+
+      if (!targetUser) {
+        req.flash('error', 'User not found.');
+        return res.redirect('/admin/users');
+      }
+
+      if (targetUser.id === req.session.user.id) {
+        req.flash('error', 'You cannot delete your own logged-in account.');
+        return res.redirect('/admin/users');
+      }
+
+      const count = await User.count();
+      if (count <= 1) {
+        req.flash('error', 'Cannot delete the only remaining admin account.');
+        return res.redirect('/admin/users');
+      }
+
+      const username = targetUser.username;
+      await targetUser.destroy();
+
+      await logAudit('USER_DELETED', { deletedUser: username }, req.session.user.id);
+      req.flash('success', `Account "${username}" was deleted.`);
+      res.redirect('/admin/users');
     } catch (err) {
       next(err);
     }
