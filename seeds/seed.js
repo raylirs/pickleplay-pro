@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const { sequelize, User, CourtCategory, Court } = require('../models');
+const { sequelize, User, CourtCategory, Court, SystemSetting } = require('../models');
 
 async function seedDatabase() {
   try {
