@@ -7,6 +7,8 @@ const { reservationLimiter } = require('../middleware/rateLimiter');
 const upload = require('../middleware/upload');
 const { CourtCategory, Court } = require('../models');
 
+const { formatCurrency, formatTime12 } = require('../utils/dateTimeUtils');
+
 // Home page displaying 3KS Playground
 router.get('/', async (req, res, next) => {
   try {
@@ -17,6 +19,7 @@ router.get('/', async (req, res, next) => {
     res.render('pages/index', {
       title: '3KS Pickleball Playground - Court Reservation',
       categories,
+      formatCurrency,
       user: req.session ? req.session.user : null
     });
   } catch (err) {
