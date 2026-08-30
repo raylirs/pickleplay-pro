@@ -5,7 +5,7 @@ const { formatCurrency, formatTime12 } = require('../utils/dateTimeUtils');
 const paymentController = {
   async showGcashMockCheckout(req, res, next) {
     try {
-      const ref = req.query.ref;
+      const ref = req.query.ref ? req.query.ref.trim() : null;
       if (!ref) {
         return res.redirect('/reservations');
       }
@@ -18,7 +18,7 @@ const paymentController = {
       if (!reservation) {
         return res.status(404).render('pages/error', {
           title: 'Invalid Payment Session',
-          message: 'The reservation could not be found.',
+          message: `The reservation with reference "${ref}" could not be found or has expired. Please create a new reservation.`,
           statusCode: 404,
           user: req.session ? req.session.user : null
         });
@@ -55,20 +55,21 @@ const paymentController = {
   async processGcashMockPayment(req, res, next) {
     try {
       const { reference_number, gcash_mobile, simulate_failure } = req.body;
+      const ref = reference_number ? reference_number.trim() : '';
 
       if (simulate_failure === 'true') {
         return res.render('pages/payment-failed', {
           title: 'Payment Unsuccessful',
           reason: 'The transaction was cancelled or declined by GCash simulator.',
-          reservation: { reference_number },
+          reservation: { reference_number: ref },
           user: req.session ? req.session.user : null
         });
       }
 
       const txnId = `GCASH-PAY-${Date.now()}`;
-      await paymentService.processPaymentSuccess(reference_number, txnId, 'GCASH');
+      await paymentService.processPaymentSuccess(ref, txnId, 'GCASH');
 
-      res.redirect(`/payment/success?ref=${reference_number}`);
+      res.redirect(`/payment/success?ref=${ref}`);
     } catch (err) {
       next(err);
     }
@@ -84,9 +85,10 @@ const paymentController = {
       }
 
       const { reference_number, transaction_id, status } = req.body;
+      const ref = reference_number ? reference_number.trim() : '';
 
       if (status === 'SUCCESS' || status === 'PAID' || status === 'CONFIRMED') {
-        await paymentService.processPaymentSuccess(reference_number, transaction_id, 'GCASH_WEBHOOK');
+        await paymentService.processPaymentSuccess(ref, transaction_id, 'GCASH_WEBHOOK');
       }
 
       res.json({ success: true, message: 'Webhook processed successfully' });
@@ -98,7 +100,7 @@ const paymentController = {
 
   async showPaymentSuccess(req, res, next) {
     try {
-      const { ref } = req.query;
+      const ref = req.query.ref ? req.query.ref.trim() : null;
       const reservation = await Reservation.findOne({
         where: { reference_number: ref },
         include: [{ model: Court, as: 'court', include: [{ model: CourtCategory, as: 'category' }] }]
