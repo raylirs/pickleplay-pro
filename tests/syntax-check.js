@@ -7,7 +7,7 @@ function getJsFiles(dir) {
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (entry.name !== 'node_modules' && entry.name !== '.git') {
+      if (entry.name !== 'node_modules' && entry.name !== '.git' && entry.name !== 'public') {
         files = files.concat(getJsFiles(fullPath));
       }
     } else if (entry.isFile() && entry.name.endsWith('.js') && !entry.name.startsWith('main') && !entry.name.startsWith('socket') && !entry.name.startsWith('reservation')) {
