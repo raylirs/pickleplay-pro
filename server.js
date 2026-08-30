@@ -14,6 +14,7 @@ const { startExpirationWorker } = require('./services/expirationWorker');
 const seedDatabase = require('./seeds/seed');
 const routes = require('./routes');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+const { formatCurrency, formatTime12, formatDate } = require('./utils/dateTimeUtils');
 
 const app = express();
 const server = http.createServer(app);
@@ -49,11 +50,14 @@ app.use(
 
 app.use(flash());
 
-// Global template variables
+// Global template variables & helper functions
 app.use((req, res, next) => {
   res.locals.user = req.session ? req.session.user : null;
   res.locals.error = req.flash('error');
   res.locals.success = req.flash('success');
+  res.locals.formatCurrency = formatCurrency;
+  res.locals.formatTime12 = formatTime12;
+  res.locals.formatDate = formatDate;
   next();
 });
 
@@ -66,39 +70,37 @@ app.set('view engine', 'ejs');
 // Static Files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Application Routes
-app.use(routes);
+// Routes
+app.use('/', routes);
 
-// 404 & Error Handling
+// 404 & Global Error Handlers
 app.use(notFoundHandler);
 app.use(errorHandler);
 
+// Database Sync & Startup
 const PORT = process.env.PORT || 3000;
 
-async function startServer() {
+async function bootstrap() {
   try {
     await sequelize.authenticate();
     console.log('[Database] Connection established successfully.');
 
     await seedDatabase();
+
     startExpirationWorker();
 
     server.listen(PORT, () => {
       console.log('====================================================');
-      console.log(`PicklePlay Pro Server running at: http://localhost:${PORT}`);
+      console.log(`3KS Playground Server running at: http://localhost:${PORT}`);
       console.log(`Admin Dashboard available at:  http://localhost:${PORT}/admin`);
-      console.log('Real-Time Socket.io: Enabled');
-      console.log('GCash Payment Simulator: Enabled');
+      console.log(`Real-Time Socket.io: Enabled`);
+      console.log(`GCash Payment System: Enabled`);
       console.log('====================================================');
     });
   } catch (err) {
-    console.error('[Server Error] Startup failed:', err);
+    console.error('[Bootstrap Error]:', err);
     process.exit(1);
   }
 }
 
-if (require.main === module) {
-  startServer();
-}
-
-module.exports = { app, server };
+bootstrap();

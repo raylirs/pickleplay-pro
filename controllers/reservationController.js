@@ -22,12 +22,14 @@ const reservationController = {
       const initialSlot = req.query.slot || '08:00';
 
       res.render('pages/reservation', {
-        title: 'Book a Court - PicklePlay Pro',
+        title: 'Book a Court - 3KS Playground',
         courts,
         selectedCourtId: selectedCourtId ? parseInt(selectedCourtId, 10) : null,
         selectedDate,
         initialSlot,
         today,
+        formatCurrency,
+        formatTime12,
         user: req.session ? req.session.user : null,
         error: req.flash('error'),
         success: req.flash('success')
