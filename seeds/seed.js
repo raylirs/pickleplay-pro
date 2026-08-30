@@ -6,6 +6,14 @@ async function seedDatabase() {
     await sequelize.sync();
     console.log('[Database] Schema synchronized.');
 
+    // Ensure new columns exist on PostgreSQL / SQLite
+    try {
+      await sequelize.query('ALTER TABLE reservations ADD COLUMN IF NOT EXISTS gcash_reference_no VARCHAR(100);');
+      await sequelize.query('ALTER TABLE reservations ADD COLUMN IF NOT EXISTS payment_screenshot VARCHAR(255);');
+    } catch (colErr) {
+      // Ignored if already present or SQLite
+    }
+
     // 1. Seed Admin User
     const adminUsername = process.env.ADMIN_USERNAME || 'admin';
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
