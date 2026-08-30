@@ -84,7 +84,26 @@ async function seedDatabase() {
       }
     }
 
-    console.log('[Seed] 3KS Pickleball Playground synchronized with 4 courts @ ₱350/hr.');
+    // Seed official GCash SystemSettings
+    await SystemSetting.upsert({
+      key: 'GCASH_QR_IMAGE',
+      value: '/images/gcash-qr.jpg',
+      description: 'Official GCash InstaPay QR Code'
+    });
+
+    await SystemSetting.upsert({
+      key: 'GCASH_ACCOUNT_NAME',
+      value: 'KA**O P.',
+      description: 'Merchant GCash Account Name'
+    });
+
+    await SystemSetting.upsert({
+      key: 'GCASH_ACCOUNT_NUMBER',
+      value: '+63 977 013 ••••',
+      description: 'Merchant GCash Mobile / User ID'
+    });
+
+    console.log('[Seed] 3KS Pickleball Playground synchronized with 4 courts @ ₱350/hr and official GCash QR.');
     console.log('[Seed] Database initialization completed successfully.');
   } catch (err) {
     console.error('[Seed Error]:', err);
