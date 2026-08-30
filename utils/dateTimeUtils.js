@@ -20,15 +20,18 @@ function formatTime12(time24) {
   const hStr = parts[0];
   const mStr = parts[1];
   let hour = parseInt(hStr, 10);
+  if (hour === 24 || hour === 0) {
+    return `12:${mStr} AM`;
+  }
   const ampm = hour >= 12 ? 'PM' : 'AM';
   hour = hour % 12;
   hour = hour ? hour : 12;
-  return hour + ':' + mStr + ' ' + ampm;
+  return `${hour}:${mStr} ${ampm}`;
 }
 
 function generateTimeSlots(start, end, intervalMinutes) {
   if (!start) start = '08:00';
-  if (!end) end = '22:00';
+  if (!end) end = '24:00';
   if (!intervalMinutes) intervalMinutes = 60;
 
   const slots = [];
@@ -63,7 +66,7 @@ function generateTimeSlots(start, end, intervalMinutes) {
 
 function addHoursToTime(timeStr, hours) {
   const parts = timeStr.split(':').map(Number);
-  const newHour = parts[0] + parseInt(hours, 10);
+  let newHour = parts[0] + parseInt(hours, 10);
   return String(newHour).padStart(2, '0') + ':' + String(parts[1]).padStart(2, '0');
 }
 
