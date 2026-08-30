@@ -1,0 +1,101 @@
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-2 border-bottom">
+    <div>
+      <h2 class="fw-bold text-dark mb-1">Financial & Reservation Reports</h2>
+      <p class="text-secondary small mb-0">Generate court occupancy reports and export structured reservation data</p>
+    </div>
+    <div class="mt-3 mt-md-0">
+      <a href="/admin/reports/export-csv?start_date=<%= startDate %>&end_date=<%= endDate %>" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm">
+        <i class="bi bi-file-earmark-excel-fill me-1"></i>Download CSV Report
+      </a>
+    </div>
+  </div>
+
+  <!-- Date Range Filter -->
+  <div class="card border-0 shadow-sm rounded-4 p-3 bg-white mb-4">
+    <form method="GET" action="/admin/reports" class="row g-3 align-items-center">
+      <div class="col-md-4">
+        <label class="form-label small fw-bold text-secondary mb-1">Start Date</label>
+        <input type="date" name="start_date" class="form-control rounded-3" value="<%= startDate %>">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-bold text-secondary mb-1">End Date</label>
+        <input type="date" name="end_date" class="form-control rounded-3" value="<%= endDate %>">
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100 rounded-3 fw-bold">
+          <i class="bi bi-filter me-1"></i>Apply Date Range
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Summary Metrics -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+        <span class="text-secondary small fw-semibold">Filtered Revenue</span>
+        <h3 class="fw-bold text-success mb-0"><%= formatCurrency(totalRevenue) %></h3>
+        <span class="small text-muted"><%= startDate %> to <%= endDate %></span>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+        <span class="text-secondary small fw-semibold">Confirmed Bookings</span>
+        <h3 class="fw-bold text-dark mb-0"><%= confirmedCount %></h3>
+        <span class="small text-muted">Out of <%= reservations.length %> total entries</span>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+        <span class="text-secondary small fw-semibold">Total Court Hours Played</span>
+        <h3 class="fw-bold text-primary mb-0"><%= totalHours %> hrs</h3>
+        <span class="small text-muted">Total booked court duration</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light small text-uppercase">
+          <tr>
+            <th>Ref</th>
+            <th>Court</th>
+            <th>Date & Time</th>
+            <th>Player</th>
+            <th>Hours</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Payment Ref</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (reservations && reservations.length > 0) { %>
+            <% reservations.forEach(function(r) { %>
+              <tr>
+                <td class="font-monospace fw-bold text-primary"><%= r.reference_number %></td>
+                <td><%= r.court ? r.court.display_name : 'N/A' %></td>
+                <td><%= r.reservation_date %> (<%= formatTime12(r.start_time) %>)</td>
+                <td><%= r.user_name %></td>
+                <td><%= r.total_hours %></td>
+                <td class="fw-bold text-success"><%= formatCurrency(r.total_amount) %></td>
+                <td>
+                  <span class="badge <%= r.status === 'CONFIRMED' ? 'bg-success' : 'bg-secondary' %>">
+                    <%= r.status %>
+                  </span>
+                </td>
+                <td class="font-monospace small text-muted"><%= r.payment_transaction_id || '-' %></td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">No reservations found in the selected date range.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

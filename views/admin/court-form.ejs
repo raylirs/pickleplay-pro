@@ -1,0 +1,71 @@
+<div class="container py-4">
+  <div class="max-w-700 mx-auto" style="max-width: 700px;">
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/admin/courts">Courts</a></li>
+        <li class="breadcrumb-item active"><%= category ? 'Edit Court' : 'New Court' %></li>
+      </ol>
+    </nav>
+
+    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+      <h3 class="fw-bold text-dark mb-4"><%= category ? 'Edit Court Category' : 'Add New Court Category' %></h3>
+
+      <form action="<%= category ? '/admin/courts/' + category.id + '/update' : '/admin/courts' %>" method="POST" enctype="multipart/form-data">
+        <!-- Court Name -->
+        <div class="mb-3">
+          <label class="form-label fw-bold text-dark">Category / Arena Name <span class="text-danger">*</span></label>
+          <input type="text" name="name" class="form-control form-control-lg rounded-3" placeholder="e.g., Championship Indoor Court" value="<%= category ? category.name : '' %>" required>
+          <div class="form-text small">Individual courts will be named "[Name] - 1", "[Name] - 2", etc.</div>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-3">
+          <label class="form-label fw-bold text-dark">Description</label>
+          <textarea name="description" class="form-control rounded-3" rows="3" placeholder="Surface type, lighting, air conditioning details..."><%= category ? category.description : '' %></textarea>
+        </div>
+
+        <!-- Pricing & Multi-Court Generation -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark">Price Per Hour (₱ PHP) <span class="text-danger">*</span></label>
+            <div class="input-group input-group-lg">
+              <span class="input-group-text bg-light fw-bold">₱</span>
+              <input type="number" step="0.01" min="0" name="price_per_hour" class="form-control" placeholder="500.00" value="<%= category ? category.price_per_hour : '500.00' %>" required>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark">Number of Sub-Courts <span class="text-danger">*</span></label>
+            <select name="total_courts" class="form-select form-select-lg rounded-3">
+              <% for (let i = 1; i <= 10; i++) { %>
+                <option value="<%= i %>" <%= category && category.total_courts === i ? 'selected' : (i === 2 && !category ? 'selected' : '') %>><%= i %> <%= i === 1 ? 'Court' : 'Courts' %></option>
+              <% } %>
+            </select>
+          </div>
+        </div>
+
+        <!-- Court Image Upload -->
+        <div class="mb-4">
+          <label class="form-label fw-bold text-dark">Court Image (JPG, PNG, WebP)</label>
+          <input type="file" name="image" class="form-control form-control-lg rounded-3" accept=".jpg,.jpeg,.png,.webp">
+          <% if (category && category.image_url) { %>
+            <div class="mt-2 d-flex align-items-center gap-3">
+              <img src="<%= category.image_url %>" alt="Current image" class="rounded-3 object-fit-cover" style="width: 80px; height: 60px;">
+              <span class="small text-muted">Current image: <%= category.image_url %></span>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="d-flex gap-3">
+          <button type="submit" class="btn btn-success btn-lg flex-fill rounded-pill fw-bold shadow">
+            <i class="bi bi-check2-circle me-1"></i><%= category ? 'Save Changes' : 'Create & Generate Courts' %>
+          </button>
+          <a href="/admin/courts" class="btn btn-outline-secondary btn-lg rounded-pill px-4">
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

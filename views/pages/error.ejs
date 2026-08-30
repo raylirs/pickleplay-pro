@@ -1,0 +1,14 @@
+<div class="container py-5 text-center">
+  <div class="max-w-600 mx-auto" style="max-width: 600px;">
+    <div class="card border-0 shadow-sm rounded-4 p-5 bg-white">
+      <h1 class="display-1 fw-bold text-danger"><%= typeof statusCode !== 'undefined' ? statusCode : 500 %></h1>
+      <h3 class="fw-bold text-dark mb-3"><%= typeof title !== 'undefined' ? title : 'Error Occurred' %></h3>
+      <p class="text-secondary mb-4"><%= typeof message !== 'undefined' ? message : 'Something went wrong. Please try again later.' %></p>
+      <div>
+        <a href="/" class="btn btn-success px-4 py-2 rounded-pill fw-bold">
+          <i class="bi bi-house-door me-1"></i>Back to Home
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,25 @@
+<div class="container py-5">
+  <div class="max-w-600 mx-auto" style="max-width: 600px;">
+    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+      <div class="text-center mb-4">
+        <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold mb-2">Lookup</span>
+        <h2 class="fw-bold text-dark">Find Your Reservation</h2>
+        <p class="text-secondary small">Enter your booking reference number (e.g. PKL-2026-...) to view receipt and status.</p>
+      </div>
+
+      <form id="lookupForm" onsubmit="event.preventDefault(); const ref = document.getElementById('refInput').value.trim(); if(ref) window.location.href='/reservations/' + encodeURIComponent(ref);">
+        <div class="mb-4">
+          <label for="refInput" class="form-label fw-semibold text-dark">Reference Number</label>
+          <div class="input-group input-group-lg">
+            <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" id="refInput" placeholder="PKL-2026-XXXX" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-lg w-100 fw-bold rounded-pill shadow">
+          Search Booking
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

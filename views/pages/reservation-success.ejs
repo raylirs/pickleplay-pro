@@ -1,0 +1,95 @@
+<div class="container py-5">
+  <div class="max-w-700 mx-auto" style="max-width: 750px;">
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white">
+      <div class="bg-success text-white p-4 text-center">
+        <div class="badge bg-white text-success rounded-circle p-3 mb-3 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+          <i class="bi bi-check2-circle fs-2"></i>
+        </div>
+        <h2 class="fw-bold mb-1">Reservation Confirmed!</h2>
+        <p class="mb-0 opacity-90">Your court is booked and locked. See you on the court!</p>
+      </div>
+
+      <div class="p-4 p-md-5">
+        <!-- Reference & Status -->
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center bg-light p-3 rounded-3 mb-4 border">
+          <div>
+            <span class="small text-secondary d-block">Booking Reference</span>
+            <span class="fs-5 fw-bold font-monospace text-primary"><%= reservation.reference_number %></span>
+          </div>
+          <div class="mt-2 mt-sm-0">
+            <span class="badge <%= reservation.status === 'CONFIRMED' ? 'bg-success' : 'bg-warning text-dark' %> px-3 py-2 fs-6 rounded-pill">
+              <i class="bi bi-patch-check-fill me-1"></i><%= reservation.status %>
+            </span>
+          </div>
+        </div>
+
+        <!-- Booking Details Grid -->
+        <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Court & Schedule Details</h5>
+        <div class="row g-3 mb-4">
+          <div class="col-6">
+            <span class="small text-secondary d-block">Court Assigned</span>
+            <strong class="text-dark"><%= reservation.court ? reservation.court.display_name : 'Pickleball Court' %></strong>
+          </div>
+          <div class="col-6">
+            <span class="small text-secondary d-block">Category</span>
+            <strong class="text-dark"><%= reservation.court && reservation.court.category ? reservation.court.category.name : 'Standard' %></strong>
+          </div>
+          <div class="col-6">
+            <span class="small text-secondary d-block">Date</span>
+            <strong class="text-dark"><%= reservation.reservation_date %></strong>
+          </div>
+          <div class="col-6">
+            <span class="small text-secondary d-block">Time Slot</span>
+            <strong class="text-dark"><%= formatTime12(reservation.start_time) %> - <%= formatTime12(reservation.end_time) %> (<%= reservation.total_hours %> hr/s)</strong>
+          </div>
+        </div>
+
+        <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Player Information</h5>
+        <div class="row g-3 mb-4">
+          <div class="col-6">
+            <span class="small text-secondary d-block">Full Name</span>
+            <strong class="text-dark"><%= reservation.user_name %></strong>
+          </div>
+          <div class="col-6">
+            <span class="small text-secondary d-block">Contact Number</span>
+            <strong class="text-dark"><%= reservation.user_contact %></strong>
+          </div>
+          <div class="col-6">
+            <span class="small text-secondary d-block">Email</span>
+            <strong class="text-dark"><%= reservation.user_email || 'Not provided' %></strong>
+          </div>
+          <div class="col-6">
+            <span class="small text-secondary d-block">Special Requests</span>
+            <span class="text-muted small"><%= reservation.special_requests || 'None' %></span>
+          </div>
+        </div>
+
+        <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Payment Details</h5>
+        <div class="bg-light p-3 rounded-3 mb-4">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-secondary small">Payment Provider:</span>
+            <span class="fw-bold text-dark small"><i class="bi bi-wallet2 text-primary me-1"></i><%= reservation.payment_provider || 'GCASH' %></span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-secondary small">Transaction ID:</span>
+            <span class="fw-bold font-monospace text-dark small"><%= reservation.payment_transaction_id || 'N/A' %></span>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span class="fw-bold text-dark">Total Amount Paid:</span>
+            <span class="fs-5 fw-bold text-success"><%= formatCurrency(reservation.total_amount) %></span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex flex-wrap gap-2 d-print-none">
+          <button onclick="window.print()" class="btn btn-outline-secondary flex-fill rounded-pill py-2 fw-semibold">
+            <i class="bi bi-printer me-1"></i>Print Receipt
+          </button>
+          <a href="/reservations" class="btn btn-success flex-fill rounded-pill py-2 fw-semibold">
+            <i class="bi bi-plus-circle me-1"></i>Book Another Court
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

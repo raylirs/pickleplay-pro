@@ -1,0 +1,160 @@
+<div class="container py-5">
+  <div class="max-w-900 mx-auto">
+    <div class="text-center mb-4">
+      <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold mb-2">Instant Booking</span>
+      <h1 class="fw-bold text-dark">Reserve Your Pickleball Court</h1>
+      <p class="text-secondary">Select your court, pick an open time slot, and check out securely with GCash</p>
+    </div>
+
+    <form id="reservationForm" action="/reservations" method="POST" class="needs-validation" novalidate>
+      <div class="row g-4">
+        <!-- Step 1: Court & Schedule Selection -->
+        <div class="col-lg-7">
+          <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+            <h5 class="fw-bold text-dark mb-3 d-flex align-items-center">
+              <span class="badge bg-success me-2 rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">1</span>
+              Select Court & Schedule
+            </h5>
+
+            <!-- Court Selection -->
+            <div class="mb-3">
+              <label for="courtSelect" class="form-label fw-semibold text-dark">Court <span class="text-danger">*</span></label>
+              <select class="form-select form-select-lg rounded-3" id="courtSelect" name="court_id" required>
+                <% courts.forEach(function(c) { %>
+                  <option value="<%= c.id %>" 
+                    data-price="<%= c.category ? c.category.price_per_hour : 0 %>" 
+                    data-name="<%= c.display_name %>"
+                    <%= selectedCourtId === c.id ? 'selected' : '' %>>
+                    <%= c.display_name %> — ₱<%= parseFloat(c.category ? c.category.price_per_hour : 0).toFixed(2) %>/hr
+                  </option>
+                <% }); %>
+              </select>
+            </div>
+
+            <!-- Date Selection -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label for="dateSelect" class="form-label fw-semibold text-dark">Reservation Date <span class="text-danger">*</span></label>
+                <input type="date" class="form-control form-control-lg rounded-3" id="dateSelect" name="reservation_date" value="<%= selectedDate %>" min="<%= today %>" required>
+              </div>
+              <div class="col-md-6">
+                <label for="durationSelect" class="form-label fw-semibold text-dark">Duration (Hours) <span class="text-danger">*</span></label>
+                <select class="form-select form-select-lg rounded-3" id="durationSelect" name="total_hours" required>
+                  <option value="1" selected>1 Hour</option>
+                  <option value="2">2 Hours</option>
+                  <option value="3">3 Hours</option>
+                  <option value="4">4 Hours</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Time Slots Matrix -->
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label fw-semibold text-dark mb-0">Select Start Time <span class="text-danger">*</span></label>
+                <span class="small text-muted" id="slotLoadingText"><i class="bi bi-arrow-repeat spin me-1"></i>Loading slots...</span>
+              </div>
+              
+              <div id="slotsGrid" class="row g-2 p-2 border rounded-3 bg-light" style="max-height: 280px; overflow-y: auto;">
+                <!-- Dynamically populated via JavaScript -->
+              </div>
+              <input type="hidden" name="start_time" id="selectedStartTime" value="<%= initialSlot %>" required>
+              <div class="invalid-feedback d-block" id="slotFeedback" style="display: none;">
+                Please select an available start time slot.
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Player Information -->
+          <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <h5 class="fw-bold text-dark mb-3 d-flex align-items-center">
+              <span class="badge bg-success me-2 rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">2</span>
+              Player Information
+            </h5>
+
+            <div class="mb-3">
+              <label for="userName" class="form-label fw-semibold text-dark">Full Name <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+                <input type="text" class="form-control form-control-lg rounded-end-3" id="userName" name="user_name" placeholder="e.g. Juan Dela Cruz" required>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label for="userContact" class="form-label fw-semibold text-dark">Contact Number (GCash) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light"><i class="bi bi-telephone"></i></span>
+                  <input type="tel" class="form-control form-control-lg rounded-end-3" id="userContact" name="user_contact" placeholder="09171234567" required>
+                </div>
+                <div class="form-text small">SMS confirmation will be sent here.</div>
+              </div>
+              <div class="col-md-6">
+                <label for="userEmail" class="form-label fw-semibold text-dark">Email Address <span class="text-muted small">(Optional)</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+                  <input type="email" class="form-control form-control-lg rounded-end-3" id="userEmail" name="user_email" placeholder="juan@example.com">
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-2">
+              <label for="specialRequests" class="form-label fw-semibold text-dark">Special Requests / Notes</label>
+              <textarea class="form-control rounded-3" id="specialRequests" name="special_requests" rows="2" placeholder="e.g., Equipment rental, left-handed paddles, balls request..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Order Summary & Checkout -->
+        <div class="col-lg-5">
+          <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top bg-white" style="top: 100px;">
+            <h5 class="fw-bold text-dark mb-3">Reservation Summary</h5>
+
+            <div class="p-3 bg-light rounded-3 mb-3">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary small">Court:</span>
+                <span class="fw-bold text-dark small" id="summaryCourtName">-</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary small">Date:</span>
+                <span class="fw-bold text-dark small" id="summaryDate">-</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary small">Time Slot:</span>
+                <span class="fw-bold text-dark small" id="summaryTimeSlot">-</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary small">Duration:</span>
+                <span class="fw-bold text-dark small" id="summaryDuration">1 Hour</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary small">Rate / hr:</span>
+                <span class="fw-bold text-dark small" id="summaryRate">₱0.00</span>
+              </div>
+              <hr class="my-2">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark">Total Amount:</span>
+                <span class="fs-4 fw-extrabold text-success" id="summaryTotal">₱0.00</span>
+              </div>
+            </div>
+
+            <div class="alert alert-warning py-2 px-3 small rounded-3 mb-3">
+              <i class="bi bi-stopwatch-fill me-1"></i>
+              <strong>15-Minute Expiry:</strong> Once submitted, the court will be held for 15 minutes to complete GCash payment.
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn btn-success btn-lg w-100 fw-bold py-3 rounded-pill shadow d-flex align-items-center justify-content-center">
+              <i class="bi bi-wallet2 me-2"></i>Proceed to GCash
+            </button>
+
+            <div class="text-center mt-3 small text-muted">
+              <i class="bi bi-shield-lock-fill text-success me-1"></i>256-Bit Encrypted Payment Flow
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/js/reservation.js"></script>

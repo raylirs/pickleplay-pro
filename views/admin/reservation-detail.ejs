@@ -1,0 +1,140 @@
+<div class="container py-4">
+  <div class="max-w-900 mx-auto" style="max-width: 900px;">
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/admin/reservations">Reservations</a></li>
+        <li class="breadcrumb-item active"><%= reservation.reference_number %></li>
+      </ol>
+    </nav>
+
+    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white mb-4">
+      <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center border-bottom pb-4 mb-4 gap-3">
+        <div>
+          <span class="small text-secondary d-block">Reservation Details</span>
+          <h2 class="fw-bold font-monospace text-primary mb-0"><%= reservation.reference_number %></h2>
+        </div>
+        <div>
+          <% if (reservation.status === 'CONFIRMED') { %>
+            <span class="badge bg-success fs-6 px-4 py-2 rounded-pill">CONFIRMED</span>
+          <% } else if (reservation.status === 'AWAITING_PAYMENT' || reservation.status === 'PENDING') { %>
+            <span class="badge bg-warning text-dark fs-6 px-4 py-2 rounded-pill"><%= reservation.status %></span>
+          <% } else if (reservation.status === 'CANCELLED') { %>
+            <span class="badge bg-danger fs-6 px-4 py-2 rounded-pill">CANCELLED</span>
+          <% } else { %>
+            <span class="badge bg-secondary fs-6 px-4 py-2 rounded-pill"><%= reservation.status %></span>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="row g-4 mb-4">
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded-3 h-100">
+            <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">Player Information</h6>
+            <p class="mb-2 small"><strong>Name:</strong> <%= reservation.user_name %></p>
+            <p class="mb-2 small"><strong>Contact:</strong> <%= reservation.user_contact %></p>
+            <p class="mb-2 small"><strong>Email:</strong> <%= reservation.user_email || 'Not provided' %></p>
+            <p class="mb-0 small"><strong>Special Requests:</strong> <%= reservation.special_requests || 'None' %></p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded-3 h-100">
+            <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">Court & Schedule</h6>
+            <p class="mb-2 small"><strong>Court:</strong> <%= reservation.court ? reservation.court.display_name : 'N/A' %></p>
+            <p class="mb-2 small"><strong>Date:</strong> <%= reservation.reservation_date %></p>
+            <p class="mb-2 small"><strong>Time:</strong> <%= formatTime12(reservation.start_time) %> - <%= formatTime12(reservation.end_time) %> (<%= reservation.total_hours %> hours)</p>
+            <p class="mb-0 small"><strong>Total Amount:</strong> <span class="fw-bold text-success"><%= formatCurrency(reservation.total_amount) %></span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-3 bg-light rounded-3 mb-4">
+        <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">Payment & Transaction Details</h6>
+        <div class="row g-2 small">
+          <div class="col-sm-6">
+            <strong>Provider:</strong> <%= reservation.payment_provider || 'GCASH' %>
+          </div>
+          <div class="col-sm-6">
+            <strong>Transaction ID:</strong> <span class="font-monospace"><%= reservation.payment_transaction_id || 'None' %></span>
+          </div>
+          <div class="col-sm-6">
+            <strong>Created At:</strong> <%= new Date(reservation.created_at).toLocaleString() %>
+          </div>
+          <div class="col-sm-6">
+            <strong>Expires At:</strong> <%= reservation.expires_at ? new Date(reservation.expires_at).toLocaleString() : 'N/A' %>
+          </div>
+          <% if (reservation.cancellation_reason) { %>
+            <div class="col-12 text-danger mt-2">
+              <strong>Cancellation Reason:</strong> <%= reservation.cancellation_reason %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Management Actions -->
+      <div class="d-flex flex-wrap gap-2 pt-3 border-top">
+        <% if (reservation.status !== 'CONFIRMED') { %>
+          <form action="/admin/reservations/<%= reservation.id %>/confirm" method="POST" onsubmit="return confirm('Manually confirm this booking?');">
+            <button type="submit" class="btn btn-success rounded-pill fw-semibold px-4">
+              <i class="bi bi-check2-circle me-1"></i>Manually Confirm
+            </button>
+          </form>
+        <% } %>
+
+        <% if (reservation.status !== 'CANCELLED') { %>
+          <button type="button" class="btn btn-outline-danger rounded-pill fw-semibold px-4" data-bs-toggle="modal" data-bs-target="#cancelDetailModal">
+            <i class="bi bi-x-circle me-1"></i>Cancel Reservation
+          </button>
+        <% } %>
+
+        <a href="/admin/reservations" class="btn btn-outline-secondary rounded-pill px-4 ms-auto">
+          Back to List
+        </a>
+      </div>
+    </div>
+
+    <!-- Audit History -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+      <h5 class="fw-bold text-dark mb-3"><i class="bi bi-clock-history me-2 text-primary"></i>Audit Trail</h5>
+      <div class="list-group list-group-flush small">
+        <% if (auditLogs && auditLogs.length > 0) { %>
+          <% auditLogs.forEach(function(log) { %>
+            <div class="list-group-item px-0 py-2">
+              <div class="d-flex justify-content-between">
+                <strong class="text-dark"><%= log.action %></strong>
+                <span class="text-muted"><%= new Date(log.created_at).toLocaleString() %></span>
+              </div>
+              <div class="text-secondary small mt-1 font-monospace"><%= log.details %></div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <p class="text-muted small mb-0">No specific audit history logged for this reservation.</p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel Modal -->
+<div class="modal fade" id="cancelDetailModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content rounded-4">
+      <form action="/admin/reservations/<%= reservation.id %>/cancel" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Cancel Reservation</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Reason for Cancellation</label>
+            <textarea name="cancellation_reason" class="form-control" rows="3" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-danger rounded-pill fw-bold">Confirm Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

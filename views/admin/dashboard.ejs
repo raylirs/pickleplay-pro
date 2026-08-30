@@ -1,0 +1,206 @@
+<div class="container-fluid px-4 py-4">
+  <!-- Header / Quick actions -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-2 border-bottom">
+    <div>
+      <h2 class="fw-bold text-dark mb-1">Executive Dashboard</h2>
+      <p class="text-secondary small mb-0">Overview of courts, live reservations, and revenue</p>
+    </div>
+    <div class="d-flex gap-2 mt-3 mt-md-0">
+      <a href="/admin/courts/new" class="btn btn-success fw-semibold rounded-pill px-3">
+        <i class="bi bi-plus-lg me-1"></i>Add Court Category
+      </a>
+      <a href="/admin/reports" class="btn btn-outline-secondary fw-semibold rounded-pill px-3">
+        <i class="bi bi-download me-1"></i>Export Reports
+      </a>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-xl-3 col-sm-6">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <span class="text-secondary small fw-semibold">Today's Revenue</span>
+            <h3 class="fw-bold text-success mb-0"><%= formatCurrency(stats.todayRevenue) %></h3>
+            <span class="small text-muted">All-time: <%= formatCurrency(stats.totalRevenue) %></span>
+          </div>
+          <div class="badge bg-success-subtle text-success p-3 rounded-circle fs-4">
+            <i class="bi bi-cash-stack"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-sm-6">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <span class="text-secondary small fw-semibold">Confirmed Bookings</span>
+            <h3 class="fw-bold text-dark mb-0"><%= stats.confirmedReservations %></h3>
+            <span class="small text-muted">Total: <%= stats.totalReservations %> bookings</span>
+          </div>
+          <div class="badge bg-primary-subtle text-primary p-3 rounded-circle fs-4">
+            <i class="bi bi-calendar-check-fill"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-sm-6">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <span class="text-secondary small fw-semibold">Active Courts</span>
+            <h3 class="fw-bold text-dark mb-0"><%= stats.activeCourts %> <span class="fs-6 text-muted fw-normal">/ <%= stats.totalCourts %></span></h3>
+            <span class="small text-muted"><%= stats.totalCourts - stats.activeCourts %> Under Maintenance</span>
+          </div>
+          <div class="badge bg-warning-subtle text-warning p-3 rounded-circle fs-4">
+            <i class="bi bi-grid-3x3-gap-fill"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-sm-6">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <span class="text-secondary small fw-semibold">Pending / In-Payment</span>
+            <h3 class="fw-bold text-warning mb-0"><%= stats.pendingReservations %></h3>
+            <span class="small text-muted">Auto-expires in 15 mins</span>
+          </div>
+          <div class="badge bg-danger-subtle text-danger p-3 rounded-circle fs-4">
+            <i class="bi bi-hourglass-split"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart & Recent Activity Row -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-graph-up text-success me-2"></i>7-Day Revenue Trend (PHP)</h5>
+        <div style="height: 280px;">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-activity text-primary me-2"></i>Recent System Audits</h5>
+        <div class="list-group list-group-flush small">
+          <% if (recentAuditLogs && recentAuditLogs.length > 0) { %>
+            <% recentAuditLogs.forEach(function(log) { %>
+              <div class="list-group-item px-0 py-2 border-light">
+                <div class="d-flex justify-content-between">
+                  <strong class="text-dark"><%= log.action %></strong>
+                  <span class="text-muted"><%= new Date(log.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></span>
+                </div>
+                <p class="text-secondary small mb-0 text-truncate" style="max-width: 260px;"><%= log.details %></p>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <p class="text-muted small">No audit logs recorded yet.</p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Reservations Table -->
+  <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold text-dark mb-0"><i class="bi bi-list-check text-success me-2"></i>Latest Reservations</h5>
+      <a href="/admin/reservations" class="btn btn-sm btn-outline-primary rounded-pill px-3">View All Bookings</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light small text-uppercase">
+          <tr>
+            <th>Reference</th>
+            <th>Court</th>
+            <th>Date & Time</th>
+            <th>Player</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (recentReservations && recentReservations.length > 0) { %>
+            <% recentReservations.forEach(function(res) { %>
+              <tr>
+                <td><a href="/admin/reservations/<%= res.id %>" class="fw-bold font-monospace text-primary text-decoration-none"><%= res.reference_number %></a></td>
+                <td><%= res.court ? res.court.display_name : 'N/A' %></td>
+                <td><%= res.reservation_date %> <span class="text-muted small">(<%= formatTime12(res.start_time) %>)</span></td>
+                <td>
+                  <div><%= res.user_name %></div>
+                  <span class="small text-muted"><%= res.user_contact %></span>
+                </td>
+                <td class="fw-bold text-dark"><%= formatCurrency(res.total_amount) %></td>
+                <td>
+                  <% if (res.status === 'CONFIRMED') { %>
+                    <span class="badge bg-success">CONFIRMED</span>
+                  <% } else if (res.status === 'AWAITING_PAYMENT' || res.status === 'PENDING') { %>
+                    <span class="badge bg-warning text-dark"><%= res.status %></span>
+                  <% } else { %>
+                    <span class="badge bg-secondary"><%= res.status %></span>
+                  <% } %>
+                </td>
+                <td>
+                  <a href="/admin/reservations/<%= res.id %>" class="btn btn-sm btn-light border rounded-circle" title="View details">
+                    <i class="bi bi-chevron-right"></i>
+                  </a>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No reservations booked yet.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const chartData = <%- chartData %>;
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: chartData.map(d => d.label),
+        datasets: [{
+          label: 'Revenue (₱)',
+          data: chartData.map(d => d.revenue),
+          borderColor: '#198754',
+          backgroundColor: 'rgba(25, 135, 84, 0.1)',
+          tension: 0.3,
+          fill: true,
+          pointBackgroundColor: '#198754',
+          pointRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) { return '₱' + value; }
+            }
+          }
+        }
+      }
+    });
+  });
+</script>

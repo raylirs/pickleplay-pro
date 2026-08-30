@@ -1,0 +1,89 @@
+<div class="container py-5">
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">Home</a></li>
+      <li class="breadcrumb-item"><a href="/courts">Courts</a></li>
+      <li class="breadcrumb-item active" aria-current="page"><%= court.display_name %></li>
+    </ol>
+  </nav>
+
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden sticky-top bg-white" style="top: 100px;">
+        <img src="<%= court.category ? court.category.image_url : '/img/default-court.jpg' %>" onerror="this.src='https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80'" class="img-fluid object-fit-cover" style="height: 250px; width: 100%;" alt="<%= court.display_name %>">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="fw-bold mb-0 text-dark"><%= court.display_name %></h3>
+            <span class="badge <%= court.is_active ? 'bg-success' : 'bg-danger' %> px-3 py-2 rounded-pill">
+              <%= court.is_active ? 'Active' : 'Maintenance' %>
+            </span>
+          </div>
+          <h4 class="text-success fw-bold mb-3">
+            ₱<%= parseFloat(court.category ? court.category.price_per_hour : 0).toFixed(2) %> <span class="fs-6 text-muted fw-normal">/ hour</span>
+          </h4>
+          <p class="text-secondary small"><%= court.category ? court.category.description : '' %></p>
+          
+          <div class="bg-light p-3 rounded-3 mb-4">
+            <h6 class="fw-bold mb-2 small text-uppercase text-secondary">Court Features</h6>
+            <ul class="list-unstyled small mb-0 text-dark">
+              <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Official Tournament Dimensions (20' x 44')</li>
+              <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Non-slip cushioned acrylic surface</li>
+              <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>Automated LED lighting</li>
+              <li><i class="bi bi-check-circle-fill text-success me-2"></i>Digital lock passcode access upon GCash payment</li>
+            </ul>
+          </div>
+
+          <a href="/reservations?court_id=<%= court.id %>&date=<%= selectedDate %>" class="btn btn-success w-100 fw-bold py-3 rounded-pill shadow-sm">
+            <i class="bi bi-calendar2-check-fill me-2"></i>Book <%= court.display_name %>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 pb-3 border-bottom gap-3">
+          <div>
+            <h4 class="fw-bold text-dark mb-1">Live Availability Matrix</h4>
+            <p class="text-secondary small mb-0">Select a date to inspect real-time booked & open slots</p>
+          </div>
+          <div>
+            <form method="GET" action="/courts/<%= court.id %>" class="d-flex align-items-center gap-2">
+              <input type="date" name="date" class="form-control form-control-sm rounded-pill px-3" value="<%= selectedDate %>" min="<%= today %>" onchange="this.form.submit()">
+            </form>
+          </div>
+        </div>
+
+        <div class="alert alert-info py-2 px-3 small d-flex align-items-center mb-4 rounded-3">
+          <i class="bi bi-broadcast me-2 fs-5"></i>
+          <span>Live real-time feed active. When another player reserves, the slot locks automatically.</span>
+        </div>
+
+        <!-- Time Slots Grid -->
+        <div class="row g-3" id="slotsContainer" data-court-id="<%= court.id %>" data-date="<%= selectedDate %>">
+          <% availability.slots.forEach(function(slot) { %>
+            <div class="col-sm-6">
+              <div class="p-3 rounded-3 border <%= slot.isAvailable ? 'border-success bg-success-subtle' : 'border-secondary bg-light text-muted opacity-75' %> d-flex justify-content-between align-items-center slot-card">
+                <div>
+                  <div class="fw-bold <%= slot.isAvailable ? 'text-success-emphasis' : 'text-secondary' %>">
+                    <%= slot.startLabel %> - <%= slot.endLabel %>
+                  </div>
+                  <span class="badge <%= slot.isAvailable ? 'bg-success' : 'bg-secondary' %> mt-1">
+                    <%= slot.isAvailable ? 'Available' : (slot.status === 'MAINTENANCE' ? 'Maintenance' : 'Booked') %>
+                  </span>
+                </div>
+                <% if (slot.isAvailable) { %>
+                  <a href="/reservations?court_id=<%= court.id %>&date=<%= selectedDate %>&slot=<%= slot.startTime %>" class="btn btn-sm btn-success rounded-pill px-3">
+                    Book
+                  </a>
+                <% } else { %>
+                  <span class="text-muted small"><i class="bi bi-lock-fill"></i> Unavailable</span>
+                <% } %>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

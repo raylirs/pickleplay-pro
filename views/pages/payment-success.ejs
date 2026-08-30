@@ -1,0 +1,24 @@
+<div class="container py-5 text-center">
+  <div class="max-w-600 mx-auto" style="max-width: 600px;">
+    <div class="card border-0 shadow-lg rounded-4 p-5 bg-white">
+      <div class="badge bg-success text-white rounded-circle p-4 mb-3 mx-auto d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+        <i class="bi bi-check-lg fs-1"></i>
+      </div>
+      <h2 class="fw-bold text-dark mb-2">Payment Successful!</h2>
+      <p class="text-secondary mb-4">
+        Thank you! Your GCash payment for reservation 
+        <strong class="text-dark font-monospace"><%= reservation.reference_number %></strong> 
+        has been confirmed.
+      </p>
+
+      <div class="d-grid gap-3">
+        <a href="/reservations/<%= reservation.reference_number %>" class="btn btn-success btn-lg rounded-pill fw-bold">
+          <i class="bi bi-receipt me-2"></i>View Booking Receipt & Pass
+        </a>
+        <a href="/" class="btn btn-outline-secondary rounded-pill">
+          Return to Home
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
