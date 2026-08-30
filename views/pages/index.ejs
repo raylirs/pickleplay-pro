@@ -2,33 +2,33 @@
   const defaultCat = (categories && categories.length > 0) ? categories[0] : null;
   const activeRate = defaultCat ? parseFloat(defaultCat.price_per_hour) : 350;
 %>
-<!-- Hero Section -->
-<section class="hero-section text-white py-5 position-relative overflow-hidden" style="background: linear-gradient(135deg, #0b3b24 0%, #157347 50%, #198754 100%);">
-  <div class="container py-5 position-relative">
-    <div class="row align-items-center g-5">
+<!-- Hero Section (Compact Mobile Optimized) -->
+<section class="hero-section text-white py-4 py-md-5 position-relative overflow-hidden" style="background: linear-gradient(135deg, #0b3b24 0%, #157347 50%, #198754 100%);">
+  <div class="container py-2 py-md-4 position-relative">
+    <div class="row align-items-center g-3 g-md-5">
       <div class="col-lg-7">
-        <span class="badge bg-light text-success px-3 py-2 rounded-pill fw-bold mb-3 d-inline-flex align-items-center shadow-sm">
-          <i class="bi bi-star-fill text-warning me-2"></i>PLAY. COMPETE. CONNECT.
+        <span class="badge bg-light text-success px-3 py-1 rounded-pill fw-bold mb-2 d-inline-flex align-items-center shadow-sm">
+          <i class="bi bi-star-fill text-warning me-1"></i>PLAY • TRAIN • COMPETE • HAVE FUN
         </span>
-        <h1 class="display-4 fw-bold text-white mb-3" style="text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+        <h1 class="display-4 fw-bold text-white mb-2" style="text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
           3KS <span class="text-warning">Pickleball Playground</span>
         </h1>
-        <p class="lead text-white mb-4" style="opacity: 0.95; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
-          Reserve one of our 4 professional covered pickleball courts for only <strong class="text-warning"><%= formatCurrency(activeRate) %> / hour</strong>. Enjoy tournament-grade surfaces, coffee shop lounge, dressing rooms, and instant GCash confirmation.
+        <p class="lead text-white mb-3" style="opacity: 0.95;">
+          4 covered tournament courts for <strong class="text-warning"><%= formatCurrency(activeRate) %> / hour</strong>. Instant booking & GCash QR payment.
         </p>
-        <div class="d-flex flex-wrap gap-3">
-          <a href="/reservations" class="btn btn-warning btn-lg px-4 py-3 rounded-pill fw-bold shadow text-dark d-flex align-items-center">
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          <a href="/reservations" class="btn btn-warning btn-lg px-4 py-2 rounded-pill fw-bold shadow text-dark d-flex align-items-center">
             <i class="bi bi-calendar2-plus-fill me-2"></i>Book a Court (<%= formatCurrency(activeRate) %>/hr)
           </a>
-          <a href="/courts" class="btn btn-outline-light btn-lg px-4 py-3 rounded-pill fw-bold">
-            <i class="bi bi-grid-fill me-2"></i>View Facility Layout
+          <a href="/courts" class="btn btn-outline-light btn-lg px-3 py-2 rounded-pill fw-semibold">
+            <i class="bi bi-grid-fill me-1"></i>Facility Layout
           </a>
         </div>
 
-        <div class="row g-3 g-md-4 mt-4 pt-3 border-top border-white border-opacity-25">
+        <div class="row g-2 g-md-4 mt-2 pt-2 border-top border-white border-opacity-25 hero-stats-box">
           <div class="col-6 col-md-3">
             <h3 class="fw-bold mb-0 text-white"><%= defaultCat ? defaultCat.total_courts : 4 %></h3>
-            <p class="small text-white text-opacity-75 mb-0">Courts</p>
+            <p class="small text-white text-opacity-75 mb-0">Covered Courts</p>
           </div>
           <div class="col-6 col-md-3">
             <h3 class="fw-bold mb-0 text-white"><%= formatCurrency(activeRate) %></h3>
@@ -44,15 +44,15 @@
           </div>
         </div>
       </div>
-      <div class="col-lg-5">
+      <div class="col-lg-5 d-none d-md-block">
         <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white text-dark p-3">
-          <img src="<%= (defaultCat && defaultCat.image_url) ? defaultCat.image_url : '/images/3ks-playground.jpg' %>" alt="3KS Pickleball Playground" class="rounded-3 img-fluid mb-3 object-fit-cover" style="height: 240px; width: 100%;">
-          <div class="p-2">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h5 class="fw-bold mb-0 text-dark">Covered 4-Court Facility</h5>
+          <img src="<%= (defaultCat && defaultCat.image_url) ? defaultCat.image_url : '/images/3ks-playground.jpg' %>" alt="3KS Pickleball Playground" class="rounded-3 img-fluid mb-2 object-fit-cover" style="height: 220px; width: 100%;">
+          <div class="p-1">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <h6 class="fw-bold mb-0 text-dark">Covered 4-Court Arena</h6>
               <span class="badge bg-success"><%= formatCurrency(activeRate) %>/hr</span>
             </div>
-            <p class="small text-secondary mb-3">Court 1, Court 2, Court 3, Court 4 with coffee shop, lounge & dressing rooms.</p>
+            <p class="small text-secondary mb-2" style="font-size: 12px;">Courts 1, 2, 3, 4 with coffee shop, lounge & dressing rooms.</p>
             <a href="/reservations" class="btn btn-primary w-100 fw-bold py-2 rounded-pill shadow-sm">
               <i class="bi bi-lightning-charge-fill me-1"></i>Check Real-Time Slots
             </a>
@@ -63,110 +63,39 @@
   </div>
 </section>
 
-<!-- Facility Overview & Courts Section -->
-<section class="py-5 bg-light">
-  <div class="container py-4">
-    <div class="text-center mx-auto mb-5" style="max-width: 750px;">
-      <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold mb-2">Facility & Courts</span>
-      <h2 class="fw-bold text-dark">3KS Playground Architecture & Layout</h2>
-      <p class="text-secondary">Official 38M x 16.6M covered venue equipped with 4 tournament courts and complete amenities.</p>
+<!-- Facility Overview & Courts Section (Compact) -->
+<section class="py-3 py-md-5 bg-light">
+  <div class="container">
+    <!-- Courts List Grid (Immediate Access) -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h4 class="fw-bold text-dark mb-0">Select Your Court</h4>
+        <span class="small text-secondary">Courts 1, 2, 3, 4</span>
+      </div>
+      <a href="/reservations" class="btn btn-sm btn-success rounded-pill fw-bold px-3">
+        Book Any Slot <i class="bi bi-arrow-right"></i>
+      </a>
     </div>
 
-    <!-- 3KS Facility Layout Card -->
-    <div class="row g-4 mb-5">
-      <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 bg-white">
-          <img src="/images/3ks-layout.jpg" alt="3KS Overhead Layout" class="img-fluid w-100 object-fit-cover" style="min-height: 320px;">
-          <div class="p-4">
-            <h5 class="fw-bold text-dark">Overhead Court Blueprint</h5>
-            <p class="small text-secondary mb-0">Featuring Courts 1, 2, 3, 4 with a 5M center walkway, mini store/coffee shop, and dedicated player dressing rooms.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100 d-flex flex-column justify-content-between">
-          <div>
-            <h4 class="fw-bold text-dark mb-3">Facility Features & Amenities</h4>
-            <div class="row g-3 mb-4">
-              <div class="col-sm-6">
-                <div class="p-3 rounded-3 bg-light border">
-                  <div class="d-flex align-items-center mb-1">
-                    <i class="bi bi-grid-fill text-success fs-5 me-2"></i>
-                    <strong class="text-dark">4 Pickleball Courts</strong>
-                  </div>
-                  <span class="small text-muted">13.41M x 6.10M each</span>
-                </div>
-              </div>
-              <div class="col-sm-6">
-                <div class="p-3 rounded-3 bg-light border">
-                  <div class="d-flex align-items-center mb-1">
-                    <i class="bi bi-cup-hot-fill text-warning fs-5 me-2"></i>
-                    <strong class="text-dark">Coffee & Mini Store</strong>
-                  </div>
-                  <span class="small text-muted">Refreshments & snacks</span>
-                </div>
-              </div>
-              <div class="col-sm-6">
-                <div class="p-3 rounded-3 bg-light border">
-                  <div class="d-flex align-items-center mb-1">
-                    <i class="bi bi-door-open-fill text-primary fs-5 me-2"></i>
-                    <strong class="text-dark">2 Dressing Rooms</strong>
-                  </div>
-                  <span class="small text-muted">With private restrooms</span>
-                </div>
-              </div>
-              <div class="col-sm-6">
-                <div class="p-3 rounded-3 bg-light border">
-                  <div class="d-flex align-items-center mb-1">
-                    <i class="bi bi-people-fill text-info fs-5 me-2"></i>
-                    <strong class="text-dark">Player Lounge</strong>
-                  </div>
-                  <span class="small text-muted">Spectator & waiting tables</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="p-3 rounded-3 bg-success-subtle border border-success d-flex justify-content-between align-items-center">
-            <div>
-              <span class="small text-secondary d-block">Hourly Rate</span>
-              <h3 class="fw-bold text-success mb-0"><%= formatCurrency(activeRate) %> <span class="fs-6 text-muted fw-normal">/ hour</span></h3>
-            </div>
-            <a href="/reservations" class="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm">
-              <i class="bi bi-lightning-charge-fill me-1"></i>Book a Court
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Courts List Grid -->
-    <h3 class="fw-bold text-dark mb-4">Pick Your Court</h3>
-    <div class="row g-4">
+    <div class="row g-2 g-md-3 mb-4">
       <% if (categories && categories.length > 0) { %>
         <% categories.forEach(function(cat) { %>
           <% if (cat.courts && cat.courts.length > 0) { %>
             <% cat.courts.forEach(function(court) { %>
-              <div class="col-sm-6 col-lg-3">
+              <div class="col-6 col-md-3">
                 <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-white court-card">
                   <div class="position-relative">
-                    <img src="<%= cat.image_url || '/images/3ks-playground.jpg' %>" class="card-img-top object-fit-cover" style="height: 160px; width: 100%;" alt="<%= court.display_name %>">
-                    <span class="badge bg-success position-absolute top-0 end-0 m-2 px-3 py-1 rounded-pill">
-                      <%= formatCurrency(cat.price_per_hour) %>/hr
+                    <img src="<%= cat.image_url || '/images/3ks-playground.jpg' %>" class="card-img-top object-fit-cover" style="height: 120px; width: 100%;" alt="<%= court.display_name %>">
+                    <span class="badge bg-success position-absolute top-0 end-0 m-1 px-2 py-1 rounded-pill small" style="font-size: 11px;">
+                      <%= formatCurrency(cat.price_per_hour) %>/h
                     </span>
                   </div>
-                  <div class="card-body p-3 d-flex flex-column">
-                    <h5 class="fw-bold text-dark mb-1"><%= court.display_name %></h5>
-                    <span class="small text-muted mb-3"><i class="bi bi-check-circle-fill text-success me-1"></i>Covered Tournament Court</span>
-                    <div class="d-grid gap-2 mt-auto">
-                      <a href="/courts/<%= court.id %>" class="btn btn-outline-secondary btn-sm rounded-pill">
-                        <i class="bi bi-calendar2-range me-1"></i>View Slots
-                      </a>
-                      <a href="/reservations?court_id=<%= court.id %>" class="btn btn-success btn-sm rounded-pill fw-semibold">
-                        <i class="bi bi-lightning-charge me-1"></i>Reserve
-                      </a>
-                    </div>
+                  <div class="card-body p-2 d-flex flex-column">
+                    <h6 class="fw-bold text-dark mb-1"><%= court.display_name %></h6>
+                    <span class="small text-muted mb-2" style="font-size: 11px;"><i class="bi bi-check-circle-fill text-success me-1"></i>Covered</span>
+                    <a href="/reservations?court_id=<%= court.id %>" class="btn btn-success btn-sm rounded-pill fw-semibold py-1 mt-auto">
+                      Reserve
+                    </a>
                   </div>
                 </div>
               </div>
@@ -174,6 +103,63 @@
           <% } %>
         <% }); %>
       <% } %>
+    </div>
+
+    <!-- Facility Layout Blueprint & Amenities -->
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 bg-white">
+          <img src="/images/3ks-layout.jpg" alt="3KS Overhead Layout" class="img-fluid w-100 object-fit-cover" style="max-height: 260px;">
+          <div class="p-3">
+            <h6 class="fw-bold text-dark mb-1">Overhead Court Blueprint</h6>
+            <p class="small text-secondary mb-0" style="font-size: 12px;">Courts 1, 2, 3, 4 with 5M center walkway, coffee shop, and dressing rooms.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 d-flex flex-column justify-content-between">
+          <div>
+            <h6 class="fw-bold text-dark mb-2">Amenities Included</h6>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <div class="p-2 rounded-3 bg-light border small">
+                  <i class="bi bi-grid-fill text-success me-1"></i><strong>4 Courts</strong>
+                  <div class="text-muted" style="font-size: 11px;">13.41M x 6.10M each</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="p-2 rounded-3 bg-light border small">
+                  <i class="bi bi-cup-hot-fill text-warning me-1"></i><strong>Coffee & Store</strong>
+                  <div class="text-muted" style="font-size: 11px;">Refreshments</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="p-2 rounded-3 bg-light border small">
+                  <i class="bi bi-door-open-fill text-primary me-1"></i><strong>2 Dressing Rooms</strong>
+                  <div class="text-muted" style="font-size: 11px;">Private Restrooms</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="p-2 rounded-3 bg-light border small">
+                  <i class="bi bi-people-fill text-info me-1"></i><strong>Player Lounge</strong>
+                  <div class="text-muted" style="font-size: 11px;">Spectator Area</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-2 rounded-3 bg-success-subtle border border-success d-flex justify-content-between align-items-center">
+            <div>
+              <span class="small text-secondary d-block" style="font-size: 11px;">Rate</span>
+              <strong class="text-success"><%= formatCurrency(activeRate) %> / hour</strong>
+            </div>
+            <a href="/reservations" class="btn btn-sm btn-success fw-bold px-3 py-1 rounded-pill">
+              Book Court Now
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>

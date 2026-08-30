@@ -39,11 +39,11 @@ body {
 .slot-btn {
   font-size: 13px;
   font-weight: 600;
-  padding: 12px 14px;
+  padding: 10px 8px;
   border-radius: 10px;
   transition: 0.15s ease-in-out;
   cursor: pointer;
-  min-height: 48px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -76,7 +76,7 @@ body {
 }
 
 /* =========================================================
-   Mobile / Cellphone (CP) Responsive Optimizations
+   Ultra-Compact Mobile / Cellphone (CP) Experience
 ========================================================= */
 @media (max-width: 768px) {
   /* Prevent iOS automatic zoom on text inputs */
@@ -87,57 +87,109 @@ body {
   input[type="number"],
   select,
   textarea {
-    font-size: 16px !important;
+    font-size: 15px !important;
   }
 
-  /* Compact padding for cards on cellphones */
+  /* Compact padding for cards on cellphones to minimize scrolling */
+  .container {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .py-5 {
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+  }
+
   .card {
-    border-radius: 16px !important;
+    border-radius: 14px !important;
+    margin-bottom: 0.75rem !important;
   }
   
-  .p-md-5 {
-    padding: 1.25rem !important;
+  .card.p-4, .p-md-5 {
+    padding: 1rem !important;
+  }
+
+  /* Compact Hero */
+  .hero-section {
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+  }
+
+  .hero-section h1.display-4 {
+    font-size: 1.6rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .hero-section .lead {
+    font-size: 0.9rem !important;
+    margin-bottom: 0.85rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .hero-section .badge {
+    font-size: 0.75rem !important;
+    padding: 0.3rem 0.65rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* Compact stats in hero */
+  .hero-stats-box {
+    margin-top: 0.75rem !important;
+    padding-top: 0.75rem !important;
+  }
+
+  .hero-stats-box h3 {
+    font-size: 1.2rem !important;
+  }
+
+  .hero-stats-box p {
+    font-size: 0.75rem !important;
+  }
+
+  /* Compact slot buttons (3 per row on mobile) */
+  .slot-btn {
+    font-size: 12px !important;
+    padding: 6px 4px !important;
+    min-height: 38px !important;
+  }
+
+  .slot-btn .small {
+    font-size: 10px !important;
   }
 
   /* Touch-friendly full width buttons on CP */
   .btn-lg {
-    min-height: 48px;
-    font-size: 1rem;
-  }
-
-  /* Hero adjustments for mobile screens */
-  .hero-section {
-    padding-top: 2rem !important;
-    padding-bottom: 2rem !important;
-  }
-
-  .hero-section h1 {
-    font-size: 1.85rem !important;
-  }
-
-  .hero-section .display-4 {
-    font-size: 1.85rem !important;
-  }
-
-  .hero-section .lead {
-    font-size: 1rem !important;
+    min-height: 44px;
+    font-size: 0.95rem;
+    padding: 0.6rem 1.25rem;
   }
 
   /* QR Code scaling on small screens */
   .col-md-6 img[alt*="QR"] {
-    max-width: 220px !important;
+    max-width: 190px !important;
+  }
+
+  /* Sticky Mobile Bottom Booking Bar */
+  .mobile-sticky-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    padding: 10px 16px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #e2e8f0;
   }
 }
 
-@media (max-width: 576px) {
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-
-  /* Stacked booking buttons */
-  .d-flex.flex-wrap.gap-2 > .btn {
-    width: 100%;
+@media (min-width: 769px) {
+  .mobile-sticky-bar {
+    display: none !important;
   }
 }
 
@@ -155,7 +207,7 @@ body {
   body {
     background-color: #fff !important;
   }
-  .d-print-none {
+  .d-print-none, .mobile-sticky-bar {
     display: none !important;
   }
 }

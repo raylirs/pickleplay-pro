@@ -1,159 +1,137 @@
-<div class="container py-5">
+<div class="container py-3 py-md-5">
   <div class="max-w-900 mx-auto">
-    <div class="text-center mb-4">
-      <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold mb-2">3KS Court Booking</span>
-      <h1 class="fw-bold text-dark">Reserve Your 3KS Court</h1>
-      <p class="text-secondary">Click one or multiple available time slots to book and pay via GCash QR Code</p>
+    <!-- Compact Title -->
+    <div class="text-center mb-3">
+      <h2 class="fw-bold text-dark mb-1 fs-3">Reserve Your 3KS Court</h2>
+      <p class="text-secondary small mb-0">Select court & time slots, then pay with GCash QR</p>
     </div>
 
     <form id="reservationForm" action="/reservations" method="POST" class="needs-validation" novalidate>
-      <div class="row g-4">
+      <div class="row g-3">
         <!-- Step 1: Court & Schedule Selection -->
         <div class="col-lg-7">
-          <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-            <h5 class="fw-bold text-dark mb-3 d-flex align-items-center">
-              <span class="badge bg-success me-2 rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">1</span>
-              Select Court & Time Slots
-            </h5>
-
-            <!-- Court Selection -->
-            <div class="mb-3">
-              <label for="courtSelect" class="form-label fw-semibold text-dark">Court <span class="text-danger">*</span></label>
-              <select class="form-select form-select-lg rounded-3" id="courtSelect" name="court_id" required>
-                <% courts.forEach(function(c) { %>
-                  <option value="<%= c.id %>" 
-                    data-price="<%= c.category ? c.category.price_per_hour : 350 %>" 
-                    data-name="<%= c.display_name %>"
-                    <%= selectedCourtId === c.id ? 'selected' : '' %>>
-                    <%= c.display_name %> — ₱<%= parseFloat(c.category ? c.category.price_per_hour : 350).toFixed(2) %>/hr
-                  </option>
-                <% }); %>
-              </select>
-            </div>
-
-            <!-- Date Selection -->
-            <div class="mb-3">
-              <label for="dateSelect" class="form-label fw-semibold text-dark">Reservation Date <span class="text-danger">*</span></label>
-              <input type="date" class="form-control form-control-lg rounded-3" id="dateSelect" name="reservation_date" value="<%= selectedDate %>" min="<%= today %>" required>
-            </div>
-
-            <!-- Time Slots Matrix -->
-            <div class="mb-3">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <div>
-                  <label class="form-label fw-semibold text-dark mb-0">Select Time Slots <span class="text-danger">*</span></label>
-                  <span class="small text-muted d-block" style="font-size: 12px;">(Click any slots you want to book)</span>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                  <span class="small text-muted" id="slotLoadingText"><i class="bi bi-arrow-repeat spin me-1"></i>Loading slots...</span>
-                  <button type="button" id="clearSlotsBtn" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2 small" style="display: none;">
-                    Clear All
-                  </button>
-                </div>
+          <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 mb-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold text-dark mb-0 d-flex align-items-center">
+                <span class="badge bg-success me-2 rounded-circle p-1 d-inline-flex align-items-center justify-content-center" style="width: 22px; height: 22px; font-size: 11px;">1</span>
+                Court & Time Slots
+              </h6>
+              <div class="d-flex align-items-center gap-2">
+                <span class="small text-muted" id="slotLoadingText" style="font-size: 11px;"><i class="bi bi-arrow-repeat spin me-1"></i>Loading...</span>
+                <button type="button" id="clearSlotsBtn" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2 small" style="font-size: 11px; display: none;">
+                  Clear
+                </button>
               </div>
-              
-              <div id="slotsGrid" class="row g-2 p-2 border rounded-3 bg-light" style="max-height: 320px; overflow-y: auto;">
+            </div>
+
+            <!-- Court & Date in 1 Row on Mobile -->
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label for="courtSelect" class="form-label small fw-semibold text-dark mb-1">Court</label>
+                <select class="form-select form-select-sm rounded-3 fw-bold text-success" id="courtSelect" name="court_id" required>
+                  <% courts.forEach(function(c) { %>
+                    <option value="<%= c.id %>" 
+                      data-price="<%= c.category ? c.category.price_per_hour : 350 %>" 
+                      data-name="<%= c.display_name %>"
+                      <%= selectedCourtId === c.id ? 'selected' : '' %>>
+                      <%= c.display_name %> (<%= formatCurrency(c.category ? c.category.price_per_hour : 350) %>/h)
+                    </option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="col-6">
+                <label for="dateSelect" class="form-label small fw-semibold text-dark mb-1">Date</label>
+                <input type="date" class="form-control form-control-sm rounded-3" id="dateSelect" name="reservation_date" value="<%= selectedDate %>" min="<%= today %>" required>
+              </div>
+            </div>
+
+            <!-- Time Slots Matrix (Compact 3-col on mobile, 4-col on desktop) -->
+            <div class="mb-1">
+              <div id="slotsGrid" class="row g-1 p-2 border rounded-3 bg-light" style="max-height: 240px; overflow-y: auto;">
                 <!-- Dynamically populated via JavaScript -->
               </div>
               <input type="hidden" name="selected_slots" id="selectedSlotsInput" value="[]" required>
               <input type="hidden" name="start_time" id="selectedStartTime" value="<%= initialSlot %>">
               <input type="hidden" name="total_hours" id="totalHoursInput" value="1">
               
-              <div class="invalid-feedback d-block" id="slotFeedback" style="display: none;">
-                Please select at least one available time slot.
+              <div class="invalid-feedback d-block small" id="slotFeedback" style="display: none; font-size: 11px;">
+                Please tap at least one available slot.
               </div>
             </div>
           </div>
 
-          <!-- Step 2: Player Information -->
-          <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
-            <h5 class="fw-bold text-dark mb-3 d-flex align-items-center">
-              <span class="badge bg-success me-2 rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">2</span>
+          <!-- Step 2: Player Information (Compact) -->
+          <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white mb-3 mb-lg-0">
+            <h6 class="fw-bold text-dark mb-2 d-flex align-items-center">
+              <span class="badge bg-success me-2 rounded-circle p-1 d-inline-flex align-items-center justify-content-center" style="width: 22px; height: 22px; font-size: 11px;">2</span>
               Player Information
-            </h5>
+            </h6>
 
-            <div class="mb-3">
-              <label for="userName" class="form-label fw-semibold text-dark">Full Name <span class="text-danger">*</span></label>
-              <div class="input-group">
-                <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
-                <input type="text" class="form-control form-control-lg rounded-end-3" id="userName" name="user_name" placeholder="e.g. Juan Dela Cruz" required>
+            <div class="row g-2">
+              <div class="col-12">
+                <label for="userName" class="form-label small fw-semibold text-dark mb-1">Full Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-sm rounded-3" id="userName" name="user_name" placeholder="e.g. Juan Dela Cruz" required>
               </div>
-            </div>
 
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label for="userContact" class="form-label fw-semibold text-dark">Contact Number (GCash) <span class="text-danger">*</span></label>
-                <div class="input-group">
-                  <span class="input-group-text bg-light"><i class="bi bi-telephone"></i></span>
-                  <input type="tel" class="form-control form-control-lg rounded-end-3" id="userContact" name="user_contact" placeholder="09171234567" required>
-                </div>
-                <div class="form-text small">SMS confirmation will be sent here.</div>
+              <div class="col-6">
+                <label for="userContact" class="form-label small fw-semibold text-dark mb-1">GCash Mobile <span class="text-danger">*</span></label>
+                <input type="tel" class="form-control form-control-sm rounded-3" id="userContact" name="user_contact" placeholder="09171234567" required>
               </div>
-              <div class="col-md-6">
-                <label for="userEmail" class="form-label fw-semibold text-dark">Email Address <span class="text-muted small">(Optional)</span></label>
-                <div class="input-group">
-                  <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
-                  <input type="email" class="form-control form-control-lg rounded-end-3" id="userEmail" name="user_email" placeholder="juan@example.com">
-                </div>
-              </div>
-            </div>
 
-            <div class="mb-2">
-              <label for="specialRequests" class="form-label fw-semibold text-dark">Special Requests / Notes</label>
-              <textarea class="form-control rounded-3" id="specialRequests" name="special_requests" rows="2" placeholder="e.g., Equipment rental, paddles, balls request..."></textarea>
+              <div class="col-6">
+                <label for="userEmail" class="form-label small fw-semibold text-dark mb-1">Email <span class="text-muted small">(Opt)</span></label>
+                <input type="email" class="form-control form-control-sm rounded-3" id="userEmail" name="user_email" placeholder="juan@email.com">
+              </div>
+
+              <div class="col-12">
+                <input type="text" class="form-control form-control-sm rounded-3" id="specialRequests" name="special_requests" placeholder="Special Requests / Notes (optional)">
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Step 3: Order Summary & Checkout -->
         <div class="col-lg-5">
-          <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top bg-white" style="top: 100px;">
-            <h5 class="fw-bold text-dark mb-3">Reservation Summary</h5>
+          <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 sticky-top bg-white" style="top: 80px;">
+            <h6 class="fw-bold text-dark mb-2">Order Summary</h6>
 
-            <div class="p-3 bg-light rounded-3 mb-3">
-              <div class="d-flex justify-content-between mb-2">
-                <span class="text-secondary small">Court:</span>
-                <span class="fw-bold text-dark small" id="summaryCourtName">-</span>
+            <div class="p-2 bg-light rounded-3 mb-2 small">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="text-secondary">Court / Date:</span>
+                <span class="fw-bold text-dark"><span id="summaryCourtName">-</span> | <span id="summaryDate">-</span></span>
               </div>
-              <div class="d-flex justify-content-between mb-2">
-                <span class="text-secondary small">Date:</span>
-                <span class="fw-bold text-dark small" id="summaryDate">-</span>
-              </div>
-              <div class="mb-2">
-                <span class="text-secondary small d-block mb-1">Selected Slots:</span>
-                <div id="summarySlotsList" class="d-flex flex-wrap gap-1">
+              <div class="mb-1">
+                <span class="text-secondary d-block" style="font-size: 11px;">Slots:</span>
+                <div id="summarySlotsList" class="d-flex flex-wrap gap-1 mt-1">
                   <span class="text-muted small">None selected</span>
                 </div>
               </div>
-              <div class="d-flex justify-content-between mb-2">
-                <span class="text-secondary small">Total Duration:</span>
-                <span class="fw-bold text-dark small" id="summaryDuration">0 Hours</span>
-              </div>
-              <div class="d-flex justify-content-between mb-2">
-                <span class="text-secondary small">Rate / hr:</span>
-                <span class="fw-bold text-dark small" id="summaryRate">₱350.00</span>
-              </div>
-              <hr class="my-2">
-              <div class="d-flex justify-content-between align-items-center">
-                <span class="fw-bold text-dark">Total Amount:</span>
-                <span class="fs-4 fw-extrabold text-success" id="summaryTotal">₱0.00</span>
+              <div class="d-flex justify-content-between align-items-center border-top pt-1 mt-1">
+                <span class="text-secondary">Total (<span id="summaryDuration">0 Hours</span>):</span>
+                <span class="fs-5 fw-extrabold text-success" id="summaryTotal">₱0.00</span>
               </div>
             </div>
 
-            <div class="alert alert-warning py-2 px-3 small rounded-3 mb-3">
-              <i class="bi bi-qr-code-scan me-1"></i>
-              <strong>GCash QR Payment:</strong> All selected slots are held in 1 order.
-            </div>
-
-            <button type="submit" id="submitBtn" class="btn btn-success btn-lg w-100 fw-bold py-3 rounded-pill shadow d-flex align-items-center justify-content-center" disabled>
+            <button type="submit" id="submitBtn" class="btn btn-success btn-lg w-100 fw-bold rounded-pill shadow-sm d-flex align-items-center justify-content-center" disabled>
               <i class="bi bi-wallet2 me-2"></i>Proceed to GCash
             </button>
 
-            <div class="text-center mt-3 small text-muted">
-              <i class="bi bi-shield-lock-fill text-success me-1"></i>Verified 3KS Playground System
+            <div class="text-center mt-2 small text-muted" style="font-size: 11px;">
+              <i class="bi bi-shield-lock-fill text-success me-1"></i>Official 3KS Playground System
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Mobile Sticky Floating Bottom Bar (Appears on phones for instant 1-tap checkout) -->
+      <div class="mobile-sticky-bar">
+        <div>
+          <span class="small text-muted d-block" style="font-size: 11px;" id="mobileStickyCount">0 slots selected</span>
+          <strong class="fs-6 text-success" id="mobileStickyTotal">₱0.00</strong>
+        </div>
+        <button type="submit" id="mobileSubmitBtn" class="btn btn-success fw-bold rounded-pill px-4 py-2" disabled>
+          Proceed <i class="bi bi-arrow-right ms-1"></i>
+        </button>
       </div>
     </form>
   </div>

@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const slotLoadingText = document.getElementById('slotLoadingText');
   const clearSlotsBtn = document.getElementById('clearSlotsBtn');
   const submitBtn = document.getElementById('submitBtn');
+  const mobileSubmitBtn = document.getElementById('mobileSubmitBtn');
+  const mobileStickyCount = document.getElementById('mobileStickyCount');
+  const mobileStickyTotal = document.getElementById('mobileStickyTotal');
   const slotFeedback = document.getElementById('slotFeedback');
 
   // Summary elements
@@ -15,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const summaryDate = document.getElementById('summaryDate');
   const summarySlotsList = document.getElementById('summarySlotsList');
   const summaryDuration = document.getElementById('summaryDuration');
-  const summaryRate = document.getElementById('summaryRate');
   const summaryTotal = document.getElementById('summaryTotal');
 
   if (!courtSelect || !slotsGrid) return;
@@ -48,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!courtId || !date) return;
 
     if (slotLoadingText) slotLoadingText.style.display = 'inline-block';
-    slotsGrid.innerHTML = '<div class="col-12 py-3 text-center text-muted small"><i class="bi bi-arrow-repeat spin me-1"></i>Loading available time slots...</div>';
+    slotsGrid.innerHTML = '<div class="col-12 py-2 text-center text-muted small" style="font-size: 11px;"><i class="bi bi-arrow-repeat spin me-1"></i>Loading slots...</div>';
 
     try {
       const res = await fetch(`/api/courts/${courtId}/availability?date=${date}`);
@@ -58,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data.success && data.data && data.data.slots) {
         currentSlots = data.data.slots;
         
-        // Remove any previously selected slots that are no longer available on this date/court
+        // Retain only valid available slots
         const availableStartTimes = new Set(currentSlots.filter(s => s.isAvailable).map(s => s.startTime));
         for (const slotTime of selectedSlots) {
           if (!availableStartTimes.has(slotTime)) {
@@ -69,11 +71,11 @@ document.addEventListener('DOMContentLoaded', () => {
         renderSlots();
         updateSummary();
       } else {
-        slotsGrid.innerHTML = '<div class="col-12 text-center text-danger small py-3">Could not load slots.</div>';
+        slotsGrid.innerHTML = '<div class="col-12 text-center text-danger small py-2">Could not load slots.</div>';
       }
     } catch (err) {
       if (slotLoadingText) slotLoadingText.style.display = 'none';
-      slotsGrid.innerHTML = '<div class="col-12 text-center text-danger small py-3">Failed to load court availability.</div>';
+      slotsGrid.innerHTML = '<div class="col-12 text-center text-danger small py-2">Failed to load slots.</div>';
     }
   }
 
@@ -81,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
     slotsGrid.innerHTML = '';
 
     if (!currentSlots || currentSlots.length === 0) {
-      slotsGrid.innerHTML = '<div class="col-12 text-center text-muted small py-3">No slots found for this date.</div>';
+      slotsGrid.innerHTML = '<div class="col-12 text-center text-muted small py-2">No slots for this date.</div>';
       return;
     }
 
@@ -90,15 +92,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const isSelected = selectedSlots.has(slot.startTime);
 
       const col = document.createElement('div');
-      col.className = 'col-6 col-md-4 col-lg-3';
+      col.className = 'col-4 col-md-3';
 
       const btn = document.createElement('div');
       btn.className = `slot-btn text-center ${isAvailable ? 'available' : 'booked'} ${isSelected ? 'selected' : ''}`;
       
       btn.innerHTML = `
         <div class="d-flex flex-column align-items-center">
-          <div class="fw-bold">${slot.startLabel}</div>
-          <div class="small opacity-75">${isSelected ? '✓ Selected' : (isAvailable ? 'Available' : 'Booked')}</div>
+          <div class="fw-bold" style="font-size: 11px;">${slot.startLabel.replace(':00', '')}</div>
+          <div class="small opacity-75" style="font-size: 9px;">${isSelected ? '✓ Picked' : (isAvailable ? 'Open' : 'Booked')}</div>
         </div>
       `;
 
@@ -133,20 +135,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const count = sortedSlots.length;
 
     if (summaryCourtName) summaryCourtName.textContent = courtName;
-    if (summaryDate) summaryDate.textContent = date || '-';
-    if (summaryDuration) summaryDuration.textContent = `${count} Hour${count !== 1 ? 's' : ''}`;
-    if (summaryRate) summaryRate.textContent = formatCurrency(pricePerHour);
+    if (summaryDate) summaryDate.textContent = date ? date.slice(5) : '-';
+    if (summaryDuration) summaryDuration.textContent = `${count} hr${count !== 1 ? 's' : ''}`;
 
     // Update slots badges in summary
     if (summarySlotsList) {
       if (count > 0) {
         summarySlotsList.innerHTML = sortedSlots.map(time => {
           const slotObj = currentSlots.find(s => s.startTime === time);
-          const label = slotObj ? `${slotObj.startLabel} - ${slotObj.endLabel}` : formatTime12(time);
-          return `<span class="badge bg-success-subtle text-success border border-success px-2 py-1">${label}</span>`;
+          const label = slotObj ? `${slotObj.startLabel.replace(':00', '')}-${slotObj.endLabel.replace(':00', '')}` : formatTime12(time);
+          return `<span class="badge bg-success-subtle text-success border border-success px-2 py-0" style="font-size: 11px;">${label}</span>`;
         }).join(' ');
       } else {
-        summarySlotsList.innerHTML = '<span class="text-muted small">None selected</span>';
+        summarySlotsList.innerHTML = '<span class="text-muted small" style="font-size: 11px;">None selected</span>';
       }
     }
 
@@ -163,11 +164,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update total price and button state
     const total = pricePerHour * count;
-    if (summaryTotal) summaryTotal.textContent = formatCurrency(total);
+    const formattedTotal = formatCurrency(total);
+    if (summaryTotal) summaryTotal.textContent = formattedTotal;
 
     if (submitBtn) {
       submitBtn.disabled = count === 0;
     }
+
+    // Mobile Sticky floating bar updates
+    if (mobileStickyCount) {
+      mobileStickyCount.textContent = `${count} slot${count !== 1 ? 's' : ''} selected`;
+    }
+    if (mobileStickyTotal) {
+      mobileStickyTotal.textContent = formattedTotal;
+    }
+    if (mobileSubmitBtn) {
+      mobileSubmitBtn.disabled = count === 0;
+    }
+
     if (slotFeedback) {
       slotFeedback.style.display = count === 0 ? 'block' : 'none';
     }
