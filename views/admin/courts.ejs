@@ -1,12 +1,12 @@
 <div class="container-fluid px-4 py-4">
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-2 border-bottom">
     <div>
-      <h2 class="fw-bold text-dark mb-1">Court Management</h2>
-      <p class="text-secondary small mb-0">Create, edit, toggle maintenance mode, or adjust hourly pricing</p>
+      <h2 class="fw-bold text-dark mb-1">Court & Pricing Management</h2>
+      <p class="text-secondary small mb-0">Change hourly rates (₱), edit facility descriptions, or toggle courts active/maintenance</p>
     </div>
     <div class="mt-3 mt-md-0">
-      <a href="/admin/courts/new" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm">
-        <i class="bi bi-plus-lg me-1"></i>Add New Court Category
+      <a href="/admin/courts/new" class="btn btn-outline-success fw-bold rounded-pill px-4 shadow-sm">
+        <i class="bi bi-plus-lg me-1"></i>Add New Category
       </a>
     </div>
   </div>
@@ -14,52 +14,44 @@
   <div class="row g-4">
     <% if (categories && categories.length > 0) { %>
       <% categories.forEach(function(cat) { %>
-        <div class="col-lg-6">
-          <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100">
+        <div class="col-lg-8 mx-auto">
+          <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
             <div class="row g-0">
-              <div class="col-sm-5 position-relative">
-                <img src="<%= cat.image_url %>" onerror="this.src='https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80'" class="img-fluid h-100 w-100 object-fit-cover" style="min-height: 200px;" alt="<%= cat.name %>">
-                <span class="badge bg-success position-absolute top-0 start-0 m-3 px-3 py-1 rounded-pill">
-                  <%= formatCurrency(cat.price_per_hour) %> / hr
+              <div class="col-md-5 position-relative">
+                <img src="<%= cat.image_url %>" onerror="this.src='/images/3ks-playground.jpg'" class="img-fluid h-100 w-100 object-fit-cover" style="min-height: 250px;" alt="<%= cat.name %>">
+                <span class="badge bg-success position-absolute top-0 start-0 m-3 px-3 py-2 rounded-pill fs-6 shadow">
+                  Current Rate: <%= formatCurrency(cat.price_per_hour) %> / hr
                 </span>
               </div>
-              <div class="col-sm-7 p-4 d-flex flex-column">
+              <div class="col-md-7 p-4 d-flex flex-column">
                 <div class="d-flex justify-content-between align-items-start mb-2">
-                  <h4 class="fw-bold text-dark mb-0"><%= cat.name %></h4>
-                  <div class="dropdown">
-                    <button class="btn btn-sm btn-light rounded-circle" type="button" data-bs-toggle="dropdown">
-                      <i class="bi bi-three-dots-vertical"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow">
-                      <li><a class="dropdown-item" href="/admin/courts/<%= cat.id %>/edit"><i class="bi bi-pencil me-2 text-primary"></i>Edit Category</a></li>
-                      <li><hr class="dropdown-divider"></li>
-                      <li>
-                        <form action="/admin/courts/<%= cat.id %>/delete" method="POST" onsubmit="return confirm('Delete court category \'<%= cat.name %>\' and ALL its individual courts?');">
-                          <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i>Delete Category</button>
-                        </form>
-                      </li>
-                    </ul>
+                  <div>
+                    <h3 class="fw-bold text-dark mb-1"><%= cat.name %></h3>
+                    <span class="badge bg-success-subtle text-success fw-bold">Active Rate: <%= formatCurrency(cat.price_per_hour) %> per hour</span>
                   </div>
+                  <a href="/admin/courts/<%= cat.id %>/edit" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold shadow-sm">
+                    <i class="bi bi-pencil-square me-1"></i>Edit Price (₱)
+                  </a>
                 </div>
 
-                <p class="text-secondary small mb-3 flex-grow-1"><%= cat.description || 'No description provided.' %></p>
+                <p class="text-secondary small mb-3 flex-grow-1"><%= cat.description || 'Championship covered arena with 4 tournament-grade courts.' %></p>
                 
                 <div class="mb-3">
                   <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="small fw-bold text-dark">Individual Courts (<%= cat.courts ? cat.courts.length : 0 %>):</span>
+                    <span class="small fw-bold text-dark">Courts Status (<%= cat.courts ? cat.courts.length : 0 %>):</span>
                   </div>
-                  <div class="d-flex flex-column gap-2">
+                  <div class="row g-2">
                     <% if (cat.courts && cat.courts.length > 0) { %>
                       <% cat.courts.forEach(function(c) { %>
-                        <div class="d-flex justify-content-between align-items-center bg-light p-2 rounded-3 border">
-                          <div class="d-flex align-items-center">
-                            <i class="bi <%= c.is_active ? 'bi-circle-fill text-success' : 'bi-slash-circle-fill text-danger' %> me-2 fs-6"></i>
-                            <span class="small fw-semibold text-dark"><%= c.display_name %></span>
-                          </div>
-                          <div>
+                        <div class="col-sm-6">
+                          <div class="d-flex justify-content-between align-items-center bg-light p-2 rounded-3 border">
+                            <div class="d-flex align-items-center">
+                              <i class="bi <%= c.is_active ? 'bi-circle-fill text-success' : 'bi-slash-circle-fill text-danger' %> me-2" style="font-size: 10px;"></i>
+                              <strong class="small text-dark"><%= c.display_name %></strong>
+                            </div>
                             <form action="/admin/courts/<%= c.id %>/toggle-status" method="POST" class="d-inline">
-                              <button type="submit" class="btn btn-sm <%= c.is_active ? 'btn-outline-danger' : 'btn-outline-success' %> py-0 px-2 rounded-pill small" style="font-size: 11px;">
-                                <%= c.is_active ? 'Set Maintenance' : 'Set Active' %>
+                              <button type="submit" class="btn btn-sm <%= c.is_active ? 'btn-outline-danger' : 'btn-outline-success' %> py-0 px-2 rounded-pill" style="font-size: 11px;">
+                                <%= c.is_active ? 'Maintenance' : 'Set Active' %>
                               </button>
                             </form>
                           </div>
@@ -69,9 +61,9 @@
                   </div>
                 </div>
 
-                <div class="pt-2 border-top d-flex gap-2">
-                  <a href="/admin/courts/<%= cat.id %>/edit" class="btn btn-sm btn-outline-secondary w-100 rounded-pill">
-                    <i class="bi bi-pencil me-1"></i>Edit Settings
+                <div class="pt-2 border-top">
+                  <a href="/admin/courts/<%= cat.id %>/edit" class="btn btn-success w-100 rounded-pill fw-bold py-2 shadow-sm">
+                    <i class="bi bi-tag-fill me-1"></i>Change Hourly Rate (₱) / Facility Settings
                   </a>
                 </div>
               </div>
@@ -79,11 +71,6 @@
           </div>
         </div>
       <% }); %>
-    <% } else { %>
-      <div class="col-12 text-center py-5">
-        <p class="text-muted mb-3">No courts configured yet.</p>
-        <a href="/admin/courts/new" class="btn btn-success rounded-pill px-4">Create First Court</a>
-      </div>
     <% } %>
   </div>
 </div>
