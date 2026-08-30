@@ -97,6 +97,15 @@ const paymentController = {
     } catch (err) {
       next(err);
     }
+  },
+
+  async handleGcashWebhook(req, res) {
+    res.json({ success: true, message: 'Webhook receiver ready.' });
+  },
+
+  async showPaymentSuccess(req, res) {
+    const { ref } = req.query;
+    res.redirect(`/reservations/${ref || ''}`);
   }
 };
 
