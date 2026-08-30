@@ -28,6 +28,10 @@ router.get('/reservations/:id', requireAuth, adminController.showReservationDeta
 router.post('/reservations/:id/cancel', requireAuth, adminController.cancelReservation);
 router.post('/reservations/:id/confirm', requireAuth, adminController.confirmReservation);
 
+// QR Code & Payment Settings
+router.get('/settings', requireAuth, adminController.showSettings);
+router.post('/settings', requireAuth, upload.single('qr_image'), adminController.updateSettings);
+
 // Reports & CSV Export
 router.get('/reports', requireAuth, adminController.showReports);
 router.get('/reports/export-csv', requireAuth, adminController.exportReservationsCsv);

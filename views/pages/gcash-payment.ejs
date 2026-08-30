@@ -21,11 +21,14 @@
           <!-- Left: Official GCash QR Code -->
           <div class="col-md-6 text-center border-end-md">
             <div class="p-2 bg-light rounded-4 border mb-3 shadow-sm d-inline-block">
-              <img src="/images/gcash-qr.jpg" alt="Official GCash QR Code" class="img-fluid rounded-3" style="max-width: 280px; width: 100%; object-fit: contain;">
+              <img src="<%= gcashQrImage %>" alt="Official GCash QR Code" class="img-fluid rounded-3" style="max-width: 280px; width: 100%; object-fit: contain;">
             </div>
             <div class="small text-secondary">
               <p class="fw-bold text-dark mb-1">3KS PICKLEBALL PLAYGROUND</p>
-              <p class="mb-0 text-muted">Account: <strong class="text-primary">RY*N KR******R L.</strong></p>
+              <p class="mb-0 text-muted">Account: <strong class="text-primary"><%= gcashAccountName %></strong></p>
+              <% if (gcashAccountNumber) { %>
+                <p class="small text-muted mb-0 font-monospace"><%= gcashAccountNumber %></p>
+              <% } %>
             </div>
           </div>
 

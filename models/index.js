@@ -1,9 +1,10 @@
-﻿const sequelize = require('../config/database');
+const sequelize = require('../config/database');
 const User = require('./User');
 const CourtCategory = require('./CourtCategory');
 const Court = require('./Court');
 const Reservation = require('./Reservation');
 const AuditLog = require('./AuditLog');
+const SystemSetting = require('./SystemSetting');
 
 // Relations
 CourtCategory.hasMany(Court, { foreignKey: 'category_id', as: 'courts', onDelete: 'CASCADE' });
@@ -21,5 +22,6 @@ module.exports = {
   CourtCategory,
   Court,
   Reservation,
-  AuditLog
+  AuditLog,
+  SystemSetting
 };

@@ -4,7 +4,7 @@
       <span class="badge bg-success me-2 rounded-circle p-1">
         <i class="bi bi-disc-fill"></i>
       </span>
-      PicklePlay <span class="text-success ms-1">Admin</span>
+      3KS <span class="text-success ms-1">Admin</span>
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
       <span class="navbar-toggler-icon"></span>
@@ -15,10 +15,13 @@
           <a class="nav-link" href="/admin"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/admin/courts"><i class="bi bi-grid-3x3-gap-fill me-1"></i>Court Management</a>
+          <a class="nav-link" href="/admin/courts"><i class="bi bi-grid-3x3-gap-fill me-1"></i>Courts & Pricing</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="/admin/reservations"><i class="bi bi-calendar-event me-1"></i>Reservations</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/settings"><i class="bi bi-qr-code-scan me-1"></i>QR Code & Payment</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="/admin/reports"><i class="bi bi-bar-chart-line-fill me-1"></i>Reports</a>
@@ -34,6 +37,7 @@
           </button>
           <ul class="dropdown-menu dropdown-menu-end shadow">
             <li><h6 class="dropdown-header">Logged in as <%= user ? user.role : 'admin' %></h6></li>
+            <li><a class="dropdown-item" href="/admin/settings"><i class="bi bi-gear me-2"></i>Payment Settings</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item text-danger" href="/admin/logout"><i class="bi bi-box-arrow-right me-2"></i>Sign Out</a></li>
           </ul>

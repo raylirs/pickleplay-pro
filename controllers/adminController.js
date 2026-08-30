@@ -1,4 +1,4 @@
-const { CourtCategory, Court, Reservation, AuditLog, User, sequelize } = require('../models');
+const { CourtCategory, Court, Reservation, AuditLog, User, SystemSetting, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const { getCourtAvailability } = require('../services/availabilityService');
 const { getIO } = require('../config/socket');
@@ -574,6 +574,69 @@ const adminController = {
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', `attachment; filename=reservations-report-${formatDate(new Date())}.csv`);
       res.status(200).send(csv);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async showSettings(req, res, next) {
+    try {
+      const qrSetting = await SystemSetting.findByPk('GCASH_QR_IMAGE');
+      const nameSetting = await SystemSetting.findByPk('GCASH_ACCOUNT_NAME');
+      const numSetting = await SystemSetting.findByPk('GCASH_ACCOUNT_NUMBER');
+
+      res.render('admin/settings', {
+        title: 'GCash Payment & Facility Settings - 3KS Playground',
+        layout: 'layouts/admin',
+        user: req.session.user,
+        gcashQrImage: qrSetting ? qrSetting.value : '/images/gcash-qr.jpg',
+        gcashAccountName: nameSetting ? nameSetting.value : 'RY*N KR******R L.',
+        gcashAccountNumber: numSetting ? numSetting.value : '0939-075-XXXX',
+        error: req.flash('error'),
+        success: req.flash('success')
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async updateSettings(req, res, next) {
+    try {
+      const { gcash_account_name, gcash_account_number } = req.body;
+
+      if (req.file) {
+        const qrUrl = `/uploads/courts/${req.file.filename}`;
+        await SystemSetting.upsert({
+          key: 'GCASH_QR_IMAGE',
+          value: qrUrl,
+          description: 'Uploaded GCash QR Code Image'
+        });
+      }
+
+      if (gcash_account_name) {
+        await SystemSetting.upsert({
+          key: 'GCASH_ACCOUNT_NAME',
+          value: gcash_account_name.trim(),
+          description: 'Merchant GCash Account Name'
+        });
+      }
+
+      if (gcash_account_number) {
+        await SystemSetting.upsert({
+          key: 'GCASH_ACCOUNT_NUMBER',
+          value: gcash_account_number.trim(),
+          description: 'Merchant GCash Mobile Number'
+        });
+      }
+
+      await logAudit('SETTINGS_UPDATED', {
+        gcashAccountName: gcash_account_name,
+        gcashAccountNumber: gcash_account_number,
+        newQrUploaded: !!req.file
+      }, req.session.user.id);
+
+      req.flash('success', 'GCash QR Code & Payment settings updated successfully!');
+      res.redirect('/admin/settings');
     } catch (err) {
       next(err);
     }

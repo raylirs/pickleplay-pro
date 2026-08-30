@@ -1,0 +1,60 @@
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-2 border-bottom">
+    <div>
+      <h2 class="fw-bold text-dark mb-1">GCash Payment & QR Code Settings</h2>
+      <p class="text-secondary small mb-0">Upload a new GCash QR code image, change merchant account name, or update GCash contact</p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+        <h4 class="fw-bold text-dark mb-4"><i class="bi bi-qr-code text-primary me-2"></i>Update Official GCash QR Code</h4>
+
+        <form action="/admin/settings" method="POST" enctype="multipart/form-data">
+          <!-- Upload New QR Code -->
+          <div class="mb-4">
+            <label class="form-label fw-bold text-dark">Upload New GCash QR Image (JPG, PNG, WebP)</label>
+            <input type="file" name="qr_image" class="form-control form-control-lg rounded-3" accept=".jpg,.jpeg,.png,.webp">
+            <div class="form-text small">Upload an image from your GCash app's "Receive Money / Generate QR".</div>
+          </div>
+
+          <!-- Account Name -->
+          <div class="mb-3">
+            <label class="form-label fw-bold text-dark">Merchant GCash Account Name</label>
+            <input type="text" name="gcash_account_name" class="form-control form-control-lg rounded-3" placeholder="e.g. RY*N KR******R L." value="<%= gcashAccountName %>" required>
+            <div class="form-text small">Display name shown under the QR code on customer checkout.</div>
+          </div>
+
+          <!-- Mobile Number -->
+          <div class="mb-4">
+            <label class="form-label fw-bold text-dark">GCash Mobile Number / Contact</label>
+            <input type="text" name="gcash_account_number" class="form-control form-control-lg rounded-3" placeholder="e.g. 0917-800-3577" value="<%= gcashAccountNumber %>">
+            <div class="form-text small">Optional mobile number displayed for customer payment reference.</div>
+          </div>
+
+          <button type="submit" class="btn btn-success btn-lg rounded-pill fw-bold px-5 shadow">
+            <i class="bi bi-check2-circle me-1"></i>Save QR & Payment Settings
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right: Current Active QR Preview -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white text-center">
+        <h5 class="fw-bold text-dark mb-3">Live Active QR Code Preview</h5>
+        <p class="small text-secondary mb-3">This is what customers see when paying on the live website.</p>
+        
+        <div class="p-3 bg-light rounded-4 border mb-3 d-inline-block shadow-sm">
+          <img src="<%= gcashQrImage %>" alt="Active QR Code" class="img-fluid rounded-3" style="max-height: 280px; object-fit: contain;">
+        </div>
+
+        <div class="small">
+          <h6 class="fw-bold text-dark mb-1"><%= gcashAccountName %></h6>
+          <span class="text-muted font-monospace"><%= gcashAccountNumber %></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
