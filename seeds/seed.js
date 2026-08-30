@@ -18,52 +18,34 @@ async function seedDatabase() {
         password_hash: passwordHash,
         role: 'admin'
       });
-      console.log('[Seed] Admin user created: ' + adminUsername + ' / ' + adminPassword + '');
+      console.log('[Seed] Admin user created: ' + adminUsername + ' / ' + adminPassword);
     } else {
       console.log('[Seed] Admin user ' + adminUsername + ' already exists.');
     }
 
-    // 2. Seed Initial Courts if empty
-    const courtCategoryCount = await CourtCategory.count();
-    if (courtCategoryCount === 0) {
-      const categoriesData = [
-        {
-          name: 'Grand Championship Court (Indoor AC)',
-          description: 'Fully air-conditioned indoor championship court with 8mm tournament cushioned flooring, broadcast-grade glare-free LED lighting, and private player lounge.',
-          price_per_hour: 800.00,
-          total_courts: 2,
-          image_url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80'
-        },
-        {
-          name: 'Pro Tournament Arena (Covered)',
-          description: 'Weatherproof high-ceiling covered court with USAPA official dimensions, premium anti-slip coating, and high-velocity circulation fans.',
-          price_per_hour: 600.00,
-          total_courts: 2,
-          image_url: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=800&q=80'
-        },
-        {
-          name: 'Sunset Open Arena (Outdoor)',
-          description: 'Open-air scenic court with professional night floodlights, ideal for evening recreational play, doubles match practice, and friendly leagues.',
-          price_per_hour: 450.00,
-          total_courts: 2,
-          image_url: 'https://images.unsplash.com/photo-1599586120429-48281b6f0ece?w=800&q=80'
-        }
-      ];
+    // 2. Seed 3KS Pickleball Playground 4 Courts if empty or update
+    const existingCategory = await CourtCategory.findOne({ where: { name: '3KS Pickleball Playground' } });
+    if (!existingCategory) {
+      // Clear placeholder categories if needed or create 3KS
+      const cat = await CourtCategory.create({
+        name: '3KS Pickleball Playground',
+        description: 'Championship covered arena with 4 tournament-grade pickleball courts, 5M center walkway, 2 dressing rooms, player lounge, and coffee shop / mini store.',
+        price_per_hour: 350.00,
+        total_courts: 4,
+        image_url: '/images/3ks-playground.jpg'
+      });
 
-      for (const catData of categoriesData) {
-        const cat = await CourtCategory.create(catData);
-        for (let i = 1; i <= catData.total_courts; i++) {
-          await Court.create({
-            category_id: cat.id,
-            court_number: i,
-            display_name: cat.name + ' - ' + i,
-            is_active: true
-          });
-        }
+      for (let i = 1; i <= 4; i++) {
+        await Court.create({
+          category_id: cat.id,
+          court_number: i,
+          display_name: 'Court ' + i,
+          is_active: true
+        });
       }
-      console.log('[Seed] Created default court categories and sub-courts.');
+      console.log('[Seed] Created 3KS Pickleball Playground with Courts 1, 2, 3, and 4 @ ₱350/hr.');
     } else {
-      console.log('[Seed] Court categories already present.');
+      console.log('[Seed] 3KS Pickleball Playground already exists.');
     }
 
     console.log('[Seed] Database initialization completed successfully.');

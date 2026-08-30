@@ -4,33 +4,37 @@
     <div class="row align-items-center g-5">
       <div class="col-lg-7">
         <span class="badge bg-light text-success px-3 py-2 rounded-pill fw-bold mb-3 d-inline-flex align-items-center shadow-sm">
-          <i class="bi bi-star-fill text-warning me-2"></i>#1 Pickleball Venue in the Metro
+          <i class="bi bi-star-fill text-warning me-2"></i>PLAY. COMPETE. CONNECT.
         </span>
         <h1 class="display-4 fw-bold text-white mb-3" style="text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
-          Book Your Pickleball Court <span class="text-warning">In Seconds</span>
+          3KS <span class="text-warning">Pickleball Playground</span>
         </h1>
         <p class="lead text-white mb-4" style="opacity: 0.95; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
-          Experience championship-grade cushioned surfaces, professional LED illumination, and seamless real-time booking with instant GCash payment.
+          Reserve one of our 4 professional covered pickleball courts for only <strong class="text-warning">₱350 / hour</strong>. Enjoy tournament-grade surfaces, coffee shop lounge, dressing rooms, and instant GCash confirmation.
         </p>
         <div class="d-flex flex-wrap gap-3">
           <a href="/reservations" class="btn btn-warning btn-lg px-4 py-3 rounded-pill fw-bold shadow text-dark d-flex align-items-center">
-            <i class="bi bi-calendar2-plus-fill me-2"></i>Reserve a Court Now
+            <i class="bi bi-calendar2-plus-fill me-2"></i>Book a Court (₱350/hr)
           </a>
           <a href="/courts" class="btn btn-outline-light btn-lg px-4 py-3 rounded-pill fw-bold">
-            <i class="bi bi-grid-fill me-2"></i>Explore Courts
+            <i class="bi bi-grid-fill me-2"></i>View Facility Layout
           </a>
         </div>
 
         <div class="row g-4 mt-4 pt-3 border-top border-white border-opacity-25">
-          <div class="col-4">
-            <h3 class="fw-bold mb-0 text-white">8+</h3>
-            <p class="small text-white text-opacity-75 mb-0">Pro Courts</p>
+          <div class="col-3">
+            <h3 class="fw-bold mb-0 text-white">4</h3>
+            <p class="small text-white text-opacity-75 mb-0">Courts</p>
           </div>
-          <div class="col-4">
+          <div class="col-3">
+            <h3 class="fw-bold mb-0 text-white">₱350</h3>
+            <p class="small text-white text-opacity-75 mb-0">Per Hour</p>
+          </div>
+          <div class="col-3">
             <h3 class="fw-bold mb-0 text-white">100%</h3>
             <p class="small text-white text-opacity-75 mb-0">Real-Time Sync</p>
           </div>
-          <div class="col-4">
+          <div class="col-3">
             <h3 class="fw-bold mb-0 text-white">GCash</h3>
             <p class="small text-white text-opacity-75 mb-0">Instant Pay</p>
           </div>
@@ -38,13 +42,13 @@
       </div>
       <div class="col-lg-5">
         <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white text-dark p-3">
-          <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80" alt="Pickleball Court" class="rounded-3 img-fluid mb-3 object-fit-cover" style="height: 220px; width: 100%;">
+          <img src="/images/3ks-playground.jpg" alt="3KS Pickleball Playground" class="rounded-3 img-fluid mb-3 object-fit-cover" style="height: 240px; width: 100%;">
           <div class="p-2">
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <h5 class="fw-bold mb-0 text-dark">Fast Booking Guarantee</h5>
-              <span class="badge bg-success">Live Status</span>
+              <h5 class="fw-bold mb-0 text-dark">Covered 4-Court Facility</h5>
+              <span class="badge bg-success">₱350/hr</span>
             </div>
-            <p class="small text-secondary mb-3">Pick your preferred court, select your slot, and secure your game time right now.</p>
+            <p class="small text-secondary mb-3">Court 1, Court 2, Court 3, Court 4 with coffee shop, lounge & dressing rooms.</p>
             <a href="/reservations" class="btn btn-primary w-100 fw-bold py-2 rounded-pill shadow-sm">
               <i class="bi bi-lightning-charge-fill me-1"></i>Check Real-Time Slots
             </a>
@@ -55,88 +59,117 @@
   </div>
 </section>
 
-<!-- Courts Showcase Section -->
+<!-- Facility Overview & Courts Section -->
 <section class="py-5 bg-light">
   <div class="container py-4">
-    <div class="text-center mx-auto mb-5" style="max-width: 700px;">
-      <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold mb-2">Facility Catalog</span>
-      <h2 class="fw-bold text-dark">Pick Your Arena</h2>
-      <p class="text-secondary">Choose between indoor air-conditioned tournament courts, covered premium setups, or open-air arenas.</p>
+    <div class="text-center mx-auto mb-5" style="max-width: 750px;">
+      <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold mb-2">Facility & Courts</span>
+      <h2 class="fw-bold text-dark">3KS Playground Architecture & Layout</h2>
+      <p class="text-secondary">Official 38M x 16.6M covered venue equipped with 4 tournament courts and complete amenities.</p>
     </div>
 
-    <div class="row g-4">
-      <% if (categories && categories.length > 0) { %>
-        <% categories.forEach(function(cat) { %>
-          <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden court-card bg-white">
-              <div class="position-relative">
-                <img src="<%= cat.image_url %>" onerror="this.src='https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80'" class="card-img-top object-fit-cover" style="height: 220px; width: 100%;" alt="<%= cat.name %>">
-                <span class="badge bg-dark bg-opacity-75 position-absolute top-0 end-0 m-3 px-3 py-2 rounded-pill fw-bold text-success fs-6 border border-secondary">
-                  ₱<%= parseFloat(cat.price_per_hour).toFixed(2) %>/hr
-                </span>
-                <span class="badge bg-primary position-absolute bottom-0 start-0 m-3 px-3 py-1 rounded-pill fw-semibold">
-                  <i class="bi bi-layers-fill me-1"></i><%= cat.courts ? cat.courts.length : cat.total_courts %> Sub-Courts
-                </span>
+    <!-- 3KS Facility Layout Card -->
+    <div class="row g-4 mb-5">
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 bg-white">
+          <img src="/images/3ks-layout.jpg" alt="3KS Overhead Layout" class="img-fluid w-100 object-fit-cover" style="min-height: 320px;">
+          <div class="p-4">
+            <h5 class="fw-bold text-dark">Overhead Court Blueprint</h5>
+            <p class="small text-secondary mb-0">Featuring Courts 1, 2, 3, 4 with a 5M center walkway, mini store/coffee shop, and dedicated player dressing rooms.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100 d-flex flex-column justify-content-between">
+          <div>
+            <h4 class="fw-bold text-dark mb-3">Facility Features & Amenities</h4>
+            <div class="row g-3 mb-4">
+              <div class="col-sm-6">
+                <div class="p-3 rounded-3 bg-light border">
+                  <div class="d-flex align-items-center mb-1">
+                    <i class="bi bi-grid-fill text-success fs-5 me-2"></i>
+                    <strong class="text-dark">4 Pickleball Courts</strong>
+                  </div>
+                  <span class="small text-muted">13.41M x 6.10M each</span>
+                </div>
               </div>
-              <div class="card-body p-4 d-flex flex-column">
-                <h5 class="card-title fw-bold text-dark mb-2"><%= cat.name %></h5>
-                <p class="card-text text-secondary small flex-grow-1"><%= cat.description || 'Championship standard court with high-contrast playing surface, professional nets, and LED tournament lighting.' %></p>
-                
-                <div class="border-top pt-3 mt-3">
-                  <div class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="small text-muted"><i class="bi bi-clock me-1"></i>8 AM - 10 PM</span>
-                    <span class="badge bg-success-subtle text-success"><i class="bi bi-check2-circle me-1"></i>GCash Ready</span>
+              <div class="col-sm-6">
+                <div class="p-3 rounded-3 bg-light border">
+                  <div class="d-flex align-items-center mb-1">
+                    <i class="bi bi-cup-hot-fill text-warning fs-5 me-2"></i>
+                    <strong class="text-dark">Coffee & Mini Store</strong>
                   </div>
-                  <div class="d-grid gap-2">
-                    <a href="/reservations?court_id=<%= cat.courts && cat.courts.length > 0 ? cat.courts[0].id : '' %>" class="btn btn-success fw-bold rounded-pill">
-                      <i class="bi bi-calendar-plus me-1"></i>Book This Court
-                    </a>
+                  <span class="small text-muted">Refreshments & snacks</span>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="p-3 rounded-3 bg-light border">
+                  <div class="d-flex align-items-center mb-1">
+                    <i class="bi bi-door-open-fill text-primary fs-5 me-2"></i>
+                    <strong class="text-dark">2 Dressing Rooms</strong>
                   </div>
+                  <span class="small text-muted">With private restrooms</span>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="p-3 rounded-3 bg-light border">
+                  <div class="d-flex align-items-center mb-1">
+                    <i class="bi bi-people-fill text-info fs-5 me-2"></i>
+                    <strong class="text-dark">Player Lounge</strong>
+                  </div>
+                  <span class="small text-muted">Spectator & waiting tables</span>
                 </div>
               </div>
             </div>
           </div>
-        <% }); %>
-      <% } else { %>
-        <div class="col-12 text-center py-5">
-          <p class="text-muted">No courts available yet. Admin can add courts in the admin panel.</p>
-        </div>
-      <% } %>
-    </div>
-  </div>
-</section>
 
-<!-- Features / Value Prop -->
-<section class="py-5 bg-white border-top">
-  <div class="container py-4">
-    <div class="row g-4 text-center">
-      <div class="col-md-4">
-        <div class="p-4 rounded-4 bg-light h-100">
-          <div class="bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-            <i class="bi bi-lightning-charge-fill fs-3"></i>
+          <div class="p-3 rounded-3 bg-success-subtle border border-success d-flex justify-content-between align-items-center">
+            <div>
+              <span class="small text-secondary d-block">Hourly Rate</span>
+              <h3 class="fw-bold text-success mb-0">₱350.00 <span class="fs-6 text-muted fw-normal">/ hour</span></h3>
+            </div>
+            <a href="/reservations" class="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm">
+              <i class="bi bi-lightning-charge-fill me-1"></i>Book a Court
+            </a>
           </div>
-          <h5 class="fw-bold mb-2 text-dark">Live Availability</h5>
-          <p class="text-secondary small mb-0">Zero double bookings. Court slots update instantly via WebSockets the moment a reservation is initiated.</p>
         </div>
       </div>
-      <div class="col-md-4">
-        <div class="p-4 rounded-4 bg-light h-100">
-          <div class="bg-primary text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-            <i class="bi bi-wallet2 fs-3"></i>
-          </div>
-          <h5 class="fw-bold mb-2 text-dark">Instant GCash Checkout</h5>
-          <p class="text-secondary small mb-0">Secure your court immediately with QR or mobile payment. Confirmation sent in real-time to your mobile & email.</p>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="p-4 rounded-4 bg-light h-100">
-          <div class="bg-warning text-dark rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-            <i class="bi bi-trophy-fill fs-3"></i>
-          </div>
-          <h5 class="fw-bold mb-2 text-dark">Pro Grade Facilities</h5>
-          <p class="text-secondary small mb-0">Non-glare LED tournament lighting, USAPA specification net posts, air-conditioned player lounge, and showers.</p>
-        </div>
-      </div>
+    </div>
+
+    <!-- Courts List Grid -->
+    <h3 class="fw-bold text-dark mb-4">Pick Your Court</h3>
+    <div class="row g-4">
+      <% if (categories && categories.length > 0) { %>
+        <% categories.forEach(function(cat) { %>
+          <% if (cat.courts && cat.courts.length > 0) { %>
+            <% cat.courts.forEach(function(court) { %>
+              <div class="col-sm-6 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-white court-card">
+                  <div class="position-relative">
+                    <img src="/images/3ks-playground.jpg" class="card-img-top object-fit-cover" style="height: 160px; width: 100%;" alt="<%= court.display_name %>">
+                    <span class="badge bg-success position-absolute top-0 end-0 m-2 px-3 py-1 rounded-pill">
+                      ₱350/hr
+                    </span>
+                  </div>
+                  <div class="card-body p-3 d-flex flex-column">
+                    <h5 class="fw-bold text-dark mb-1"><%= court.display_name %></h5>
+                    <span class="small text-muted mb-3"><i class="bi bi-check-circle-fill text-success me-1"></i>Covered Tournament Court</span>
+                    <div class="d-grid gap-2 mt-auto">
+                      <a href="/courts/<%= court.id %>" class="btn btn-outline-secondary btn-sm rounded-pill">
+                        <i class="bi bi-calendar2-range me-1"></i>View Slots
+                      </a>
+                      <a href="/reservations?court_id=<%= court.id %>" class="btn btn-success btn-sm rounded-pill fw-semibold">
+                        <i class="bi bi-lightning-charge me-1"></i>Reserve
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          <% } %>
+        <% }); %>
+      <% } %>
     </div>
   </div>
 </section>
