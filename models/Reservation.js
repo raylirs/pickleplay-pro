@@ -1,4 +1,4 @@
-﻿const { DataTypes } = require('sequelize');
+const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
 const Reservation = sequelize.define('Reservation', {
@@ -50,15 +50,23 @@ const Reservation = sequelize.define('Reservation', {
   },
   status: {
     type: DataTypes.STRING(50),
-    defaultValue: 'PENDING'
+    defaultValue: 'AWAITING_PAYMENT' // AWAITING_PAYMENT, AWAITING_CONFIRMATION, CONFIRMED, CANCELLED, REJECTED, EXPIRED
   },
   payment_transaction_id: {
     type: DataTypes.STRING(255),
     allowNull: true
   },
+  gcash_reference_no: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
+  payment_screenshot: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
   payment_provider: {
     type: DataTypes.STRING(50),
-    defaultValue: 'GCASH'
+    defaultValue: 'GCASH_QR'
   },
   special_requests: {
     type: DataTypes.TEXT,

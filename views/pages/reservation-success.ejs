@@ -1,13 +1,31 @@
 <div class="container py-5">
   <div class="max-w-700 mx-auto" style="max-width: 750px;">
     <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white">
-      <div class="bg-success text-white p-4 text-center">
-        <div class="badge bg-white text-success rounded-circle p-3 mb-3 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-          <i class="bi bi-check2-circle fs-2"></i>
+      <% if (reservation.status === 'CONFIRMED') { %>
+        <div class="bg-success text-white p-4 text-center">
+          <div class="badge bg-white text-success rounded-circle p-3 mb-2 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+            <i class="bi bi-check2-circle fs-2"></i>
+          </div>
+          <h2 class="fw-bold mb-1">Reservation Confirmed!</h2>
+          <p class="mb-0 opacity-90">Your court is booked and locked. See you at 3KS Playground!</p>
         </div>
-        <h2 class="fw-bold mb-1">Reservation Confirmed!</h2>
-        <p class="mb-0 opacity-90">Your court is booked and locked. See you on the court!</p>
-      </div>
+      <% } else if (reservation.status === 'AWAITING_CONFIRMATION') { %>
+        <div class="bg-primary text-white p-4 text-center" style="background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%) !important;">
+          <div class="badge bg-white text-primary rounded-circle p-3 mb-2 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+            <i class="bi bi-hourglass-split fs-2"></i>
+          </div>
+          <h2 class="fw-bold mb-1">Payment Proof Submitted!</h2>
+          <p class="mb-0 opacity-90">Awaiting Admin Confirmation. Your slot is held while the admin verifies your GCash payment.</p>
+        </div>
+      <% } else { %>
+        <div class="bg-warning text-dark p-4 text-center">
+          <div class="badge bg-dark text-warning rounded-circle p-3 mb-2 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+            <i class="bi bi-wallet2 fs-2"></i>
+          </div>
+          <h2 class="fw-bold mb-1">Awaiting GCash Payment</h2>
+          <p class="mb-0">Please scan the GCash QR code to complete your booking.</p>
+        </div>
+      <% } %>
 
       <div class="p-4 p-md-5">
         <!-- Reference & Status -->
@@ -17,9 +35,19 @@
             <span class="fs-5 fw-bold font-monospace text-primary"><%= reservation.reference_number %></span>
           </div>
           <div class="mt-2 mt-sm-0">
-            <span class="badge <%= reservation.status === 'CONFIRMED' ? 'bg-success' : 'bg-warning text-dark' %> px-3 py-2 fs-6 rounded-pill">
-              <i class="bi bi-patch-check-fill me-1"></i><%= reservation.status %>
-            </span>
+            <% if (reservation.status === 'CONFIRMED') { %>
+              <span class="badge bg-success px-3 py-2 fs-6 rounded-pill">
+                <i class="bi bi-check-circle-fill me-1"></i>CONFIRMED
+              </span>
+            <% } else if (reservation.status === 'AWAITING_CONFIRMATION') { %>
+              <span class="badge bg-primary px-3 py-2 fs-6 rounded-pill">
+                <i class="bi bi-clock-history me-1"></i>AWAITING APPROVAL
+              </span>
+            <% } else { %>
+              <span class="badge bg-warning text-dark px-3 py-2 fs-6 rounded-pill">
+                <i class="bi bi-wallet2 me-1"></i>UNPAID
+              </span>
+            <% } %>
           </div>
         </div>
 
@@ -31,8 +59,8 @@
             <strong class="text-dark"><%= reservation.court ? reservation.court.display_name : 'Pickleball Court' %></strong>
           </div>
           <div class="col-6">
-            <span class="small text-secondary d-block">Category</span>
-            <strong class="text-dark"><%= reservation.court && reservation.court.category ? reservation.court.category.name : 'Standard' %></strong>
+            <span class="small text-secondary d-block">Venue</span>
+            <strong class="text-dark">3KS Pickleball Playground</strong>
           </div>
           <div class="col-6">
             <span class="small text-secondary d-block">Date</span>
@@ -65,25 +93,39 @@
         </div>
 
         <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Payment Details</h5>
-        <div class="bg-light p-3 rounded-3 mb-4">
+        <div class="bg-light p-3 rounded-3 mb-4 border">
           <div class="d-flex justify-content-between mb-2">
-            <span class="text-secondary small">Payment Provider:</span>
-            <span class="fw-bold text-dark small"><i class="bi bi-wallet2 text-primary me-1"></i><%= reservation.payment_provider || 'GCASH' %></span>
+            <span class="text-secondary small">Payment Method:</span>
+            <span class="fw-bold text-dark small"><i class="bi bi-qr-code text-primary me-1"></i>GCash QR Code</span>
           </div>
           <div class="d-flex justify-content-between mb-2">
-            <span class="text-secondary small">Transaction ID:</span>
-            <span class="fw-bold font-monospace text-dark small"><%= reservation.payment_transaction_id || 'N/A' %></span>
+            <span class="text-secondary small">Submitted GCash Ref No:</span>
+            <span class="fw-bold font-monospace text-primary small"><%= reservation.gcash_reference_no || 'Pending Submission' %></span>
           </div>
-          <div class="d-flex justify-content-between">
-            <span class="fw-bold text-dark">Total Amount Paid:</span>
+          <% if (reservation.payment_screenshot) { %>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-secondary small">Uploaded Receipt:</span>
+              <a href="<%= reservation.payment_screenshot %>" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill py-0 px-2 small">
+                <i class="bi bi-image me-1"></i>View Screenshot
+              </a>
+            </div>
+          <% } %>
+          <hr class="my-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-dark">Total Amount:</span>
             <span class="fs-5 fw-bold text-success"><%= formatCurrency(reservation.total_amount) %></span>
           </div>
         </div>
 
         <!-- Actions -->
         <div class="d-flex flex-wrap gap-2 d-print-none">
+          <% if (reservation.status === 'AWAITING_PAYMENT') { %>
+            <a href="/payment/gcash-checkout?ref=<%= reservation.reference_number %>" class="btn btn-primary flex-fill rounded-pill py-2 fw-semibold">
+              <i class="bi bi-qr-code me-1"></i>Pay via GCash QR Now
+            </a>
+          <% } %>
           <button onclick="window.print()" class="btn btn-outline-secondary flex-fill rounded-pill py-2 fw-semibold">
-            <i class="bi bi-printer me-1"></i>Print Receipt
+            <i class="bi bi-printer me-1"></i>Print Pass
           </button>
           <a href="/reservations" class="btn btn-success flex-fill rounded-pill py-2 fw-semibold">
             <i class="bi bi-plus-circle me-1"></i>Book Another Court

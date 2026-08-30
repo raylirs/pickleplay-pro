@@ -1,55 +1,56 @@
 <div class="container py-5">
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom">
     <div>
-      <h1 class="fw-bold text-dark mb-1">Pickleball Courts</h1>
-      <p class="text-secondary mb-0">Browse our courts and check instant availability</p>
+      <h1 class="fw-bold text-dark mb-1">3KS Pickleball Playground Courts</h1>
+      <p class="text-secondary mb-0">Covered 4-court tournament facility with coffee shop, lounge & dressing rooms</p>
     </div>
     <div class="mt-3 mt-md-0">
       <a href="/reservations" class="btn btn-success fw-bold rounded-pill px-4">
-        <i class="bi bi-calendar2-check-fill me-1"></i>Book Any Court
+        <i class="bi bi-calendar2-check-fill me-1"></i>Book a Court (₱350/hr)
       </a>
     </div>
   </div>
 
   <div class="row g-4">
     <% categories.forEach(function(cat) { %>
-      <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 bg-white">
-          <div class="row g-0 h-100">
-            <div class="col-md-5 position-relative">
-              <img src="<%= cat.image_url %>" onerror="this.src='https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80'" alt="<%= cat.name %>" class="img-fluid h-100 w-100 object-fit-cover" style="min-height: 200px;">
-              <span class="badge bg-success position-absolute top-0 start-0 m-3 px-3 py-1 rounded-pill">
-                ₱<%= parseFloat(cat.price_per_hour).toFixed(2) %>/hr
+      <div class="col-12 mb-4">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+          <div class="row g-0">
+            <div class="col-lg-5 position-relative">
+              <img src="/images/3ks-playground.jpg" alt="3KS Playground" class="img-fluid h-100 w-100 object-fit-cover" style="min-height: 280px;">
+              <span class="badge bg-success position-absolute top-0 start-0 m-3 px-3 py-2 rounded-pill fs-6">
+                ₱350.00 / hour
               </span>
             </div>
-            <div class="col-md-7 d-flex flex-column p-4">
-              <h4 class="fw-bold text-dark mb-2"><%= cat.name %></h4>
-              <p class="text-secondary small flex-grow-1"><%= cat.description || 'Premium indoor/covered pickleball court with professional flooring.' %></p>
+            <div class="col-lg-7 d-flex flex-column p-4 p-md-5">
+              <h3 class="fw-bold text-dark mb-2"><%= cat.name %></h3>
+              <p class="text-secondary mb-4"><%= cat.description || 'Championship covered arena with 4 tournament-grade pickleball courts, 5M center walkway, 2 dressing rooms, player lounge, and coffee shop / mini store.' %></p>
               
-              <div class="mb-3">
-                <span class="small fw-bold text-dark d-block mb-1">Available Individual Courts:</span>
-                <div class="d-flex flex-wrap gap-2">
+              <div class="mb-4">
+                <span class="small fw-bold text-dark d-block mb-2">Select an Individual Court:</span>
+                <div class="row g-2">
                   <% if (cat.courts && cat.courts.length > 0) { %>
                     <% cat.courts.forEach(function(c) { %>
-                      <a href="/courts/<%= c.id %>" class="badge text-decoration-none <%= c.is_active ? 'bg-light text-dark border border-secondary' : 'bg-danger text-white' %> p-2 rounded-2">
-                        <i class="bi <%= c.is_active ? 'bi-check-circle-fill text-success' : 'bi-tools text-white' %> me-1"></i><%= c.display_name %>
-                      </a>
+                      <div class="col-sm-6">
+                        <div class="p-3 bg-light rounded-3 border d-flex justify-content-between align-items-center">
+                          <div>
+                            <div class="fw-bold text-dark"><%= c.display_name %></div>
+                            <span class="small text-success"><i class="bi bi-check-circle-fill me-1"></i>Covered Tournament Court</span>
+                          </div>
+                          <a href="/courts/<%= c.id %>" class="btn btn-sm btn-outline-success rounded-pill px-3">
+                            View Slots
+                          </a>
+                        </div>
+                      </div>
                     <% }); %>
-                  <% } else { %>
-                    <span class="text-muted small">No active courts</span>
                   <% } %>
                 </div>
               </div>
 
-              <div class="d-flex gap-2 mt-auto pt-2 border-top">
-                <% if (cat.courts && cat.courts.length > 0) { %>
-                  <a href="/courts/<%= cat.courts[0].id %>" class="btn btn-outline-secondary btn-sm flex-fill rounded-pill">
-                    <i class="bi bi-eye me-1"></i>View Slots
-                  </a>
-                  <a href="/reservations?court_id=<%= cat.courts[0].id %>" class="btn btn-success btn-sm flex-fill rounded-pill fw-semibold">
-                    <i class="bi bi-lightning-charge me-1"></i>Reserve
-                  </a>
-                <% } %>
+              <div class="d-flex gap-3 mt-auto pt-3 border-top">
+                <a href="/reservations" class="btn btn-success btn-lg flex-fill rounded-pill fw-bold">
+                  <i class="bi bi-lightning-charge-fill me-1"></i>Book Any Court Now
+                </a>
               </div>
             </div>
           </div>

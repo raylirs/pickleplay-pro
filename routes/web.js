@@ -4,9 +4,10 @@ const courtController = require('../controllers/courtController');
 const reservationController = require('../controllers/reservationController');
 const paymentController = require('../controllers/paymentController');
 const { reservationLimiter } = require('../middleware/rateLimiter');
+const upload = require('../middleware/upload');
 const { CourtCategory, Court } = require('../models');
 
-// Home page displaying all courts
+// Home page displaying 3KS Playground
 router.get('/', async (req, res, next) => {
   try {
     const categories = await CourtCategory.findAll({
@@ -14,7 +15,7 @@ router.get('/', async (req, res, next) => {
       order: [['id', 'ASC']]
     });
     res.render('pages/index', {
-      title: 'PicklePlay Pro - Premier Pickleball Court Reservations',
+      title: '3KS Pickleball Playground - Court Reservation',
       categories,
       user: req.session ? req.session.user : null
     });
@@ -33,13 +34,8 @@ router.post('/reservations', reservationLimiter, reservationController.createRes
 router.get('/reservations/lookup', reservationController.showLookupPage);
 router.get('/reservations/:reference', reservationController.getReservationByReference);
 
-// Payment flow
-router.get('/payment/gcash-checkout', paymentController.showGcashMockCheckout);
-router.post('/payment/gcash-mock-pay', paymentController.processGcashMockPayment);
-router.get('/payment/success', paymentController.showPaymentSuccess);
-router.get('/payment/failed', paymentController.showPaymentFailed);
-
-// Webhook
-router.post('/webhook/gcash-payment', paymentController.handleGcashWebhook);
+// GCash QR Payment flow
+router.get('/payment/gcash-checkout', paymentController.showGcashPaymentPage);
+router.post('/payment/submit-proof', upload.single('screenshot'), paymentController.submitPaymentProof);
 
 module.exports = router;

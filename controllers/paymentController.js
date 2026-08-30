@@ -1,9 +1,10 @@
 const { Reservation, Court, CourtCategory } = require('../models');
-const paymentService = require('../services/paymentService');
+const { getIO } = require('../config/socket');
 const { formatCurrency, formatTime12 } = require('../utils/dateTimeUtils');
+const { logAudit } = require('../utils/helpers');
 
 const paymentController = {
-  async showGcashMockCheckout(req, res, next) {
+  async showGcashPaymentPage(req, res, next) {
     try {
       const ref = req.query.ref ? req.query.ref.trim() : null;
       if (!ref) {
@@ -17,31 +18,25 @@ const paymentController = {
 
       if (!reservation) {
         return res.status(404).render('pages/error', {
-          title: 'Invalid Payment Session',
-          message: `The reservation with reference "${ref}" could not be found or has expired. Please create a new reservation.`,
+          title: 'Invalid Booking Reference',
+          message: `The reservation with reference "${ref}" was not found. Please create a new booking.`,
           statusCode: 404,
           user: req.session ? req.session.user : null
         });
       }
 
       if (reservation.status === 'CONFIRMED') {
-        return res.redirect(`/payment/success?ref=${reservation.reference_number}`);
+        req.flash('success', 'Your reservation is already confirmed!');
+        return res.redirect(`/reservations/${reservation.reference_number}`);
       }
 
-      if (reservation.status === 'EXPIRED' || (new Date() > new Date(reservation.expires_at))) {
-        reservation.status = 'EXPIRED';
-        await reservation.save();
-        return res.render('pages/payment-failed', {
-          title: 'Payment Expired - PicklePlay Pro',
-          reason: 'Your 15-minute payment session has expired. The time slot has been released for other players.',
-          reservation,
-          user: req.session ? req.session.user : null
-        });
+      if (reservation.status === 'AWAITING_CONFIRMATION') {
+        req.flash('success', 'Your payment proof was already submitted and is awaiting admin approval.');
+        return res.redirect(`/reservations/${reservation.reference_number}`);
       }
 
-      res.render('pages/gcash-mock', {
-        title: 'GCash Secure Checkout',
-        layout: false,
+      res.render('pages/gcash-payment', {
+        title: 'GCash QR Payment - 3KS Pickleball Playground',
         reservation,
         formatCurrency,
         formatTime12,
@@ -52,83 +47,56 @@ const paymentController = {
     }
   },
 
-  async processGcashMockPayment(req, res, next) {
+  async submitPaymentProof(req, res, next) {
     try {
-      const { reference_number, gcash_mobile, simulate_failure } = req.body;
+      const { reference_number, gcash_reference_no } = req.body;
       const ref = reference_number ? reference_number.trim() : '';
 
-      if (simulate_failure === 'true') {
-        return res.render('pages/payment-failed', {
-          title: 'Payment Unsuccessful',
-          reason: 'The transaction was cancelled or declined by GCash simulator.',
-          reservation: { reference_number: ref },
-          user: req.session ? req.session.user : null
-        });
-      }
-
-      const txnId = `GCASH-PAY-${Date.now()}`;
-      await paymentService.processPaymentSuccess(ref, txnId, 'GCASH');
-
-      res.redirect(`/payment/success?ref=${ref}`);
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async handleGcashWebhook(req, res) {
-    try {
-      const signature = req.headers['x-gcash-signature'] || req.headers['x-paymongo-signature'];
-      const isValid = paymentService.verifyWebhookSignature(signature, req.body);
-
-      if (!isValid) {
-        return res.status(401).json({ success: false, error: 'Invalid webhook signature' });
-      }
-
-      const { reference_number, transaction_id, status } = req.body;
-      const ref = reference_number ? reference_number.trim() : '';
-
-      if (status === 'SUCCESS' || status === 'PAID' || status === 'CONFIRMED') {
-        await paymentService.processPaymentSuccess(ref, transaction_id, 'GCASH_WEBHOOK');
-      }
-
-      res.json({ success: true, message: 'Webhook processed successfully' });
-    } catch (err) {
-      console.error('[Webhook Error]:', err.message);
-      res.status(500).json({ success: false, error: err.message });
-    }
-  },
-
-  async showPaymentSuccess(req, res, next) {
-    try {
-      const ref = req.query.ref ? req.query.ref.trim() : null;
       const reservation = await Reservation.findOne({
         where: { reference_number: ref },
-        include: [{ model: Court, as: 'court', include: [{ model: CourtCategory, as: 'category' }] }]
+        include: [{ model: Court, as: 'court' }]
       });
 
       if (!reservation) {
-        return res.redirect('/');
+        req.flash('error', 'Reservation not found.');
+        return res.redirect('/reservations');
       }
 
-      res.render('pages/payment-success', {
-        title: 'Payment Successful! - PicklePlay Pro',
-        reservation,
-        formatCurrency,
-        formatTime12,
-        user: req.session ? req.session.user : null
+      reservation.gcash_reference_no = gcash_reference_no ? gcash_reference_no.trim() : null;
+      if (req.file) {
+        reservation.payment_screenshot = `/uploads/courts/${req.file.filename}`;
+      }
+      reservation.status = 'AWAITING_CONFIRMATION';
+      await reservation.save();
+
+      await logAudit('PAYMENT_PROOF_SUBMITTED', {
+        referenceNumber: reservation.reference_number,
+        court: reservation.court ? reservation.court.display_name : 'Court',
+        gcashRef: reservation.gcash_reference_no,
+        amount: reservation.total_amount
       });
+
+      // Real-time broadcast to Admin
+      try {
+        const io = getIO();
+        io.emit('payment_submitted_for_approval', {
+          reference: reservation.reference_number,
+          courtName: reservation.court ? reservation.court.display_name : 'Court',
+          playerName: reservation.user_name,
+          date: reservation.reservation_date,
+          time: reservation.start_time,
+          amount: reservation.total_amount,
+          gcashRef: reservation.gcash_reference_no
+        });
+      } catch (socketErr) {
+        console.warn('Socket broadcast warning:', socketErr.message);
+      }
+
+      req.flash('success', 'GCash payment proof submitted successfully! The admin will verify and confirm your slot.');
+      res.redirect(`/reservations/${reservation.reference_number}`);
     } catch (err) {
       next(err);
     }
-  },
-
-  async showPaymentFailed(req, res) {
-    res.render('pages/payment-failed', {
-      title: 'Payment Failed',
-      reason: req.query.reason || 'Payment could not be completed at this time.',
-      reservation: { reference_number: req.query.ref || 'N/A' },
-      user: req.session ? req.session.user : null
-    });
   }
 };
 

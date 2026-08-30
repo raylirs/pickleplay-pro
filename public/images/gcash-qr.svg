@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480" width="100%" height="100%">
+  <defs>
+    <linearGradient id="gcashGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#005ce6" />
+      <stop offset="100%" stop-color="#003d99" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer Card -->
+  <rect width="400" height="480" rx="24" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+  
+  <!-- Header -->
+  <path d="M 0 24 Q 0 0 24 0 L 376 0 Q 400 0 400 24 L 400 90 L 0 90 Z" fill="url(#gcashGrad)" />
+  <text x="200" y="45" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">GCash QR Payment</text>
+  <text x="200" y="70" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="13" fill="#99ccff" text-anchor="middle">Scan to Pay 3KS Pickleball Playground</text>
+
+  <!-- QR Frame -->
+  <rect x="50" y="110" width="300" height="300" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+  
+  <!-- QR Code Graphics Simulation -->
+  <!-- Top-Left Target -->
+  <rect x="75" y="135" width="65" height="65" rx="8" fill="#005ce6" />
+  <rect x="87" y="147" width="41" height="41" rx="4" fill="#ffffff" />
+  <rect x="96" y="156" width="23" height="23" rx="2" fill="#005ce6" />
+  
+  <!-- Top-Right Target -->
+  <rect x="260" y="135" width="65" height="65" rx="8" fill="#005ce6" />
+  <rect x="272" y="147" width="41" height="41" rx="4" fill="#ffffff" />
+  <rect x="281" y="156" width="23" height="23" rx="2" fill="#005ce6" />
+
+  <!-- Bottom-Left Target -->
+  <rect x="75" y="320" width="65" height="65" rx="8" fill="#005ce6" />
+  <rect x="87" y="332" width="41" height="41" rx="4" fill="#ffffff" />
+  <rect x="96" y="341" width="23" height="23" rx="2" fill="#005ce6" />
+
+  <!-- Center Icon -->
+  <circle cx="200" cy="260" r="28" fill="#005ce6" />
+  <text x="200" y="267" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">G</text>
+
+  <!-- Decorative QR Data Dots Matrix -->
+  <rect x="155" y="135" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="180" y="135" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="210" y="135" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="230" y="135" width="16" height="16" rx="3" fill="#1e293b"/>
+
+  <rect x="155" y="160" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="190" y="160" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="230" y="160" width="16" height="16" rx="3" fill="#1e293b"/>
+
+  <rect x="155" y="185" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="180" y="185" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="210" y="185" width="16" height="16" rx="3" fill="#1e293b"/>
+
+  <rect x="75" y="220" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="100" y="220" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="125" y="220" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="260" y="220" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="285" y="220" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="310" y="220" width="16" height="16" rx="3" fill="#1e293b"/>
+
+  <rect x="75" y="250" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="105" y="250" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="285" y="250" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="310" y="250" width="16" height="16" rx="3" fill="#1e293b"/>
+
+  <rect x="75" y="280" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="120" y="280" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="260" y="280" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="290" y="280" width="16" height="16" rx="3" fill="#1e293b"/>
+
+  <rect x="155" y="320" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="190" y="320" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="230" y="320" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="260" y="320" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="290" y="320" width="16" height="16" rx="3" fill="#1e293b"/>
+
+  <rect x="155" y="350" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="180" y="350" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="210" y="350" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="250" y="350" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="280" y="350" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="310" y="350" width="16" height="16" rx="3" fill="#1e293b"/>
+
+  <rect x="155" y="375" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="190" y="375" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="220" y="375" width="16" height="16" rx="3" fill="#1e293b"/>
+  <rect x="260" y="375" width="16" height="16" rx="3" fill="#1e293b"/>
+
+  <!-- Footer Merchant Details -->
+  <text x="200" y="435" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">3KS PICKLEBALL PLAYGROUND</text>
+  <text x="200" y="455" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="12" fill="#64748b" text-anchor="middle">Account: 0917-800-3577 (Admin GCash)</text>
+</svg>

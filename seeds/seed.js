@@ -18,36 +18,64 @@ async function seedDatabase() {
         password_hash: passwordHash,
         role: 'admin'
       });
-      console.log('[Seed] Admin user created: ' + adminUsername + ' / ' + adminPassword);
+      console.log('[Seed] Admin user created: ' + adminUsername);
     } else {
       console.log('[Seed] Admin user ' + adminUsername + ' already exists.');
     }
 
-    // 2. Seed 3KS Pickleball Playground 4 Courts if empty or update
-    const existingCategory = await CourtCategory.findOne({ where: { name: '3KS Pickleball Playground' } });
-    if (!existingCategory) {
-      // Clear placeholder categories if needed or create 3KS
-      const cat = await CourtCategory.create({
+    // 2. Clean up any dummy/placeholder categories and ensure ONLY 3KS Playground exists
+    const dummyCategories = await CourtCategory.findAll({
+      where: {
+        name: ['Grand Championship Court (Indoor AC)', 'Pro Tournament Arena (Covered)', 'Sunset Open Arena (Outdoor)']
+      }
+    });
+
+    for (const dummy of dummyCategories) {
+      await Court.destroy({ where: { category_id: dummy.id } });
+      await dummy.destroy();
+      console.log(`[Seed] Removed dummy category: ${dummy.name}`);
+    }
+
+    // Ensure 3KS Pickleball Playground exists with 4 courts
+    let threeKsCat = await CourtCategory.findOne({ where: { name: '3KS Pickleball Playground' } });
+    if (!threeKsCat) {
+      threeKsCat = await CourtCategory.create({
         name: '3KS Pickleball Playground',
         description: 'Championship covered arena with 4 tournament-grade pickleball courts, 5M center walkway, 2 dressing rooms, player lounge, and coffee shop / mini store.',
         price_per_hour: 350.00,
         total_courts: 4,
         image_url: '/images/3ks-playground.jpg'
       });
+    } else {
+      threeKsCat.price_per_hour = 350.00;
+      threeKsCat.total_courts = 4;
+      threeKsCat.image_url = '/images/3ks-playground.jpg';
+      await threeKsCat.save();
+    }
 
-      for (let i = 1; i <= 4; i++) {
+    // Ensure Courts 1, 2, 3, 4 exist for 3KS Playground
+    for (let i = 1; i <= 4; i++) {
+      const existingCourt = await Court.findOne({
+        where: {
+          category_id: threeKsCat.id,
+          court_number: i
+        }
+      });
+
+      if (!existingCourt) {
         await Court.create({
-          category_id: cat.id,
+          category_id: threeKsCat.id,
           court_number: i,
           display_name: 'Court ' + i,
           is_active: true
         });
+      } else {
+        existingCourt.display_name = 'Court ' + i;
+        await existingCourt.save();
       }
-      console.log('[Seed] Created 3KS Pickleball Playground with Courts 1, 2, 3, and 4 @ ₱350/hr.');
-    } else {
-      console.log('[Seed] 3KS Pickleball Playground already exists.');
     }
 
+    console.log('[Seed] 3KS Pickleball Playground synchronized with 4 courts @ ₱350/hr.');
     console.log('[Seed] Database initialization completed successfully.');
   } catch (err) {
     console.error('[Seed Error]:', err);
