@@ -9,13 +9,13 @@ const { logAudit } = require('../utils/helpers');
 class PaymentService {
   constructor() {
     this.apiKey = process.env.GCASH_API_KEY || 'mock_gcash_key';
-    this.baseUrl = process.env.GCASH_BASE_URL || 'http://localhost:3000/mock-gcash';
+    this.baseUrl = process.env.GCASH_BASE_URL || '/mock-gcash';
     this.webhookSecret = process.env.GCASH_WEBHOOK_SECRET || 'mock_secret';
-    this.appUrl = process.env.APP_URL || 'http://localhost:3000';
   }
 
   async createPaymentIntent(reservation) {
-    const paymentUrl = `${this.appUrl}/payment/gcash-checkout?ref=${reservation.reference_number}`;
+    // Use relative path so it seamlessly works on both localhost and cloud (Render/Supabase)
+    const paymentUrl = `/payment/gcash-checkout?ref=${reservation.reference_number}`;
     const transactionId = `GCASH-TXN-${Date.now()}-${reservation.id}`;
 
     return {
@@ -40,8 +40,9 @@ class PaymentService {
   }
 
   async processPaymentSuccess(referenceNumber, transactionId = null, provider = 'GCASH') {
+    const ref = referenceNumber ? referenceNumber.trim() : '';
     const reservation = await Reservation.findOne({
-      where: { reference_number: referenceNumber },
+      where: { reference_number: ref },
       include: [{ model: Court, as: 'court', include: [{ model: CourtCategory, as: 'category' }] }]
     });
 
