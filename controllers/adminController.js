@@ -833,6 +833,71 @@ const adminController = {
     } catch (err) {
       next(err);
     }
+  },
+
+  async showFacebookSubscribers(req, res, next) {
+    try {
+      const { getSetting } = require('../services/facebookService');
+      const adminPsid = await getSetting('fb_admin_psid');
+      const pageName = await getSetting('fb_page_name');
+
+      const boundSubscribers = await Reservation.findAll({
+        where: {
+          fb_psid: { [Op.ne]: null }
+        },
+        order: [['updated_at', 'DESC']]
+      });
+
+      res.render('admin/facebook-subscribers', {
+        title: 'Bound Messenger Users - 3KS Playground',
+        layout: 'layouts/admin',
+        user: req.session.user,
+        boundSubscribers,
+        adminPsid,
+        pageName,
+        error: req.flash('error'),
+        success: req.flash('success')
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async sendDirectMessage(req, res, next) {
+    try {
+      const { sendMessengerNotify } = require('../services/facebookService');
+      const { psid, message } = req.body;
+
+      if (!psid || !message) {
+        req.flash('error', 'Recipient PSID and message are required.');
+        return res.redirect(req.headers.referer || '/admin/facebook/subscribers');
+      }
+
+      const sent = await sendMessengerNotify(psid.trim(), message.trim());
+      if (sent) {
+        req.flash('success', 'Direct Messenger alert sent successfully!');
+      } else {
+        req.flash('error', 'Could not deliver message. User might need to interact with the page first.');
+      }
+      res.redirect(req.headers.referer || '/admin/facebook/subscribers');
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async unbindSubscriber(req, res, next) {
+    try {
+      const id = req.params.id;
+      const reservation = await Reservation.findByPk(id);
+      if (reservation) {
+        reservation.fb_psid = null;
+        await reservation.save();
+        req.flash('success', `Unlinked Messenger for reservation ${reservation.reference_number}.`);
+      }
+      res.redirect(req.headers.referer || '/admin/facebook/subscribers');
+    } catch (err) {
+      next(err);
+    }
   }
 };
 

@@ -1,0 +1,207 @@
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-2 border-bottom">
+    <div>
+      <h2 class="fw-bold text-dark mb-1">
+        <i class="bi bi-people-fill text-primary me-2"></i>Connected & Bound Messenger Users
+      </h2>
+      <p class="text-secondary small mb-0">List of players and administrators connected to 3KS Reservation for real-time Messenger alerts and digital passes</p>
+    </div>
+    <div class="mt-3 mt-md-0 d-flex gap-2">
+      <a href="/admin/facebook" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+        <i class="bi bi-gear-fill me-1"></i>Meta Settings
+      </a>
+      <button class="btn btn-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#broadcastModal">
+        <i class="bi bi-broadcast me-1"></i>Send Direct Message
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+        <div class="d-flex align-items-center">
+          <div class="badge bg-primary-subtle text-primary rounded-circle p-3 me-3 fs-5">
+            <i class="bi bi-messenger"></i>
+          </div>
+          <div>
+            <span class="text-secondary small d-block">Bound Players / Bookings</span>
+            <h3 class="fw-bold text-dark mb-0"><%= boundSubscribers.length %></h3>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+        <div class="d-flex align-items-center">
+          <div class="badge bg-success-subtle text-success rounded-circle p-3 me-3 fs-5">
+            <i class="bi bi-shield-check"></i>
+          </div>
+          <div>
+            <span class="text-secondary small d-block">Admin PSID (You)</span>
+            <h6 class="fw-bold text-dark font-monospace mb-0"><%= adminPsid ? adminPsid.slice(0, 8) + '...' : 'Configured' %></h6>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+        <div class="d-flex align-items-center">
+          <div class="badge bg-info-subtle text-info rounded-circle p-3 me-3 fs-5">
+            <i class="bi bi-building-check"></i>
+          </div>
+          <div>
+            <span class="text-secondary small d-block">Connected Page</span>
+            <h6 class="fw-bold text-dark mb-0"><%= pageName || '3KS Reservation' %></h6>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subscribers Table -->
+  <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+      <h6 class="fw-bold text-dark mb-0">Active Bound Users & Reservations</h6>
+      <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1 small">Live Sync</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light small text-uppercase">
+          <tr>
+            <th>Player / User</th>
+            <th>Contact Number</th>
+            <th>Booking Ref</th>
+            <th>Messenger PSID</th>
+            <th>Date Linked</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Admin User Profile Row -->
+          <% if (adminPsid) { %>
+            <tr class="table-primary-subtle">
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="badge bg-primary text-white rounded-circle p-2 me-2">
+                    <i class="bi bi-person-badge-fill"></i>
+                  </div>
+                  <div>
+                    <strong class="text-dark">Ryan Kristoffer Liray (Admin)</strong>
+                    <span class="badge bg-primary ms-1 small" style="font-size: 10px;">Facility Owner</span>
+                  </div>
+                </div>
+              </td>
+              <td><span class="small text-muted">Master Admin</span></td>
+              <td><span class="badge bg-secondary">All Facility Alerts</span></td>
+              <td><code class="text-primary small"><%= adminPsid %></code></td>
+              <td><span class="small text-success fw-bold">Active & Verified</span></td>
+              <td class="text-end">
+                <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" onclick="openDirectMessageModal('<%= adminPsid %>', 'Ryan Kristoffer Liray')">
+                  <i class="bi bi-send me-1"></i>Send Alert
+                </button>
+              </td>
+            </tr>
+          <% } %>
+
+          <!-- Player Bookings Rows -->
+          <% if (boundSubscribers && boundSubscribers.length > 0) { %>
+            <% boundSubscribers.forEach(function(res) { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="badge bg-success-subtle text-success rounded-circle p-2 me-2">
+                      <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div>
+                      <strong class="text-dark"><%= res.user_name %></strong>
+                      <% if (res.user_email) { %>
+                        <div class="text-muted small" style="font-size: 11px;"><%= res.user_email %></div>
+                      <% } %>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="small text-dark font-monospace"><%= res.user_contact %></span>
+                </td>
+                <td>
+                  <a href="/reservations/<%= res.reference_number %>" target="_blank" class="fw-bold font-monospace text-primary text-decoration-none">
+                    <%= res.reference_number %>
+                  </a>
+                  <span class="badge <%= res.status === 'CONFIRMED' ? 'bg-success' : 'bg-warning text-dark' %> ms-1" style="font-size: 10px;">
+                    <%= res.status %>
+                  </span>
+                </td>
+                <td>
+                  <code class="text-dark small"><%= res.fb_psid %></code>
+                </td>
+                <td class="small text-secondary">
+                  <%= new Date(res.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                </td>
+                <td class="text-end">
+                  <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 me-1" onclick="openDirectMessageModal('<%= res.fb_psid %>', '<%= res.user_name %>')">
+                    <i class="bi bi-chat-dots me-1"></i>Message
+                  </button>
+                  <form action="/admin/facebook/subscribers/<%= res.id %>/unbind" method="POST" class="d-inline" onsubmit="return confirm('Unbind Messenger for reservation <%= res.reference_number %>?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Unbind">
+                      <i class="bi bi-x-circle"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            <% }); %>
+          <% } %>
+
+          <% if (!adminPsid && (!boundSubscribers || boundSubscribers.length === 0)) { %>
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted small">
+                <i class="bi bi-info-circle fs-4 d-block mb-2 text-secondary"></i>
+                No players have linked their Messenger yet. When players scan their booking QR code, they will automatically appear here!
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Direct Message Modal -->
+<div class="modal fade" id="directMessageModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content rounded-4">
+      <form action="/admin/facebook/send-direct" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Send Direct Messenger Alert</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="psid" id="modalPsid">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Recipient</label>
+            <input type="text" id="modalRecipientName" class="form-control rounded-3" readonly disabled>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Message Content <span class="text-danger">*</span></label>
+            <textarea name="message" class="form-control rounded-3" rows="4" placeholder="Type your message or schedule announcement..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary rounded-pill fw-bold px-4">
+            <i class="bi bi-send-fill me-1"></i>Send to Messenger
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openDirectMessageModal(psid, name) {
+  document.getElementById('modalPsid').value = psid;
+  document.getElementById('modalRecipientName').value = name + ' (PSID: ' + psid + ')';
+  const modal = new bootstrap.Modal(document.getElementById('directMessageModal'));
+  modal.show();
+}
+</script>
