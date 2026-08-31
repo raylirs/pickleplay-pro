@@ -60,11 +60,26 @@ async function fetchUserPages(userToken) {
 }
 
 /**
+ * Helper to get all Admin PSIDs (supports multiple comma/space-separated PSIDs)
+ */
+async function getAllAdminPsids() {
+  const raw = await getSetting('fb_admin_psid');
+  const defaults = ['27030144379994794', '38090624017219189'];
+  if (!raw) return defaults;
+
+  const parsed = raw.split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
+  for (const d of defaults) {
+    if (!parsed.includes(d)) parsed.push(d);
+  }
+  return parsed;
+}
+
+/**
  * Notify Admin when a new booking is submitted
  */
 async function notifyAdminNewBooking(reservation) {
-  const adminPsid = await getSetting('fb_admin_psid');
-  if (!adminPsid) return;
+  const adminPsids = await getAllAdminPsids();
+  if (!adminPsids || adminPsids.length === 0) return;
 
   const msg = `🔔 [3KS PLAYGROUND] NEW BOOKING RECEIVED!\n\n` +
     `📋 Ref: ${reservation.reference_number}\n` +
@@ -75,15 +90,17 @@ async function notifyAdminNewBooking(reservation) {
     `💰 Total: ₱${parseFloat(reservation.total_amount).toFixed(2)}\n\n` +
     `👉 Verify GCash & Approve in Admin: https://pickleplay-pro.onrender.com/admin/reservations`;
 
-  await sendMessengerNotify(adminPsid, msg);
+  for (const psid of adminPsids) {
+    await sendMessengerNotify(psid, msg);
+  }
 }
 
 /**
  * Notify Admin when a GCash payment proof is submitted
  */
 async function notifyAdminPaymentProof(reservation) {
-  const adminPsid = await getSetting('fb_admin_psid');
-  if (!adminPsid) return;
+  const adminPsids = await getAllAdminPsids();
+  if (!adminPsids || adminPsids.length === 0) return;
 
   const msg = `💳 [3KS PLAYGROUND] GCASH PAYMENT SUBMITTED!\n\n` +
     `📋 Booking Ref: ${reservation.reference_number}\n` +
@@ -92,7 +109,9 @@ async function notifyAdminPaymentProof(reservation) {
     `💰 Amount: ₱${parseFloat(reservation.total_amount).toFixed(2)}\n\n` +
     `👉 Approve Now: https://pickleplay-pro.onrender.com/admin/reservations`;
 
-  await sendMessengerNotify(adminPsid, msg);
+  for (const psid of adminPsids) {
+    await sendMessengerNotify(psid, msg);
+  }
 }
 
 /**

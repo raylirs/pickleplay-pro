@@ -103,31 +103,52 @@
           </tr>
         </thead>
         <tbody>
-          <!-- Admin User Profile Row -->
-          <% if (adminPsid) { %>
-            <tr class="table-primary-subtle">
-              <td>
-                <div class="d-flex align-items-center">
-                  <div class="badge bg-primary text-white rounded-circle p-2 me-2">
-                    <i class="bi bi-person-badge-fill"></i>
-                  </div>
-                  <div>
-                    <strong class="text-dark">Ryan Kristoffer Liray (Admin)</strong>
-                    <span class="badge bg-primary ms-1 small" style="font-size: 10px;">Facility Owner</span>
-                  </div>
+          <!-- Admin User Profile Rows (Ryan & Karlo) -->
+          <tr class="table-primary-subtle">
+            <td>
+              <div class="d-flex align-items-center">
+                <div class="badge bg-primary text-white rounded-circle p-2 me-2">
+                  <i class="bi bi-person-badge-fill"></i>
                 </div>
-              </td>
-              <td><span class="small text-muted">Master Admin</span></td>
-              <td><span class="badge bg-secondary">All Facility Alerts</span></td>
-              <td><code class="text-primary small"><%= adminPsid %></code></td>
-              <td><span class="small text-success fw-bold">Active & Verified</span></td>
-              <td class="text-end">
-                <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" onclick="openDirectMessageModal('<%= adminPsid %>', 'Ryan Kristoffer Liray')">
-                  <i class="bi bi-send me-1"></i>Send Alert
-                </button>
-              </td>
-            </tr>
-          <% } %>
+                <div>
+                  <strong class="text-dark">Ryan Kristoffer Liray (Admin)</strong>
+                  <span class="badge bg-primary ms-1 small" style="font-size: 10px;">Facility Owner</span>
+                </div>
+              </div>
+            </td>
+            <td><span class="small text-muted">Master Admin</span></td>
+            <td><span class="badge bg-success"><i class="bi bi-bell-fill me-1"></i>All Facility Alerts</span></td>
+            <td><code class="text-primary small">27030144379994794</code></td>
+            <td><span class="small text-success fw-bold">Active & Verified</span></td>
+            <td class="text-end">
+              <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" onclick="openDirectMessageModal('27030144379994794', 'Ryan Kristoffer Liray')">
+                <i class="bi bi-send me-1"></i>Send Alert
+              </button>
+            </td>
+          </tr>
+
+          <tr class="table-primary-subtle">
+            <td>
+              <div class="d-flex align-items-center">
+                <div class="badge bg-info text-white rounded-circle p-2 me-2">
+                  <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <div>
+                  <strong class="text-dark">Karlo (Admin)</strong>
+                  <span class="badge bg-info text-dark ms-1 small" style="font-size: 10px;">Co-Admin / Merchant</span>
+                </div>
+              </div>
+            </td>
+            <td><span class="small text-muted">0977-013-5041</span></td>
+            <td><span class="badge bg-success"><i class="bi bi-bell-fill me-1"></i>All Facility Alerts</span></td>
+            <td><code class="text-info small">38090624017219189</code></td>
+            <td><span class="small text-success fw-bold">Active & Verified</span></td>
+            <td class="text-end">
+              <button type="button" class="btn btn-sm btn-info text-dark rounded-pill px-3 fw-semibold" onclick="openDirectMessageModal('38090624017219189', 'Karlo')">
+                <i class="bi bi-send me-1"></i>Send Alert
+              </button>
+            </td>
+          </tr>
 
           <!-- Player Bookings Rows -->
           <% if (boundSubscribers && boundSubscribers.length > 0) { %>

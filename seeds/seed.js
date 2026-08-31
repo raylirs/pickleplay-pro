@@ -138,8 +138,8 @@ async function seedDatabase() {
 
     await SystemSetting.upsert({
       key: 'fb_admin_psid',
-      value: '27030144379994794',
-      description: 'Admin Facebook Messenger Profile PSID'
+      value: '27030144379994794, 38090624017219189',
+      description: 'Admin Facebook Messenger Profile PSIDs (Ryan & Karlo)'
     });
 
     console.log('[Seed] 3KS Pickleball Playground synchronized with 4 courts, GCash QR, and Facebook Meta settings.');
