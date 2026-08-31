@@ -103,7 +103,38 @@ async function seedDatabase() {
       description: 'Merchant GCash Mobile Number'
     });
 
-    console.log('[Seed] 3KS Pickleball Playground synchronized with 4 courts @ ₱350/hr and official GCash QR.');
+    // Seed Facebook Meta credentials
+    await SystemSetting.upsert({
+      key: 'fb_app_id',
+      value: '1573381463838687',
+      description: 'Facebook Meta App ID'
+    });
+
+    await SystemSetting.upsert({
+      key: 'fb_app_secret',
+      value: '3bf7fffdea2dc18e4327c1b1888f9452',
+      description: 'Facebook Meta App Secret'
+    });
+
+    await SystemSetting.upsert({
+      key: 'fb_page_id',
+      value: '1224751467396635',
+      description: 'Facebook Page ID (3KS Reservation)'
+    });
+
+    await SystemSetting.upsert({
+      key: 'fb_page_name',
+      value: '3KS Reservation',
+      description: 'Facebook Page Name'
+    });
+
+    await SystemSetting.upsert({
+      key: 'fb_page_token',
+      value: 'EAAWWZB2sZCj98BSW2ZCkGHDBvykbSk8s3BJWfw5zPUieMprBj1sNCZAQKSkvaZCoRqS6m8EZCbDXhYzEUoPtODwNJRnzVRAgMW9DwYRvt8hkY8F3Ks50vG5NTSP50x3gegaoo2BbO7VgWvcigibmwKJOjEple7ebZB7BIrMJqHCStv5marJbnjL5u9oWid4ASXt47n1fFkZB',
+      description: 'Facebook Page Access Token'
+    });
+
+    console.log('[Seed] 3KS Pickleball Playground synchronized with 4 courts, GCash QR, and Facebook Meta settings.');
     console.log('[Seed] Database initialization completed successfully.');
   } catch (err) {
     console.error('[Seed Error]:', err);
