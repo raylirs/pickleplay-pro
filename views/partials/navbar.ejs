@@ -45,20 +45,31 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <div class="badge bg-primary-subtle text-primary rounded-circle p-3 mb-3 fs-3">
+        <div class="badge bg-primary-subtle text-primary rounded-circle p-3 mb-2 fs-3">
           <i class="bi bi-messenger"></i>
         </div>
         <h4 class="fw-bold text-dark mb-1">Connect with 3KS on Messenger</h4>
-        <p class="small text-secondary mb-3">Scan this QR code with your phone camera or click below to chat with 3KS Reservation for real-time passes and schedule reminders!</p>
+        <p class="small text-secondary mb-3">Scan this QR code with your phone camera or tap below to open Messenger chat with <strong>3KS Reservation</strong>.</p>
 
         <div class="p-3 bg-light rounded-4 border d-inline-block mb-3 shadow-sm">
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https://m.me/1224751467396635" alt="3KS Messenger QR" width="180" height="180" class="rounded-3">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https://m.me/1224751467396635" alt="3KS Messenger QR" width="170" height="170" class="rounded-3">
           <span class="small d-block text-muted mt-2" style="font-size: 11px;">https://m.me/1224751467396635</span>
         </div>
 
-        <div>
-          <a href="https://m.me/1224751467396635" target="_blank" class="btn btn-primary btn-lg rounded-pill fw-bold w-100 mb-2">
+        <div class="bg-primary-subtle text-dark p-3 rounded-3 mb-3 text-start small border border-primary-subtle">
+          <div class="fw-bold mb-1"><i class="bi bi-info-circle-fill text-primary me-1"></i>How to link your booking:</div>
+          <ul class="mb-0 ps-3 text-secondary" style="font-size: 12px;">
+            <li>If you have booked a court, send your <strong>Booking Reference Number</strong> (e.g. <code>3KS2026A1B2</code>) or your <strong>6-digit Quick Code</strong> in the chat.</li>
+            <li>Your Messenger will be instantly linked to receive digital passes and live schedule updates!</li>
+          </ul>
+        </div>
+
+        <div class="d-flex flex-column gap-2">
+          <a href="https://m.me/1224751467396635" target="_blank" class="btn btn-primary btn-lg rounded-pill fw-bold w-100">
             <i class="bi bi-chat-dots-fill me-2"></i>Open Chat in Messenger
+          </a>
+          <a href="/reservations/lookup" class="btn btn-outline-secondary btn-sm rounded-pill">
+            <i class="bi bi-search me-1"></i>Lookup My Booking Reference
           </a>
         </div>
       </div>
