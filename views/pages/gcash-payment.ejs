@@ -77,17 +77,18 @@
               <input type="hidden" name="reference_number" value="<%= reservation.reference_number %>">
               
               <div class="mb-3">
-                <label class="form-label small fw-bold text-dark">GCash Reference No. <span class="text-muted small">(Optional)</span></label>
+                <label class="form-label small fw-bold text-dark">GCash Reference No. <span class="text-danger">*</span></label>
                 <div class="input-group">
                   <span class="input-group-text bg-light"><i class="bi bi-receipt"></i></span>
-                  <input type="text" name="gcash_reference_no" class="form-control" placeholder="e.g. 1002 8394 1928 (Optional)">
+                  <input type="text" name="gcash_reference_no" class="form-control" placeholder="e.g. 1002 8394 1928" required>
                 </div>
-                <div class="form-text small">Optional reference number from your GCash confirmation receipt.</div>
+                <div class="form-text small">Enter the official reference number from your GCash payment receipt.</div>
               </div>
 
               <div class="mb-4">
-                <label class="form-label small fw-bold text-dark">Payment Screenshot <span class="text-muted small">(Optional)</span></label>
-                <input type="file" name="screenshot" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp">
+                <label class="form-label small fw-bold text-dark">Payment Screenshot <span class="text-danger">*</span></label>
+                <input type="file" name="screenshot" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp" required>
+                <div class="form-text small">Upload your GCash confirmation screenshot as proof of payment.</div>
               </div>
 
               <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold rounded-pill shadow-sm" style="background-color: #005ce6; border-color: #005ce6;">

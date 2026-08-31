@@ -69,10 +69,18 @@ const paymentController = {
         return res.redirect('/reservations');
       }
 
-      reservation.gcash_reference_no = gcash_reference_no ? gcash_reference_no.trim() : null;
-      if (req.file) {
-        reservation.payment_screenshot = `/uploads/courts/${req.file.filename}`;
+      if (!gcash_reference_no || !gcash_reference_no.trim()) {
+        req.flash('error', 'GCash Reference Number is required.');
+        return res.redirect(`/payment/gcash-checkout?ref=${ref}`);
       }
+
+      if (!req.file) {
+        req.flash('error', 'Please upload your GCash payment screenshot as proof of payment.');
+        return res.redirect(`/payment/gcash-checkout?ref=${ref}`);
+      }
+
+      reservation.gcash_reference_no = gcash_reference_no.trim();
+      reservation.payment_screenshot = `/uploads/courts/${req.file.filename}`;
       reservation.status = 'AWAITING_CONFIRMATION';
       await reservation.save();
 
