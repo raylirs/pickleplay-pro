@@ -130,13 +130,37 @@ async function notifyAdminNewBooking(reservation) {
 }
 
 /**
- * Notify Admin when a GCash payment proof is submitted (with 1-Click Interactive Buttons)
+ * Notify Admin when a GCash payment proof is submitted (with Screenshot Image & 1-Click Interactive Buttons)
  */
 async function notifyAdminPaymentProof(reservation) {
   const adminPsids = await getAllAdminPsids();
   if (!adminPsids || adminPsids.length === 0) return;
 
-  const text = `💳 [3KS] GCASH PAYMENT SUBMITTED!\n\n` +
+  const baseUrl = 'https://pickleplay-pro.onrender.com';
+
+  // 1. If screenshot is uploaded, send the image attachment to Admin first
+  if (reservation.payment_screenshot) {
+    const screenshotUrl = reservation.payment_screenshot.startsWith('http')
+      ? reservation.payment_screenshot
+      : `${baseUrl}${reservation.payment_screenshot}`;
+
+    const imagePayload = {
+      attachment: {
+        type: 'image',
+        payload: {
+          url: screenshotUrl,
+          is_reusable: true
+        }
+      }
+    };
+
+    for (const psid of adminPsids) {
+      await sendMessengerNotify(psid, imagePayload);
+    }
+  }
+
+  // 2. Send transaction details and 1-Click Action Buttons
+  const text = `💳 [3KS] GCASH PROOF SUBMITTED!\n\n` +
     `📋 Ref: ${reservation.reference_number}\n` +
     `👤 Player: ${reservation.user_name}\n` +
     `🧾 GCash Ref: ${reservation.gcash_reference_no || 'Attached Screenshot'}\n` +
@@ -161,7 +185,7 @@ async function notifyAdminPaymentProof(reservation) {
           },
           {
             type: 'web_url',
-            url: 'https://pickleplay-pro.onrender.com/admin/reservations',
+            url: `${baseUrl}/admin/reservations`,
             title: 'View Booking'
           }
         ]
