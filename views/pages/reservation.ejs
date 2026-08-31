@@ -54,6 +54,12 @@
               <input type="hidden" name="start_time" id="selectedStartTime" value="<%= initialSlot %>">
               <input type="hidden" name="total_hours" id="totalHoursInput" value="1">
               
+              <div class="d-flex flex-wrap align-items-center justify-content-center gap-3 mt-2 pt-1 border-top" style="font-size: 11px;">
+                <div class="d-flex align-items-center"><span class="badge bg-success-subtle text-success border border-success-subtle rounded-circle p-1 me-1"></span> Open</div>
+                <div class="d-flex align-items-center"><span class="badge bg-warning-subtle text-warning border border-warning rounded-circle p-1 me-1"></span> Processing</div>
+                <div class="d-flex align-items-center"><span class="badge bg-secondary-subtle text-secondary border rounded-circle p-1 me-1"></span> Booked</div>
+              </div>
+
               <div class="invalid-feedback d-block small" id="slotFeedback" style="display: none; font-size: 11px;">
                 Please tap at least one available slot.
               </div>

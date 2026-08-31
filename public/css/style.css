@@ -67,6 +67,14 @@ body {
   box-shadow: 0 4px 10px rgba(25, 135, 84, 0.35);
 }
 
+.slot-btn.processing {
+  background-color: #fffbeb !important;
+  border: 1.5px dashed #f59e0b !important;
+  color: #b45309 !important;
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
 .slot-btn.booked {
   background-color: #f1f5f9;
   border: 1px solid #cbd5e1;

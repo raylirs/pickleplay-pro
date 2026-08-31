@@ -91,16 +91,37 @@ document.addEventListener('DOMContentLoaded', () => {
       const isAvailable = slot.isAvailable;
       const isSelected = selectedSlots.has(slot.startTime);
 
+      let statusClass = 'booked';
+      let statusLabel = 'Booked';
+
+      if (isAvailable) {
+        statusClass = 'available';
+        statusLabel = 'Open';
+      } else if (slot.status === 'AWAITING_PAYMENT' || slot.status === 'PENDING') {
+        statusClass = 'processing';
+        statusLabel = 'Processing';
+      } else if (slot.status === 'AWAITING_CONFIRMATION') {
+        statusClass = 'processing';
+        statusLabel = 'Verifying';
+      } else if (slot.status === 'MAINTENANCE') {
+        statusClass = 'booked';
+        statusLabel = 'Closed';
+      }
+
+      if (isSelected) {
+        statusLabel = '✓ Picked';
+      }
+
       const col = document.createElement('div');
       col.className = 'col-4 col-md-3';
 
       const btn = document.createElement('div');
-      btn.className = `slot-btn text-center ${isAvailable ? 'available' : 'booked'} ${isSelected ? 'selected' : ''}`;
+      btn.className = `slot-btn text-center ${statusClass} ${isSelected ? 'selected' : ''}`;
       
       btn.innerHTML = `
         <div class="d-flex flex-column align-items-center">
           <div class="fw-bold" style="font-size: 11px;">${slot.startLabel.replace(':00', '')}</div>
-          <div class="small opacity-75" style="font-size: 9px;">${isSelected ? '✓ Picked' : (isAvailable ? 'Open' : 'Booked')}</div>
+          <div class="small opacity-75" style="font-size: 9px;">${statusLabel}</div>
         </div>
       `;
 
