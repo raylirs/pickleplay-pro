@@ -103,23 +103,36 @@
           </tr>
         </thead>
         <tbody>
-          <!-- Admin User Profile Rows (Ryan & Karlo) -->
-          <tr class="table-primary-subtle">
+          <!-- Admin User Profile Rows (Ryan & Karlo) with Active/Mute Toggle -->
+          <tr class="<%= ryanActive ? 'table-primary-subtle' : 'table-light opacity-75' %>">
             <td>
               <div class="d-flex align-items-center">
-                <div class="badge bg-primary text-white rounded-circle p-2 me-2">
-                  <i class="bi bi-person-badge-fill"></i>
+                <div class="badge <%= ryanActive ? 'bg-primary text-white' : 'bg-secondary text-white' %> rounded-circle p-2 me-2">
+                  <i class="bi <%= ryanActive ? 'bi-person-badge-fill' : 'bi-person-x-fill' %>"></i>
                 </div>
                 <div>
                   <strong class="text-dark">Ryan Kristoffer Liray (Admin)</strong>
-                  <span class="badge bg-primary ms-1 small" style="font-size: 10px;">Facility Owner</span>
+                  <span class="badge <%= ryanActive ? 'bg-primary' : 'bg-secondary' %> ms-1 small" style="font-size: 10px;">Facility Owner</span>
                 </div>
               </div>
             </td>
             <td><span class="small text-muted">Master Admin</span></td>
-            <td><span class="badge bg-success"><i class="bi bi-bell-fill me-1"></i>All Facility Alerts</span></td>
+            <td>
+              <span class="badge <%= ryanActive ? 'bg-success' : 'bg-secondary' %>">
+                <i class="bi <%= ryanActive ? 'bi-bell-fill' : 'bi-bell-slash-fill' %> me-1"></i>
+                <%= ryanActive ? 'All Facility Alerts' : 'Alerts Muted' %>
+              </span>
+            </td>
             <td><code class="text-primary small">27030144379994794</code></td>
-            <td><span class="small text-success fw-bold">Active & Verified</span></td>
+            <td>
+              <form action="/admin/facebook/toggle-admin-recipient" method="POST" class="d-inline">
+                <input type="hidden" name="recipient" value="ryan">
+                <button type="submit" class="btn btn-sm <%= ryanActive ? 'btn-success text-white' : 'btn-outline-secondary' %> rounded-pill px-3 py-0 fw-bold" style="font-size: 11px;">
+                  <i class="bi <%= ryanActive ? 'bi-toggle-on' : 'bi-toggle-off' %> me-1"></i>
+                  <%= ryanActive ? 'Active' : 'Muted / Inactive' %>
+                </button>
+              </form>
+            </td>
             <td class="text-end">
               <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" onclick="openDirectMessageModal('27030144379994794', 'Ryan Kristoffer Liray')">
                 <i class="bi bi-send me-1"></i>Send Alert
@@ -127,22 +140,35 @@
             </td>
           </tr>
 
-          <tr class="table-primary-subtle">
+          <tr class="<%= karloActive ? 'table-primary-subtle' : 'table-light opacity-75' %>">
             <td>
               <div class="d-flex align-items-center">
-                <div class="badge bg-info text-white rounded-circle p-2 me-2">
-                  <i class="bi bi-person-badge-fill"></i>
+                <div class="badge <%= karloActive ? 'bg-info text-white' : 'bg-secondary text-white' %> rounded-circle p-2 me-2">
+                  <i class="bi <%= karloActive ? 'bi-person-badge-fill' : 'bi-person-x-fill' %>"></i>
                 </div>
                 <div>
                   <strong class="text-dark">Karlo (Admin)</strong>
-                  <span class="badge bg-info text-dark ms-1 small" style="font-size: 10px;">Co-Admin / Merchant</span>
+                  <span class="badge <%= karloActive ? 'bg-info text-dark' : 'bg-secondary' %> ms-1 small" style="font-size: 10px;">Co-Admin / Merchant</span>
                 </div>
               </div>
             </td>
             <td><span class="small text-muted">0977-013-5041</span></td>
-            <td><span class="badge bg-success"><i class="bi bi-bell-fill me-1"></i>All Facility Alerts</span></td>
+            <td>
+              <span class="badge <%= karloActive ? 'bg-success' : 'bg-secondary' %>">
+                <i class="bi <%= karloActive ? 'bi-bell-fill' : 'bi-bell-slash-fill' %> me-1"></i>
+                <%= karloActive ? 'All Facility Alerts' : 'Alerts Muted' %>
+              </span>
+            </td>
             <td><code class="text-info small">38090624017219189</code></td>
-            <td><span class="small text-success fw-bold">Active & Verified</span></td>
+            <td>
+              <form action="/admin/facebook/toggle-admin-recipient" method="POST" class="d-inline">
+                <input type="hidden" name="recipient" value="karlo">
+                <button type="submit" class="btn btn-sm <%= karloActive ? 'btn-success text-white' : 'btn-outline-secondary' %> rounded-pill px-3 py-0 fw-bold" style="font-size: 11px;">
+                  <i class="bi <%= karloActive ? 'bi-toggle-on' : 'bi-toggle-off' %> me-1"></i>
+                  <%= karloActive ? 'Active' : 'Muted / Inactive' %>
+                </button>
+              </form>
+            </td>
             <td class="text-end">
               <button type="button" class="btn btn-sm btn-info text-dark rounded-pill px-3 fw-semibold" onclick="openDirectMessageModal('38090624017219189', 'Karlo')">
                 <i class="bi bi-send me-1"></i>Send Alert

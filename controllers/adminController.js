@@ -840,6 +840,8 @@ const adminController = {
       const { getSetting } = require('../services/facebookService');
       const adminPsid = await getSetting('fb_admin_psid');
       const pageName = await getSetting('fb_page_name');
+      const ryanActive = (await getSetting('fb_admin_ryan_active')) !== 'false';
+      const karloActive = (await getSetting('fb_admin_karlo_active')) !== 'false';
 
       const boundSubscribers = await Reservation.findAll({
         where: {
@@ -855,9 +857,32 @@ const adminController = {
         boundSubscribers,
         adminPsid,
         pageName,
+        ryanActive,
+        karloActive,
         error: req.flash('error'),
         success: req.flash('success')
       });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async toggleAdminRecipient(req, res, next) {
+    try {
+      const { getSetting } = require('../services/facebookService');
+      const { recipient } = req.body;
+      const key = recipient === 'karlo' ? 'fb_admin_karlo_active' : 'fb_admin_ryan_active';
+      const current = (await getSetting(key)) !== 'false';
+      const nextState = current ? 'false' : 'true';
+
+      await SystemSetting.upsert({
+        key,
+        value: nextState,
+        description: `Toggle state for ${recipient} Facebook alert notifications`
+      });
+
+      req.flash('success', `${recipient === 'karlo' ? 'Karlo' : 'Ryan'} alert notifications are now ${nextState === 'true' ? 'ACTIVE 🟢' : 'MUTED / INACTIVE ⚪'}.`);
+      res.redirect('/admin/facebook/subscribers');
     } catch (err) {
       next(err);
     }

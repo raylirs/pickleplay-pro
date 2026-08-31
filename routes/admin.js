@@ -40,6 +40,7 @@ router.post('/facebook/fetch-pages', requireAuth, adminController.fetchFacebookP
 router.post('/facebook/connect-page', requireAuth, adminController.connectFacebookPage);
 router.post('/facebook/test-notification', requireAuth, adminController.testFacebookNotification);
 router.post('/facebook/send-direct', requireAuth, adminController.sendDirectMessage);
+router.post('/facebook/toggle-admin-recipient', requireAuth, adminController.toggleAdminRecipient);
 router.post('/facebook/subscribers/:id/unbind', requireAuth, adminController.unbindSubscriber);
 
 // User & Staff Accounts Management

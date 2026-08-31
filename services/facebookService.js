@@ -60,18 +60,26 @@ async function fetchUserPages(userToken) {
 }
 
 /**
- * Helper to get all Admin PSIDs (supports multiple comma/space-separated PSIDs)
+ * Helper to get all Admin PSIDs (supports multiple comma/space-separated PSIDs and active toggle states)
  */
 async function getAllAdminPsids() {
-  const raw = await getSetting('fb_admin_psid');
-  const defaults = ['27030144379994794', '38090624017219189'];
-  if (!raw) return defaults;
+  const ryanActive = (await getSetting('fb_admin_ryan_active')) !== 'false';
+  const karloActive = (await getSetting('fb_admin_karlo_active')) !== 'false';
 
-  const parsed = raw.split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
-  for (const d of defaults) {
-    if (!parsed.includes(d)) parsed.push(d);
+  const activePsids = [];
+  if (ryanActive) activePsids.push('27030144379994794');
+  if (karloActive) activePsids.push('38090624017219189');
+
+  const raw = await getSetting('fb_admin_psid');
+  if (raw) {
+    const parsed = raw.split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
+    for (const p of parsed) {
+      if (p !== '27030144379994794' && p !== '38090624017219189' && !activePsids.includes(p)) {
+        activePsids.push(p);
+      }
+    }
   }
-  return parsed;
+  return activePsids;
 }
 
 /**
