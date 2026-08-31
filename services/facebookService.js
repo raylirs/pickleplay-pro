@@ -160,20 +160,34 @@ async function handleWebhookEvents(req, res) {
       console.log(`[FB Webhook] Received event from PSID ${senderId}: "${incomingText}"`);
 
       if (incomingText) {
-        // Clean text (e.g. "3KS-8492" or "3KS2026A1B2" or "bind 3ks-8492")
-        const cleanedCode = incomingText.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+        // Clean text (normalize spaces, dashes, uppercase)
+        const cleanedText = incomingText.trim().toUpperCase();
+        const compactText = cleanedText.replace(/\s+/g, '').replace(/–|—/g, '-');
+        const digitsOnly = incomingText.replace(/\D/g, '');
 
-        // 1. Search by booking reference or binding_code
-        const { Op } = require('sequelize');
+        const searchConditions = [
+          { reference_number: compactText },
+          { binding_code: compactText },
+          { reference_number: { [Op.like]: `%${compactText}%` } },
+          { binding_code: { [Op.like]: `%${compactText}%` } }
+        ];
+
+        if (digitsOnly.length >= 4) {
+          searchConditions.push({ binding_code: `3KS-${digitsOnly}` });
+          searchConditions.push({ binding_code: { [Op.like]: `%${digitsOnly}%` } });
+          searchConditions.push({ reference_number: { [Op.like]: `%${digitsOnly}%` } });
+        }
+
+        if (digitsOnly.length >= 10) {
+          searchConditions.push({ user_contact: { [Op.like]: `%${digitsOnly}%` } });
+        }
+
+        // 1. Search by booking reference, binding_code, or contact
         const reservation = await Reservation.findOne({
           where: {
-            [Op.or]: [
-              { reference_number: cleanedCode },
-              { binding_code: cleanedCode },
-              { reference_number: { [Op.like]: `%${cleanedCode}%` } },
-              { binding_code: { [Op.like]: `%${cleanedCode}%` } }
-            ]
+            [Op.or]: searchConditions
           },
+          order: [['id', 'DESC']],
           include: [{ model: Court, as: 'court' }]
         });
 
