@@ -188,6 +188,12 @@ const reservationController = {
         console.warn('Socket broadcast error:', e.message);
       }
 
+      // Dispatch Facebook Messenger notification to Admin Profile (Async)
+      try {
+        const { notifyAdminNewBooking } = require('../services/facebookService');
+        notifyAdminNewBooking(reservation).catch(e => console.warn('[FB Notify Error]:', e.message));
+      } catch (e) {}
+
       const paymentIntent = await paymentService.createPaymentIntent(reservation);
 
       if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {

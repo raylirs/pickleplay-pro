@@ -722,6 +722,111 @@ const adminController = {
     } catch (err) {
       next(err);
     }
+  },
+
+  async showFacebookSettings(req, res, next) {
+    try {
+      const allSettings = await SystemSetting.findAll();
+      const settingsMap = {};
+      allSettings.forEach(s => {
+        settingsMap[s.key] = s.value;
+      });
+
+      res.render('admin/facebook-settings', {
+        title: 'Facebook & Meta Settings - 3KS Playground',
+        layout: 'layouts/admin',
+        user: req.session.user,
+        settings: settingsMap,
+        error: req.flash('error'),
+        success: req.flash('success')
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async saveFacebookSettings(req, res, next) {
+    try {
+      const {
+        fb_app_id,
+        fb_app_secret,
+        fb_page_id,
+        fb_page_name,
+        fb_page_token,
+        fb_admin_psid
+      } = req.body;
+
+      const updates = [
+        { key: 'fb_app_id', value: fb_app_id ? fb_app_id.trim() : '' },
+        { key: 'fb_app_secret', value: fb_app_secret ? fb_app_secret.trim() : '' },
+        { key: 'fb_page_id', value: fb_page_id ? fb_page_id.trim() : '' },
+        { key: 'fb_page_name', value: fb_page_name ? fb_page_name.trim() : '' },
+        { key: 'fb_page_token', value: fb_page_token ? fb_page_token.trim() : '' },
+        { key: 'fb_admin_psid', value: fb_admin_psid ? fb_admin_psid.trim() : '' }
+      ];
+
+      for (const item of updates) {
+        await SystemSetting.upsert({
+          key: item.key,
+          value: item.value,
+          description: 'Facebook Meta Configuration'
+        });
+      }
+
+      await logAudit('FACEBOOK_SETTINGS_UPDATED', { fb_page_id, fb_admin_psid }, req.session.user.id);
+      req.flash('success', 'Facebook Meta & Profile notification settings saved successfully!');
+      res.redirect('/admin/facebook');
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async fetchFacebookPages(req, res, next) {
+    try {
+      const { fetchUserPages } = require('../services/facebookService');
+      const { userToken } = req.body;
+      const pages = await fetchUserPages(userToken);
+      res.json({ success: true, pages });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  },
+
+  async connectFacebookPage(req, res, next) {
+    try {
+      const { page_id, page_name, page_token } = req.body;
+      await SystemSetting.upsert({ key: 'fb_page_id', value: page_id });
+      await SystemSetting.upsert({ key: 'fb_page_name', value: page_name });
+      await SystemSetting.upsert({ key: 'fb_page_token', value: page_token });
+
+      req.flash('success', `Connected Facebook Page: "${page_name}" successfully!`);
+      res.redirect('/admin/facebook');
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async testFacebookNotification(req, res, next) {
+    try {
+      const { sendMessengerNotify, getSetting } = require('../services/facebookService');
+      const { test_message } = req.body;
+      const psid = await getSetting('fb_admin_psid');
+
+      if (!psid) {
+        req.flash('error', 'Please configure your Profile PSID first.');
+        return res.redirect('/admin/facebook');
+      }
+
+      const sent = await sendMessengerNotify(psid, test_message || 'Test notification from 3KS Playground');
+      if (sent) {
+        req.flash('success', 'Test Messenger notification sent successfully to your Facebook Profile!');
+      } else {
+        req.flash('error', 'Failed to send Messenger notification. Check your Page Access Token and PSID.');
+      }
+      res.redirect('/admin/facebook');
+    } catch (err) {
+      next(err);
+    }
   }
 };
 

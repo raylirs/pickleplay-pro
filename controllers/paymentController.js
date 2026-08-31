@@ -99,6 +99,12 @@ const paymentController = {
         console.warn('Socket broadcast warning:', socketErr.message);
       }
 
+      // Dispatch Facebook Messenger alert to Admin Profile (Async)
+      try {
+        const { notifyAdminPaymentProof } = require('../services/facebookService');
+        notifyAdminPaymentProof(reservation).catch(e => console.warn('[FB Notify Error]:', e.message));
+      } catch (e) {}
+
       req.flash('success', 'GCash payment proof submitted successfully! The admin will verify and confirm your slot.');
       res.redirect(`/reservations/${reservation.reference_number}`);
     } catch (err) {

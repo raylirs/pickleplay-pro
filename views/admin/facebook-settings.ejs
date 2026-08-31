@@ -1,0 +1,168 @@
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-2 border-bottom">
+    <div>
+      <h2 class="fw-bold text-dark mb-1">
+        <i class="bi bi-messenger text-primary me-2"></i>Facebook & Meta Notification Hub
+      </h2>
+      <p class="text-secondary small mb-0">Connect your Facebook App & Page to receive instant Messenger booking alerts on your personal Facebook profile</p>
+    </div>
+    <div class="mt-3 mt-md-0 d-flex gap-2">
+      <a href="https://developers.facebook.com/apps" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+        <i class="bi bi-box-arrow-up-right me-1"></i>Meta for Developers
+      </a>
+      <a href="https://developers.facebook.com/tools/explorer" target="_blank" class="btn btn-primary btn-sm rounded-pill px-3">
+        <i class="bi bi-tools me-1"></i>Graph API Explorer
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left: Settings Form -->
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+        <h5 class="fw-bold text-dark mb-3">1. Meta App & Page Credentials</h5>
+        <form action="/admin/facebook/save-settings" method="POST">
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Facebook App ID</label>
+              <input type="text" name="fb_app_id" class="form-control rounded-3 font-monospace small" value="<%= settings.fb_app_id || '' %>" placeholder="e.g. 1573381463838687">
+              <div class="form-text small" style="font-size: 11px;">Found under App Settings > Basic in Meta Dashboard</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Facebook App Secret</label>
+              <input type="password" name="fb_app_secret" class="form-control rounded-3 font-monospace small" value="<%= settings.fb_app_secret || '' %>" placeholder="••••••••••••••••">
+              <div class="form-text small" style="font-size: 11px;">Found under App Settings > Basic</div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Facebook Page ID</label>
+              <input type="text" name="fb_page_id" class="form-control rounded-3 font-monospace small" value="<%= settings.fb_page_id || '' %>" placeholder="e.g. 102938475618293">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Page Name</label>
+              <input type="text" name="fb_page_name" class="form-control rounded-3 small" value="<%= settings.fb_page_name || '' %>" placeholder="e.g. 3KS Playground Page">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Page Access Token (Permanent / Long-Lived)</label>
+            <textarea name="fb_page_token" rows="3" class="form-control rounded-3 font-monospace small" placeholder="EAAB... (Paste Page Access Token from Graph API Explorer)"><%= settings.fb_page_token || '' %></textarea>
+            <div class="form-text small" style="font-size: 11px;">Generated from Graph API Explorer or Meta Messenger Settings</div>
+          </div>
+
+          <hr class="my-3">
+
+          <h5 class="fw-bold text-dark mb-2">2. Profile Notification Recipient (Your Profile)</h5>
+          <p class="small text-secondary mb-3">Enter your personal Facebook PSID (Page-Scoped User ID) to receive instant booking alerts directly in your Messenger app.</p>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Your Profile PSID <span class="text-primary">*</span></label>
+            <input type="text" name="fb_admin_psid" class="form-control rounded-3 font-monospace" value="<%= settings.fb_admin_psid || '' %>" placeholder="e.g. 8492019482910482">
+            <div class="form-text small" style="font-size: 11px;">Send a message to your Facebook Page from your profile, then your PSID will appear in the page inbox.</div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success fw-bold rounded-pill px-4">
+              <i class="bi bi-save me-1"></i>Save Facebook Settings
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Test Notification Card -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <h5 class="fw-bold text-dark mb-2"><i class="bi bi-send-fill text-primary me-2"></i>Send Test Notification</h5>
+        <p class="small text-secondary mb-3">Verify that Messenger alerts are delivering properly to your personal Facebook profile.</p>
+
+        <form action="/admin/facebook/test-notification" method="POST" class="d-flex gap-2">
+          <input type="text" name="test_message" class="form-control rounded-pill" value="🔔 Hello! This is a test notification from 3KS Pickleball Playground." required>
+          <button type="submit" class="btn btn-primary fw-bold rounded-pill px-4 text-nowrap">
+            <i class="bi bi-send me-1"></i>Test Alert
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right: Auto-Fetch Pages Tool & Instructions -->
+    <div class="col-lg-5">
+      <!-- 1-Click Page Fetcher -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+        <h5 class="fw-bold text-dark mb-2"><i class="bi bi-magic text-warning me-2"></i>1-Click Page Auto-Connect</h5>
+        <p class="small text-secondary mb-3">Paste your User Access Token from Graph API Explorer to automatically retrieve your Facebook Pages and tokens.</p>
+
+        <div class="mb-3">
+          <input type="text" id="userTokenInput" class="form-control rounded-3 font-monospace small" placeholder="Paste User Token (EAAB...)">
+        </div>
+        <button type="button" id="btnFetchPages" class="btn btn-dark fw-bold rounded-pill w-100 mb-3">
+          <i class="bi bi-arrow-repeat me-1"></i>Fetch My Facebook Pages
+        </button>
+
+        <div id="pagesContainer" class="d-flex flex-column gap-2" style="max-height: 280px; overflow-y: auto;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Help Guide -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-light">
+        <h6 class="fw-bold text-dark mb-2"><i class="bi bi-question-circle-fill text-info me-2"></i>How to get your credentials:</h6>
+        <ol class="small text-secondary ps-3 mb-0" style="line-height: 1.6;">
+          <li class="mb-2"><strong>App ID & Secret:</strong> In Meta Developers Dashboard ➔ Go to <code>App Settings > Basic</code> ➔ Copy App ID and click "Show" for Secret.</li>
+          <li class="mb-2"><strong>Page Access Token:</strong> Go to <a href="https://developers.facebook.com/tools/explorer" target="_blank" class="text-primary fw-bold">Graph API Explorer</a> ➔ Select your App ➔ Under "User or Page" select your Page ➔ Copy the generated token.</li>
+          <li><strong>Profile PSID:</strong> Send a quick "Hi" message from your Facebook profile to your Facebook Page. Then open Page Inbox or use Graph API <code>/me/conversations</code> to copy your recipient PSID.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('btnFetchPages').addEventListener('click', async () => {
+  const userToken = document.getElementById('userTokenInput').value.trim();
+  if (!userToken) {
+    alert('Please paste your User Access Token first.');
+    return;
+  }
+
+  const container = document.getElementById('pagesContainer');
+  container.innerHTML = '<div class="text-center py-3 text-muted small"><i class="bi bi-arrow-repeat spin me-1"></i>Fetching pages from Meta Graph API...</div>';
+
+  try {
+    const res = await fetch('/admin/facebook/fetch-pages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userToken })
+    });
+    const data = await res.json();
+
+    if (data.success && data.pages && data.pages.length > 0) {
+      container.innerHTML = '';
+      data.pages.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'p-3 border rounded-3 bg-white d-flex align-items-center justify-content-between shadow-sm';
+        div.innerHTML = `
+          <div class="d-flex align-items-center">
+            <img src="${p.picture ? p.picture.data.url : '/images/logo.png'}" class="rounded-circle me-2" width="40" height="40">
+            <div>
+              <strong class="text-dark d-block small">${p.name}</strong>
+              <span class="text-muted" style="font-size: 11px;">ID: ${p.id}</span>
+            </div>
+          </div>
+          <form action="/admin/facebook/connect-page" method="POST" class="mb-0">
+            <input type="hidden" name="page_id" value="${p.id}">
+            <input type="hidden" name="page_name" value="${p.name}">
+            <input type="hidden" name="page_token" value="${p.access_token}">
+            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">Connect</button>
+          </form>
+        `;
+        container.appendChild(div);
+      });
+    } else {
+      container.innerHTML = '<div class="text-center py-2 text-danger small">No pages found or token expired. Error: ' + (data.error || 'Unknown') + '</div>';
+    }
+  } catch (err) {
+    container.innerHTML = '<div class="text-center py-2 text-danger small">Failed to connect to Meta API.</div>';
+  }
+});
+</script>
