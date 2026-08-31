@@ -36,9 +36,15 @@ async function checkAndSyncMessengerInbox() {
 
         const senderId = msg.from.id;
         const senderName = msg.from.name || 'Player';
-        const text = (msg.message || '').trim().toUpperCase();
+        const rawMessage = (msg.message || '').trim();
+        const text = rawMessage.toUpperCase();
 
         if (!text) continue;
+
+        // 1. Process Admin 1-Click Action (Approve / Cancel)
+        const { processAdminAction } = require('./facebookService');
+        const handledAdmin = await processAdminAction(senderId, rawMessage);
+        if (handledAdmin) continue;
 
         const compactText = text.replace(/\s+/g, '').replace(/–|—/g, '-');
         const digitsOnly = text.replace(/\D/g, '');

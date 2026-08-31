@@ -1,5 +1,6 @@
 const { SystemSetting, Reservation, Court } = require('../models');
 const { getIO } = require('../config/socket');
+const { Op } = require('sequelize');
 
 const FB_VERSION = 'v24.0';
 
@@ -39,7 +40,7 @@ async function sendMessengerNotify(psid, payload) {
       console.error('[FB Messenger Error]:', data.error.message);
       return false;
     }
-    console.log('[FB Service] Notification sent successfully to PSID:', psid, 'Message ID:', data.message_id);
+    console.log('[FB Service] Message delivered to PSID:', psid, 'ID:', data.message_id);
     return true;
   } catch (error) {
     console.error('[FB Messenger Service Error]:', error.message);
@@ -83,42 +84,93 @@ async function getAllAdminPsids() {
 }
 
 /**
- * Notify Admin when a new booking is submitted
+ * Notify Admin when a new booking is submitted (with 1-Click Interactive Buttons)
  */
 async function notifyAdminNewBooking(reservation) {
   const adminPsids = await getAllAdminPsids();
   if (!adminPsids || adminPsids.length === 0) return;
 
-  const msg = `🔔 [3KS PLAYGROUND] NEW BOOKING RECEIVED!\n\n` +
+  const text = `🔔 [3KS] NEW BOOKING RECEIVED!\n\n` +
     `📋 Ref: ${reservation.reference_number}\n` +
     `👤 Player: ${reservation.user_name} (${reservation.user_contact})\n` +
-    `🏟️ Court: Court ${reservation.court_id}\n` +
-    `📅 Date: ${reservation.reservation_date}\n` +
+    `🏟️ Court: Court ${reservation.court_id} | 📅 ${reservation.reservation_date}\n` +
     `⏰ Time: ${reservation.start_time}\n` +
-    `💰 Total: ₱${parseFloat(reservation.total_amount).toFixed(2)}\n\n` +
-    `👉 Verify GCash & Approve in Admin: https://pickleplay-pro.onrender.com/admin/reservations`;
+    `💰 Total: ₱${parseFloat(reservation.total_amount).toFixed(2)}`;
+
+  const buttonPayload = {
+    attachment: {
+      type: 'template',
+      payload: {
+        template_type: 'button',
+        text: text.slice(0, 640),
+        buttons: [
+          {
+            type: 'postback',
+            title: '✅ 1-Click Approve',
+            payload: `APPROVE_${reservation.reference_number}`
+          },
+          {
+            type: 'postback',
+            title: '❌ Cancel Slot',
+            payload: `CANCEL_${reservation.reference_number}`
+          },
+          {
+            type: 'web_url',
+            url: 'https://pickleplay-pro.onrender.com/admin/reservations',
+            title: '👁️ Open Admin'
+          }
+        ]
+      }
+    }
+  };
 
   for (const psid of adminPsids) {
-    await sendMessengerNotify(psid, msg);
+    await sendMessengerNotify(psid, buttonPayload);
   }
 }
 
 /**
- * Notify Admin when a GCash payment proof is submitted
+ * Notify Admin when a GCash payment proof is submitted (with 1-Click Interactive Buttons)
  */
 async function notifyAdminPaymentProof(reservation) {
   const adminPsids = await getAllAdminPsids();
   if (!adminPsids || adminPsids.length === 0) return;
 
-  const msg = `💳 [3KS PLAYGROUND] GCASH PAYMENT SUBMITTED!\n\n` +
-    `📋 Booking Ref: ${reservation.reference_number}\n` +
+  const text = `💳 [3KS] GCASH PAYMENT SUBMITTED!\n\n` +
+    `📋 Ref: ${reservation.reference_number}\n` +
     `👤 Player: ${reservation.user_name}\n` +
     `🧾 GCash Ref: ${reservation.gcash_reference_no || 'Attached Screenshot'}\n` +
-    `💰 Amount: ₱${parseFloat(reservation.total_amount).toFixed(2)}\n\n` +
-    `👉 Approve Now: https://pickleplay-pro.onrender.com/admin/reservations`;
+    `💰 Amount: ₱${parseFloat(reservation.total_amount).toFixed(2)}`;
+
+  const buttonPayload = {
+    attachment: {
+      type: 'template',
+      payload: {
+        template_type: 'button',
+        text: text.slice(0, 640),
+        buttons: [
+          {
+            type: 'postback',
+            title: '✅ Approve & Confirm',
+            payload: `APPROVE_${reservation.reference_number}`
+          },
+          {
+            type: 'postback',
+            title: '❌ Reject/Cancel',
+            payload: `CANCEL_${reservation.reference_number}`
+          },
+          {
+            type: 'web_url',
+            url: 'https://pickleplay-pro.onrender.com/admin/reservations',
+            title: '👁️ View in Admin'
+          }
+        ]
+      }
+    }
+  };
 
   for (const psid of adminPsids) {
-    await sendMessengerNotify(psid, msg);
+    await sendMessengerNotify(psid, buttonPayload);
   }
 }
 
@@ -142,6 +194,94 @@ async function notifyPlayerBookingConfirmed(reservation) {
 }
 
 /**
+ * Process Admin 1-Click Action (Confirm or Cancel via Messenger buttons/messages)
+ */
+async function processAdminAction(senderId, rawText) {
+  const adminPsids = await getAllAdminPsids();
+  if (!adminPsids.includes(senderId)) return false;
+
+  const upper = (rawText || '').trim().toUpperCase();
+  const isApprove = upper.startsWith('APPROVE_') || upper.startsWith('CONFIRM_') || upper.startsWith('APPROVE ') || upper.startsWith('CONFIRM ');
+  const isCancel = upper.startsWith('CANCEL_') || upper.startsWith('REJECT_') || upper.startsWith('CANCEL ') || upper.startsWith('REJECT ');
+
+  if (!isApprove && !isCancel) return false;
+
+  const refMatch = upper.replace(/^(APPROVE_|CONFIRM_|CANCEL_|REJECT_|APPROVE\s+|CONFIRM\s+|CANCEL\s+|REJECT\s+)/, '').trim();
+  if (!refMatch) return false;
+
+  const { getCourtAvailability } = require('./availabilityService');
+
+  const reservation = await Reservation.findOne({
+    where: {
+      [Op.or]: [
+        { reference_number: refMatch },
+        { reference_number: { [Op.like]: `%${refMatch}%` } },
+        { binding_code: refMatch },
+        { binding_code: { [Op.like]: `%${refMatch}%` } }
+      ]
+    },
+    include: [{ model: Court, as: 'court' }]
+  });
+
+  if (!reservation) {
+    await sendMessengerNotify(senderId, `⚠️ Reservation "${refMatch}" not found.`);
+    return true;
+  }
+
+  if (isApprove) {
+    reservation.status = 'CONFIRMED';
+    reservation.payment_transaction_id = `MESSENGER-1CLICK-${Date.now()}`;
+    await reservation.save();
+
+    // Send confirmed pass to player if bound
+    await notifyPlayerBookingConfirmed(reservation);
+
+    // Broadcast real-time availability update to all browsers
+    try {
+      const io = getIO();
+      const avail = await getCourtAvailability(reservation.court_id, reservation.reservation_date);
+      io.emit('court_availability_updated', {
+        courtId: reservation.court_id,
+        date: reservation.reservation_date,
+        slots: avail.slots
+      });
+      io.emit('payment_confirmed', {
+        reference: reservation.reference_number,
+        courtId: reservation.court_id
+      });
+    } catch (e) {}
+
+    await sendMessengerNotify(senderId, `🎉 [1-CLICK APPROVED] Reservation #${reservation.reference_number} for ${reservation.user_name} is now CONFIRMED!\n\nPlayer has been sent their confirmed digital pass on Messenger.`);
+    return true;
+  }
+
+  if (isCancel) {
+    reservation.status = 'CANCELLED';
+    reservation.cancellation_reason = 'Cancelled by Admin via 1-Click Messenger';
+    await reservation.save();
+
+    try {
+      const io = getIO();
+      const avail = await getCourtAvailability(reservation.court_id, reservation.reservation_date);
+      io.emit('court_availability_updated', {
+        courtId: reservation.court_id,
+        date: reservation.reservation_date,
+        slots: avail.slots
+      });
+    } catch (e) {}
+
+    if (reservation.fb_psid) {
+      await sendMessengerNotify(reservation.fb_psid, `⚠️ [3KS PLAYGROUND] Your booking #${reservation.reference_number} has been cancelled by Admin.`);
+    }
+
+    await sendMessengerNotify(senderId, `❌ [1-CLICK CANCELLED] Reservation #${reservation.reference_number} has been cancelled and slots released.`);
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Webhook Verification Handler (GET /webhook/facebook)
  */
 async function handleWebhookVerification(req, res) {
@@ -162,7 +302,6 @@ async function handleWebhookVerification(req, res) {
 
 /**
  * Webhook Event Handler (POST /webhook/facebook)
- * Auto-binds player Messenger PSID when they send their booking reference or 6-digit code!
  */
 async function handleWebhookEvents(req, res) {
   const body = req.body;
@@ -174,9 +313,10 @@ async function handleWebhookEvents(req, res) {
 
       const senderId = webhookEvent.sender.id;
 
-      // Handle message text or postback referral
       let incomingText = '';
-      if (webhookEvent.message && webhookEvent.message.text) {
+      if (webhookEvent.postback && webhookEvent.postback.payload) {
+        incomingText = webhookEvent.postback.payload.trim();
+      } else if (webhookEvent.message && webhookEvent.message.text) {
         incomingText = webhookEvent.message.text.trim();
       } else if (webhookEvent.postback && webhookEvent.postback.referral) {
         incomingText = webhookEvent.postback.referral.ref || '';
@@ -187,7 +327,11 @@ async function handleWebhookEvents(req, res) {
       console.log(`[FB Webhook] Received event from PSID ${senderId}: "${incomingText}"`);
 
       if (incomingText) {
-        // Clean text (normalize spaces, dashes, uppercase)
+        // 1. Check if this is an Admin 1-Click Approve/Cancel action
+        const handledAdmin = await processAdminAction(senderId, incomingText);
+        if (handledAdmin) continue;
+
+        // 2. Otherwise, check for player booking binding
         const cleanedText = incomingText.trim().toUpperCase();
         const compactText = cleanedText.replace(/\s+/g, '').replace(/–|—/g, '-');
         const digitsOnly = incomingText.replace(/\D/g, '');
@@ -209,21 +353,17 @@ async function handleWebhookEvents(req, res) {
           searchConditions.push({ user_contact: { [Op.like]: `%${digitsOnly}%` } });
         }
 
-        // 1. Search by booking reference, binding_code, or contact
         const reservation = await Reservation.findOne({
-          where: {
-            [Op.or]: searchConditions
-          },
+          where: { [Op.or]: searchConditions },
           order: [['id', 'DESC']],
           include: [{ model: Court, as: 'court' }]
         });
 
         if (reservation) {
-          console.log(`[FB Webhook] Found matching reservation ${reservation.reference_number}! Binding to PSID ${senderId}...`);
+          console.log(`[FB Webhook] Binding reservation ${reservation.reference_number} to PSID ${senderId}...`);
           reservation.fb_psid = senderId;
           await reservation.save();
 
-          // Real-time socket event to browser
           try {
             const io = getIO();
             io.emit('player_messenger_bound', {
@@ -232,16 +372,14 @@ async function handleWebhookEvents(req, res) {
             });
           } catch (e) {}
 
-          // Reply in Messenger
           const replyText = `✅ [3KS PLAYGROUND] Connected!\n\n` +
             `Hello ${reservation.user_name}! Your Facebook Messenger is now linked to Reservation #${reservation.reference_number}.\n\n` +
             `📅 Date: ${reservation.reservation_date} (${reservation.start_time})\n` +
             `🏟️ Court: ${reservation.court ? reservation.court.display_name : 'Court ' + reservation.court_id}\n\n` +
-            `You will receive instant confirmation & pass updates right here! 🏓`;
+            `You will receive instant pass & confirmation alerts here! 🏓`;
 
           await sendMessengerNotify(senderId, replyText);
         } else {
-          // If no matching reservation code, send helpful instructions
           if (incomingText.toLowerCase().includes('hi') || incomingText.toLowerCase().includes('hello') || incomingText.toLowerCase().includes('help')) {
             const helpText = `👋 Hello! Welcome to 3KS Pickleball Playground.\n\n` +
               `To link your court booking for alerts, simply reply with your Booking Reference Number or 6-digit Code (e.g. 3KS-1234).\n\n` +
@@ -264,7 +402,9 @@ module.exports = {
   notifyAdminNewBooking,
   notifyAdminPaymentProof,
   notifyPlayerBookingConfirmed,
+  processAdminAction,
   handleWebhookVerification,
   handleWebhookEvents,
+  getAllAdminPsids,
   getSetting
 };
