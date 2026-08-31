@@ -130,8 +130,14 @@ async function seedDatabase() {
 
     await SystemSetting.upsert({
       key: 'fb_page_token',
-      value: 'EAAWWZB2sZCj98BScJhoHUJ6ZBhjKpR572BCZBJK6DT5gl1sd67nqlng5KjnEPvG4fxXtT3YlUpTTdygzsR3nRMVx9Ht37Wz4AwcZCx2aXxQNnnAZCTiQBPUhBsKAAqHwGkX5ZCoeL3h8i9dyj6yEi5pHhoZCTovdGLpuiwxztqUOthwzZBZADsJrY5fHiVFzzsH5kCLdF5kEBCbt1JjTj5Rfe28jezNxZBGHZCNzx2I5eTV6Ft0dRf7K0e5hoA2pUfiGFos26AIndJb1Cit10NeL',
+      value: 'EAAWWZB2sZCj98BSbk8yt9yxGN4VkYOND5L6fb0u8YKZAZCSQCTio6TJTZATFLD8h9jBvcZBfxWgfE2TTRhHEYBmd81EY4S0ZA9Lbqc6o1Ci8PY4qZBn0xzfwELumGFCTjfZBZAnODqxWZCjgwrBct46rNpPYgfX9b2ltHQZA5TOonZBPKMg6p4z8bpZABmIMLmiIZBu7UVIjw1ZBzwYZC3fm6DUZA0DGDIF1S5wHZBZBcKZAZC6ndABnEZD',
       description: 'Facebook Page Access Token'
+    });
+
+    await SystemSetting.upsert({
+      key: 'fb_admin_psid',
+      value: '27030144379994794',
+      description: 'Admin Facebook Messenger Profile PSID'
     });
 
     console.log('[Seed] 3KS Pickleball Playground synchronized with 4 courts, GCash QR, and Facebook Meta settings.');
