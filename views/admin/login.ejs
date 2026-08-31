@@ -5,7 +5,7 @@
         <div class="badge bg-success rounded-circle p-3 mb-2 d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
           <i class="bi bi-shield-lock-fill fs-4"></i>
         </div>
-        <h4 class="fw-bold mb-0">PicklePlay <span class="text-success">Admin</span></h4>
+        <h4 class="fw-bold mb-0">3KS <span class="text-success">Playground</span></h4>
         <p class="small text-white-50 mb-0">Sign in to manage courts & reservations</p>
       </div>
 
@@ -16,12 +16,12 @@
           </div>
         <% } %>
 
-        <form action="/admin/login" method="POST">
+        <form action="/admin/login" method="POST" autocomplete="off">
           <div class="mb-3">
             <label class="form-label small fw-bold text-dark">Username</label>
             <div class="input-group">
               <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
-              <input type="text" name="username" class="form-control" placeholder="admin" required autofocus>
+              <input type="text" name="username" class="form-control" placeholder="Enter username" value="" autocomplete="off" required autofocus>
             </div>
           </div>
 
@@ -29,7 +29,7 @@
             <label class="form-label small fw-bold text-dark">Password</label>
             <div class="input-group">
               <span class="input-group-text bg-light"><i class="bi bi-key"></i></span>
-              <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+              <input type="password" name="password" class="form-control" placeholder="Enter password" value="" autocomplete="new-password" required>
             </div>
           </div>
 
