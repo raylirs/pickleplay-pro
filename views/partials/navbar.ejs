@@ -23,13 +23,45 @@
         </li>
       </ul>
       <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-outline-info btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#messengerModal">
+          <i class="bi bi-messenger me-1"></i>Messenger Alerts
+        </button>
         <a href="/reservations" class="btn btn-success fw-semibold px-4 rounded-pill shadow-sm">
           <i class="bi bi-lightning-charge-fill me-1"></i>Reserve Now
         </a>
-        <a href="/admin" class="btn btn-outline-light btn-sm rounded-pill px-3 ms-2">
-          <i class="bi bi-shield-lock me-1"></i>Admin Portal
+        <a href="/admin" class="btn btn-outline-light btn-sm rounded-pill px-3 ms-1">
+          <i class="bi bi-shield-lock me-1"></i>Admin
         </a>
       </div>
     </div>
   </div>
 </nav>
+
+<!-- Messenger QR Popup Modal for Public Visitors -->
+<div class="modal fade" id="messengerModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 text-center p-3">
+      <div class="modal-header border-0 pb-0">
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="badge bg-primary-subtle text-primary rounded-circle p-3 mb-3 fs-3">
+          <i class="bi bi-messenger"></i>
+        </div>
+        <h4 class="fw-bold text-dark mb-1">Connect with 3KS on Messenger</h4>
+        <p class="small text-secondary mb-3">Scan this QR code with your phone camera or click below to chat with 3KS Reservation for real-time passes and schedule reminders!</p>
+
+        <div class="p-3 bg-light rounded-4 border d-inline-block mb-3 shadow-sm">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https://m.me/1224751467396635" alt="3KS Messenger QR" width="180" height="180" class="rounded-3">
+          <span class="small d-block text-muted mt-2" style="font-size: 11px;">https://m.me/1224751467396635</span>
+        </div>
+
+        <div>
+          <a href="https://m.me/1224751467396635" target="_blank" class="btn btn-primary btn-lg rounded-pill fw-bold w-100 mb-2">
+            <i class="bi bi-chat-dots-fill me-2"></i>Open Chat in Messenger
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
