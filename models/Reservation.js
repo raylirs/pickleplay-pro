@@ -76,6 +76,14 @@ const Reservation = sequelize.define('Reservation', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  fb_psid: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
+  binding_code: {
+    type: DataTypes.STRING(20),
+    allowNull: true
+  },
   cancellation_reason: {
     type: DataTypes.TEXT,
     allowNull: true

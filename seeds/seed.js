@@ -11,6 +11,8 @@ async function seedDatabase() {
       await sequelize.query('ALTER TABLE reservations ADD COLUMN IF NOT EXISTS gcash_reference_no VARCHAR(100);');
       await sequelize.query('ALTER TABLE reservations ADD COLUMN IF NOT EXISTS payment_screenshot VARCHAR(255);');
       await sequelize.query('ALTER TABLE reservations ADD COLUMN IF NOT EXISTS slots_json TEXT;');
+      await sequelize.query('ALTER TABLE reservations ADD COLUMN IF NOT EXISTS fb_psid VARCHAR(100);');
+      await sequelize.query('ALTER TABLE reservations ADD COLUMN IF NOT EXISTS binding_code VARCHAR(20);');
     } catch (colErr) {
       // Ignored if already present or SQLite
     }

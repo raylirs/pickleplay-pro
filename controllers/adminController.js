@@ -469,6 +469,12 @@ const adminController = {
       await sendReservationConfirmation(reservation, reservation.court);
       await sendReservationSMS(reservation, reservation.court);
 
+      // Dispatch Facebook Messenger notification to Player if bound
+      try {
+        const { notifyPlayerBookingConfirmed } = require('../services/facebookService');
+        notifyPlayerBookingConfirmed(reservation).catch(e => console.warn('[FB Player Notify Error]:', e.message));
+      } catch (e) {}
+
       try {
         const io = getIO();
         const avail = await getCourtAvailability(reservation.court_id, reservation.reservation_date);

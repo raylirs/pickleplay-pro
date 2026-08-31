@@ -41,4 +41,9 @@ router.get('/reservations/:reference', reservationController.getReservationByRef
 router.get('/payment/gcash-checkout', paymentController.showGcashPaymentPage);
 router.post('/payment/submit-proof', upload.single('screenshot'), paymentController.submitPaymentProof);
 
+// Facebook Messenger Webhook & Binding
+const facebookService = require('../services/facebookService');
+router.get('/webhook/facebook', facebookService.handleWebhookVerification);
+router.post('/webhook/facebook', facebookService.handleWebhookEvents);
+
 module.exports = router;

@@ -103,6 +103,34 @@
           </div>
         </div>
 
+        <!-- Messenger Alert Binding Card -->
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-primary-subtle border-primary border">
+          <div class="d-flex flex-column flex-md-row align-items-center gap-3">
+            <div class="text-center">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=https://m.me/1224751467396635" alt="Messenger Binding QR" class="rounded-3 shadow-sm bg-white p-1" width="100" height="100">
+              <span class="small d-block text-muted mt-1" style="font-size: 10px;">Scan to open chat</span>
+            </div>
+            <div class="flex-grow-1 text-center text-md-start">
+              <div class="d-flex align-items-center justify-content-center justify-content-md-start gap-2 mb-1">
+                <i class="bi bi-messenger text-primary fs-5"></i>
+                <h6 class="fw-bold text-dark mb-0">Get Booking Pass & Alerts on Messenger</h6>
+              </div>
+              <p class="small text-secondary mb-2" style="font-size: 12px;">
+                Scan QR or tap below, then send code: <strong class="text-primary font-monospace fs-6"><%= reservation.binding_code || reservation.reference_number %></strong>
+              </p>
+              <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-md-start align-items-center">
+                <a href="https://m.me/1224751467396635" target="_blank" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold">
+                  <i class="bi bi-chat-dots-fill me-1"></i>Open Messenger
+                </a>
+                <span id="messengerBindStatus" class="badge <%= reservation.fb_psid ? 'bg-success' : 'bg-warning text-dark' %> px-3 py-2 rounded-pill small">
+                  <i class="bi <%= reservation.fb_psid ? 'bi-check-circle-fill' : 'bi-hourglass-split' %> me-1"></i>
+                  <%= reservation.fb_psid ? 'Connected to Messenger' : 'Waiting for Messenger link' %>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Payment Details</h5>
         <div class="bg-light p-3 rounded-3 mb-4 border">
           <div class="d-flex justify-content-between mb-2">
@@ -146,3 +174,20 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof io !== 'undefined') {
+    const socket = io();
+    socket.on('player_messenger_bound', (data) => {
+      if (data && data.reference === '<%= reservation.reference_number %>') {
+        const badge = document.getElementById('messengerBindStatus');
+        if (badge) {
+          badge.className = 'badge bg-success px-3 py-2 rounded-pill small';
+          badge.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Connected to Messenger!';
+        }
+      }
+    });
+  }
+});
+</script>

@@ -150,6 +150,8 @@ const reservationController = {
       const referenceNumber = generateReferenceNumber();
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins validity
 
+      const bindingCode = '3KS-' + Math.floor(1000 + Math.random() * 9000);
+
       const reservation = await Reservation.create({
         reference_number: referenceNumber,
         court_id: court.id,
@@ -165,6 +167,7 @@ const reservationController = {
         status: 'AWAITING_PAYMENT',
         payment_provider: 'GCASH_QR',
         special_requests: special_requests ? special_requests.trim() : null,
+        binding_code: bindingCode,
         expires_at: expiresAt
       });
 
