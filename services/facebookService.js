@@ -106,18 +106,18 @@ async function notifyAdminNewBooking(reservation) {
         buttons: [
           {
             type: 'postback',
-            title: '✅ 1-Click Approve',
+            title: 'Approve',
             payload: `APPROVE_${reservation.reference_number}`
           },
           {
             type: 'postback',
-            title: '❌ Cancel Slot',
+            title: 'Decline',
             payload: `CANCEL_${reservation.reference_number}`
           },
           {
             type: 'web_url',
             url: 'https://pickleplay-pro.onrender.com/admin/reservations',
-            title: '👁️ Open Admin'
+            title: 'View Booking'
           }
         ]
       }
@@ -151,18 +151,18 @@ async function notifyAdminPaymentProof(reservation) {
         buttons: [
           {
             type: 'postback',
-            title: '✅ Approve & Confirm',
+            title: 'Approve',
             payload: `APPROVE_${reservation.reference_number}`
           },
           {
             type: 'postback',
-            title: '❌ Reject/Cancel',
+            title: 'Decline',
             payload: `CANCEL_${reservation.reference_number}`
           },
           {
             type: 'web_url',
             url: 'https://pickleplay-pro.onrender.com/admin/reservations',
-            title: '👁️ View in Admin'
+            title: 'View Booking'
           }
         ]
       }
