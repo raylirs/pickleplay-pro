@@ -88,6 +88,8 @@ async function bootstrap() {
     await seedDatabase();
 
     startExpirationWorker();
+    const { startMessengerSyncWorker } = require('./services/messengerSyncWorker');
+    startMessengerSyncWorker();
 
     server.listen(PORT, () => {
       console.log('====================================================');
