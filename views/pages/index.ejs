@@ -176,45 +176,74 @@
             </p>
           </div>
           <div class="d-flex flex-wrap gap-2">
-            <a href="https://www.google.com/maps/search/?api=1&query=Piot+Heights+Buntong+Camaman-an+Cagayan+de+Oro+Philippines" target="_blank" rel="noopener noreferrer" class="btn btn-outline-success btn-sm rounded-pill px-3 fw-semibold">
+            <a href="https://www.google.com/maps/dir/?api=1&destination=8.4631,124.6554" target="_blank" rel="noopener noreferrer" class="btn btn-outline-success btn-sm rounded-pill px-3 fw-semibold">
               <i class="bi bi-map me-1"></i>Open Google Maps
             </a>
-            <a href="https://waze.com/ul?q=Piot+Heights+Buntong+Camaman-an+Cagayan+de+Oro+Philippines" target="_blank" rel="noopener noreferrer" class="btn btn-outline-info btn-sm rounded-pill px-3 fw-semibold">
+            <a href="https://waze.com/ul?ll=8.4631,124.6554&navigate=yes" target="_blank" rel="noopener noreferrer" class="btn btn-outline-info btn-sm rounded-pill px-3 fw-semibold">
               <i class="bi bi-compass me-1"></i>Open in Waze
             </a>
           </div>
         </div>
       </div>
-      <div id="facilityMap" style="height: 350px; width: 100%; z-index: 1;"></div>
+      <div id="facilityMap" style="height: 380px; width: 100%; z-index: 1;"></div>
     </div>
   </div>
 </section>
 
-<!-- Leaflet Interactive Map CSS & JS -->
+<!-- Leaflet Map CSS & JS with Google Satellite Tiles -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const lat = 8.4635;
-    const lng = 124.6552;
+    // Exact coordinates of 3KS Playground in Piot Heights, Buntong
+    const lat = 8.4631;
+    const lng = 124.6554;
+
+    // Google Satellite with road and place labels
+    const googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      attribution: '&copy; Google Satellite Maps'
+    });
+
+    // Google Standard Streets
+    const googleStreets = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      attribution: '&copy; Google Maps'
+    });
+
+    // OpenStreetMap
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap'
+    });
 
     const map = L.map('facilityMap', {
       center: [lat, lng],
-      zoom: 15,
+      zoom: 18,
+      layers: [googleSatellite],
       scrollWheelZoom: false
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
+    // Layer control to switch between Satellite and Street views
+    const baseMaps = {
+      "🛰️ Google Satellite": googleSatellite,
+      "🗺️ Google Streets": googleStreets,
+      "📍 OpenStreetMap": osm
+    };
+    L.control.layers(baseMaps).addTo(map);
 
+    // Custom Marker for 3KS Playground
     const marker = L.marker([lat, lng]).addTo(map);
     marker.bindPopup(`
-      <div style="font-family: inherit; padding: 2px;">
+      <div style="font-family: inherit; padding: 4px; min-width: 180px;">
         <strong style="color: #198754; font-size: 13px;">🏓 3KS Pickleball Playground</strong><br>
-        <span style="font-size: 11px; color: #555;">Piot Heights, Buntong, Camaman-an</span><br>
-        <a href="https://www.google.com/maps/search/?api=1&query=Piot+Heights+Buntong+Camaman-an+Cagayan+de+Oro+Philippines" target="_blank" style="font-size: 11px; color: #0d6efd; text-decoration: none; font-weight: bold;">Get Directions &rarr;</a>
+        <span style="font-size: 11px; color: #333;">Piot Heights, Buntong, Camaman-an</span><br>
+        <div style="font-size: 11px; color: #666; margin-top: 2px;">4 Tournament Courts • Covered Arena</div>
+        <div class="mt-2 pt-1 border-top">
+          <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" style="font-size: 11px; color: #0d6efd; text-decoration: none; font-weight: bold;">
+            <i class="bi bi-cursor-fill me-1"></i>Start Navigation &rarr;
+          </a>
+        </div>
       </div>
     `).openPopup();
   });
