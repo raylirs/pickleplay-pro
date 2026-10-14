@@ -1,4 +1,4 @@
-const userToken = 'EAAWWZB2sZCj98BScJhoHUJ6ZBhjKpR572BCZBJK6DT5gl1sd67nqlng5KjnEPvG4fxXtT3YlUpTTdygzsR3nRMVx9Ht37Wz4AwcZCx2aXxQNnnAZCTiQBPUhBsKAAqHwGkX5ZCoeL3h8i9dyj6yEi5pHhoZCTovdGLpuiwxztqUOthwzZBZADsJrY5fHiVFzzsH5kCLdF5kEBCbt1JjTj5Rfe28jezNxZBGHZCNzx2I5eTV6Ft0dRf7K0e5hoA2pUfiGFos26AIndJb1Cit10NeL';
+const pageAccessToken = 'EAAWWZB2sZCj98BStXkhzebYUyqbVZBRMvylumn14cXdkhCqAGZButIek2SmOYAsLO3v8PI6p5g54L7hXyq9v2A61SezkZAbK5LwL8MenFvCm8jwGygRGWqIqEPmB1Bv2IX9KBTAkQr2HnFDRZBPFws98Pd52TDArvMWCaOQfjHClhZCA3EpiARhTujWoNyYllAs00SV';
 const targetPageId = '1224751467396635'; // 3KS Reservation
 
 async function testFacebookNotification() {
@@ -6,31 +6,13 @@ async function testFacebookNotification() {
   console.log('🧪 TESTING FACEBOOK META NOTIFICATION INTEGRATION');
   console.log('=====================================================');
 
-  // 1. Get User info
-  console.log('[Step 1] Verifying User Token for Ryan Kristoffer Liray...');
-  const meRes = await fetch(`https://graph.facebook.com/v24.0/me?access_token=${userToken}`);
+  // 1. Verify Page Token
+  console.log('[Step 1] Verifying Page Access Token for 3KS Reservation...');
+  const meRes = await fetch(`https://graph.facebook.com/v24.0/me?fields=id,name&access_token=${pageAccessToken}`);
   const meData = await meRes.json();
-  console.log('User Profile:', meData);
+  console.log('Page Identity:', meData);
 
-  // 2. Fetch all Pages and get the specific Page Access Token for 3KS Reservation
-  console.log('\n[Step 2] Fetching Page Access Token for 3KS Reservation...');
-  const pagesRes = await fetch(`https://graph.facebook.com/v24.0/me/accounts?fields=id,name,access_token,category&access_token=${userToken}`);
-  const pagesData = await pagesRes.json();
-
-  if (pagesData.error) {
-    console.error('Failed to fetch pages:', pagesData.error.message);
-    return;
-  }
-
-  const targetPage = pagesData.data.find(p => p.id === targetPageId) || pagesData.data.find(p => p.name.includes('3KS'));
-  if (!targetPage) {
-    console.error(`Page with ID ${targetPageId} not found in user accounts. Available pages:`, pagesData.data.map(p => `${p.name} (${p.id})`));
-    return;
-  }
-
-  console.log(`Found Page: "${targetPage.name}" (ID: ${targetPage.id})`);
-  const pageAccessToken = targetPage.access_token;
-  console.log('Page Access Token extracted successfully.');
+  const targetPage = { id: targetPageId, name: meData.name || '3KS Reservation' };
 
   // 3. Fetch conversations
   console.log('\n[Step 3] Checking conversations in "' + targetPage.name + '" inbox...');

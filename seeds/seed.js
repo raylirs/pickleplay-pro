@@ -132,7 +132,7 @@ async function seedDatabase() {
 
     await SystemSetting.upsert({
       key: 'fb_page_token',
-      value: 'EAAWWZB2sZCj98BSWkQw2zOWEM83U2az9tREFVDdV2r5xsZCUZB4uZCCzjyRLWqdwQ1mrAVykAueyhdaRNDwZARC8oklCajJGmd5AgZBfw9gs3SgxldeZBFLOeP250HvOIR4UTOXQEYGJ3NjsCIl7jEydeXmoMqiB84jApZBHz1rkRJVbNakdkctum6Ej34pbRIAkLSVdd',
+      value: 'EAAWWZB2sZCj98BStXkhzebYUyqbVZBRMvylumn14cXdkhCqAGZButIek2SmOYAsLO3v8PI6p5g54L7hXyq9v2A61SezkZAbK5LwL8MenFvCm8jwGygRGWqIqEPmB1Bv2IX9KBTAkQr2HnFDRZBPFws98Pd52TDArvMWCaOQfjHClhZCA3EpiARhTujWoNyYllAs00SV',
       description: 'Permanent Never-Expiring Facebook Page Access Token'
     });
 
