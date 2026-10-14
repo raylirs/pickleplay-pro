@@ -524,7 +524,7 @@ h1, h2, h3, h4, .font-display {
   backdrop-filter: blur(14px);
   border-top: 2px solid var(--gold-500);
   box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.35);
-  z-index: 1080;
+  z-index: 1040;
   padding: 12px 20px;
   transform: translateY(120%);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
