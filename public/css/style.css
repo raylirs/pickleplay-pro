@@ -304,6 +304,8 @@ h1, h2, h3, h4, .font-display {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .legend-swatch {
