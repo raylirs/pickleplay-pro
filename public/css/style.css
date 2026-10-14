@@ -300,8 +300,8 @@ h1, h2, h3, h4, .font-display {
 .matrix-legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: 12px;
+  gap: 5px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--text-muted);
   white-space: nowrap;
@@ -309,9 +309,9 @@ h1, h2, h3, h4, .font-display {
 }
 
 .legend-swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
   flex-shrink: 0;
 }
 
