@@ -4,7 +4,7 @@
       <div class="text-center mb-4">
         <span class="badge gold-badge px-3 py-2 rounded-pill fw-bold mb-2">Reservation Lookup</span>
         <h2 class="fw-bold text-dark font-display">Find Your Booking</h2>
-        <p class="text-secondary small">Enter your booking reference number (e.g. 3KS2026...) to view receipt and status.</p>
+        <p class="text-secondary small">Enter your booking reference number (e.g. PLAY2026...) to view receipt and status.</p>
       </div>
 
       <form id="lookupForm" onsubmit="event.preventDefault(); const ref = document.getElementById('refInput').value.trim(); if(ref) window.location.href='/reservations/' + encodeURIComponent(ref);">
@@ -12,7 +12,7 @@
           <label for="refInput" class="form-label fw-semibold text-dark">Reference Number</label>
           <div class="input-group input-group-lg">
             <span class="input-group-text bg-light text-primary"><i class="bi bi-search"></i></span>
-            <input type="text" class="form-control font-monospace" id="refInput" placeholder="3KS2026..." required>
+            <input type="text" class="form-control font-monospace" id="refInput" placeholder="PLAY2026..." required>
           </div>
         </div>
 

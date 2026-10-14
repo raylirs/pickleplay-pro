@@ -53,35 +53,58 @@ async function seedDatabase() {
       console.log(`[Seed] Removed dummy category: ${dummy.name}`);
     }
 
-    // Ensure 3KS Pickleball Playground exists with 4 courts
-    let threeKsCat = await CourtCategory.findOne({ where: { name: '3KS Pickleball Playground' } });
-    if (!threeKsCat) {
-      threeKsCat = await CourtCategory.create({
-        name: '3KS Pickleball Playground',
+    // 2. Direct SQL and ORM update for court_categories to ensure Supabase matches The Playground
+    try {
+      await sequelize.query(`
+        UPDATE court_categories
+        SET name = 'The Playground Pickleball',
+            image_url = '/images/the-playground-logo.jpg',
+            description = 'Championship covered arena with 4 tournament-grade pickleball courts, 5M center walkway, 2 dressing rooms, player lounge, and coffee shop / mini store.'
+        WHERE id = 4 OR name = '3KS Pickleball Playground';
+      `);
+      console.log('[Seed] court_categories table updated to The Playground Pickleball.');
+    } catch (sqlErr) {
+      console.log('[Seed] Direct SQL update note:', sqlErr.message);
+    }
+
+    // Ensure The Playground Pickleball exists in DB
+    let playgroundCat = await CourtCategory.findOne({
+      where: {
+        name: ['The Playground Pickleball', '3KS Pickleball Playground']
+      }
+    });
+
+    if (!playgroundCat) {
+      playgroundCat = await CourtCategory.create({
+        name: 'The Playground Pickleball',
         description: 'Championship covered arena with 4 tournament-grade pickleball courts, 5M center walkway, 2 dressing rooms, player lounge, and coffee shop / mini store.',
         price_per_hour: 350.00,
         total_courts: 4,
-        image_url: '/images/3ks-playground.jpg'
+        image_url: '/images/the-playground-logo.jpg'
       });
+      console.log('[Seed] Created category: The Playground Pickleball');
     } else {
-      threeKsCat.price_per_hour = 350.00;
-      threeKsCat.total_courts = 4;
-      threeKsCat.image_url = '/images/3ks-playground.jpg';
-      await threeKsCat.save();
+      playgroundCat.name = 'The Playground Pickleball';
+      playgroundCat.description = 'Championship covered arena with 4 tournament-grade pickleball courts, 5M center walkway, 2 dressing rooms, player lounge, and coffee shop / mini store.';
+      playgroundCat.price_per_hour = 350.00;
+      playgroundCat.total_courts = 4;
+      playgroundCat.image_url = '/images/the-playground-logo.jpg';
+      await playgroundCat.save();
+      console.log('[Seed] Updated category: The Playground Pickleball');
     }
 
-    // Ensure Courts 1, 2, 3, 4 exist for 3KS Playground
+    // Ensure Courts 1, 2, 3, 4 exist for The Playground
     for (let i = 1; i <= 4; i++) {
       const existingCourt = await Court.findOne({
         where: {
-          category_id: threeKsCat.id,
+          category_id: playgroundCat.id,
           court_number: i
         }
       });
 
       if (!existingCourt) {
         await Court.create({
-          category_id: threeKsCat.id,
+          category_id: playgroundCat.id,
           court_number: i,
           display_name: 'Court ' + i,
           is_active: true
@@ -148,7 +171,7 @@ async function seedDatabase() {
       description: 'Admin Facebook Messenger Profile PSIDs (Ryan & Karlo)'
     });
 
-    console.log('[Seed] 3KS Pickleball Playground synchronized with 4 courts, GCash QR, and Facebook Meta settings.');
+    console.log('[Seed] The Playground Pickleball synchronized with 4 courts, GCash QR, and Facebook Meta settings.');
     console.log('[Seed] Database initialization completed successfully.');
   } catch (err) {
     console.error('[Seed Error]:', err);
