@@ -13,8 +13,14 @@ const paymentController = {
       }
 
       const reservation = await Reservation.findOne({
-        where: { reference_number: ref },
-        include: [{ model: Court, as: 'court', include: [{ model: CourtCategory, as: 'category' }] }]
+        where: {
+          [Op.or]: [
+            { reference_number: ref },
+            { user_contact: ref }
+          ]
+        },
+        include: [{ model: Court, as: 'court', include: [{ model: CourtCategory, as: 'category' }] }],
+        order: [['id', 'DESC']]
       });
 
       if (!reservation) {
@@ -41,7 +47,7 @@ const paymentController = {
       const numSetting = await SystemSetting.findByPk('GCASH_ACCOUNT_NUMBER');
 
       // Find all sibling court reservations booked in the same order
-      const masterRef = ref.split('-')[0];
+      const masterRef = reservation.reference_number.split('-')[0];
       const siblingReservations = await Reservation.findAll({
         where: {
           reference_number: {

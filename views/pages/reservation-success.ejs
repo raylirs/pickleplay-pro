@@ -219,6 +219,12 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  <% if (reservation.status === 'CONFIRMED' || reservation.status === 'AWAITING_CONFIRMATION') { %>
+    try { localStorage.removeItem('courtogo_pending_ref'); } catch(e) {}
+  <% } else if (reservation.status === 'AWAITING_PAYMENT') { %>
+    try { localStorage.setItem('courtogo_pending_ref', '<%= reservation.reference_number %>'); } catch(e) {}
+  <% } %>
+
   if (typeof io !== 'undefined') {
     const socket = io();
     socket.on('player_messenger_bound', (data) => {

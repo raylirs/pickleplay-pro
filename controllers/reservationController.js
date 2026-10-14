@@ -360,21 +360,28 @@ const reservationController = {
   async getReservationByReference(req, res, next) {
     try {
       const { reference } = req.params;
+      const cleanQuery = reference.trim();
       const reservation = await Reservation.findOne({
-        where: { reference_number: reference },
-        include: [{ model: Court, as: 'court', include: [{ model: CourtCategory, as: 'category' }] }]
+        where: {
+          [Op.or]: [
+            { reference_number: cleanQuery },
+            { user_contact: cleanQuery }
+          ]
+        },
+        include: [{ model: Court, as: 'court', include: [{ model: CourtCategory, as: 'category' }] }],
+        order: [['id', 'DESC']]
       });
 
       if (!reservation) {
         return res.status(404).render('pages/error', {
           title: 'Reservation Not Found',
-          message: `No reservation found matching reference "${reference}".`,
+          message: `No reservation found matching reference or contact number "${reference}".`,
           statusCode: 404,
           user: req.session ? req.session.user : null
         });
       }
 
-      const masterRef = reference.split('-')[0];
+      const masterRef = reservation.reference_number.split('-')[0];
       const siblingReservations = await Reservation.findAll({
         where: {
           reference_number: {
@@ -408,8 +415,15 @@ const reservationController = {
   async getReservationStatusJson(req, res, next) {
     try {
       const { reference } = req.params;
+      const cleanQuery = reference.trim();
       const reservation = await Reservation.findOne({
-        where: { reference_number: reference }
+        where: {
+          [Op.or]: [
+            { reference_number: cleanQuery },
+            { user_contact: cleanQuery }
+          ]
+        },
+        order: [['id', 'DESC']]
       });
 
       if (!reservation) {

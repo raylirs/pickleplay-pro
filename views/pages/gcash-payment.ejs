@@ -247,3 +247,9 @@
 
   </div>
 </div>
+
+<script>
+  if ('<%= reservation.reference_number %>') {
+    localStorage.setItem('courtogo_pending_ref', '<%= reservation.reference_number %>');
+  }
+</script>

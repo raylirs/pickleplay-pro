@@ -120,6 +120,30 @@
        TAB 1: BOOK COURT (Interactive Schedule Matrix)
   ========================================================= -->
   <div id="tab-content-book" class="venue-tab-pane">
+    <!-- Unpaid Reservation Notice Banner (Auto-detected if player closed or reloaded during GCash payment) -->
+    <div id="unpaidReservationBanner" class="alert alert-warning border-warning shadow-sm rounded-4 p-3 d-none align-items-center justify-content-between mb-3" style="background: #fffbeb; border: 1.5px solid #fde047 !important;">
+      <div class="d-flex align-items-center gap-3">
+        <span class="badge bg-warning text-dark rounded-circle p-2 fs-6 d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+          <i class="bi bi-clock-history"></i>
+        </span>
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <strong class="text-dark">You have an unpaid reservation in progress:</strong>
+            <span class="badge bg-dark font-monospace text-warning px-2.5 py-1" id="unpaidBannerRef">PKL-XXXXXX</span>
+          </div>
+          <span class="text-secondary small d-block mt-0.5">Court slots are held for 15 minutes. Click to resume GCash payment.</span>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2 mt-2 mt-sm-0">
+        <a id="unpaidBannerLink" href="#" class="btn btn-book-now-gold btn-sm rounded-pill px-3 py-1.5 fw-bold shadow-sm">
+          <i class="bi bi-qr-code-scan me-1"></i> Resume GCash Payment &rarr;
+        </a>
+        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-2.5 py-1" onclick="dismissUnpaidBanner()" title="Dismiss">
+          &times;
+        </button>
+      </div>
+    </div>
+
     <div class="matrix-card">
       <!-- Matrix Toolbar: Date Navigation & Quick Actions -->
       <div class="matrix-date-toolbar d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
@@ -369,15 +393,15 @@
               <i class="bi bi-search"></i>
             </div>
             <h3 class="fw-bold text-dark font-display mb-1">Find Your Booking</h3>
-            <p class="text-secondary small mb-0">Enter your booking reference number to view your digital pass, QR code, and payment status.</p>
+            <p class="text-secondary small mb-0">Enter your booking reference (PKL-...) or GCash mobile number to view your pass or resume payment.</p>
           </div>
 
           <form id="inlineLookupForm" onsubmit="handleInlineLookup(event)">
             <div class="mb-3">
-              <label for="inlineRefInput" class="form-label small fw-bold text-dark">Booking Reference Number</label>
+              <label for="inlineRefInput" class="form-label small fw-bold text-dark">Booking Reference or GCash Mobile Number</label>
               <div class="input-group input-group-lg">
-                <span class="input-group-text bg-light text-primary border-end-0"><i class="bi bi-ticket-perforated"></i></span>
-                <input type="text" class="form-control font-monospace border-start-0 text-uppercase" id="inlineRefInput" placeholder="e.g. PLAY2026..." required autocomplete="off">
+                <span class="input-group-text bg-light text-primary border-end-0"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control font-monospace border-start-0" id="inlineRefInput" placeholder="e.g. PKL-123456 or 09171234567" required autocomplete="off">
               </div>
               <div id="inlineLookupError" class="alert alert-danger py-2 px-3 small mt-2 d-none rounded-3" role="alert"></div>
             </div>
@@ -464,6 +488,49 @@
       <!-- Footer Info -->
       <div class="text-center pt-3 text-white-50 small">
         <span><i class="bi bi-arrow-left-right me-1"></i>Navigate with &larr; &rarr; arrow keys &bull; Press <kbd class="bg-secondary text-white px-2 py-0.5 rounded">Esc</kbd> to close</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     SLOT AWAITING PAYMENT INFO MODAL
+========================================================= -->
+<div class="modal fade" id="pendingSlotModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+      <div class="modal-header modal-checkout-header p-4">
+        <div>
+          <h5 class="modal-title fw-bold font-display text-white mb-0">Court Slot Awaiting Payment</h5>
+          <span class="text-white-50 small">Temporary 15-Minute Reservation Hold</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <div class="mb-3">
+          <span class="badge bg-warning-subtle text-dark border border-warning px-3 py-1.5 rounded-pill fw-bold" style="font-size: 13px;">
+            <i class="bi bi-hourglass-split me-1"></i> Awaiting GCash Payment
+          </span>
+        </div>
+        <p class="text-secondary small mb-3">
+          This slot on <strong id="pendingSlotCourtName" class="text-dark">Court</strong> at <strong id="pendingSlotTime" class="text-dark">Time</strong> is currently held while the player completes their GCash QR transfer.
+        </p>
+        <div class="bg-light p-3 rounded-4 border mb-4 text-start">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="text-muted small">Booking Reference:</span>
+            <span class="fw-bold font-monospace text-primary" id="pendingSlotRef">PKL-XXXXXX</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted small">Hold Expiration:</span>
+            <span class="text-dark small fw-semibold">Auto-releases if unpaid in 15 mins</span>
+          </div>
+        </div>
+        <div class="d-flex flex-column gap-2">
+          <a id="pendingSlotPayBtn" href="#" class="btn btn-book-now-gold fw-bold rounded-pill py-2.5">
+            <i class="bi bi-qr-code-scan me-1"></i> Is this your booking? Resume GCash Payment &rarr;
+          </a>
+          <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
+        </div>
       </div>
     </div>
   </div>
@@ -602,6 +669,9 @@
         switchVenueTab(targetTab);
       }
     }
+
+    // 6. Check for active unpaid booking in localStorage to show recovery banner
+    checkUnpaidBookingBanner();
   });
 
   // Tab Switcher
@@ -643,7 +713,7 @@
     const errorBox = document.getElementById('inlineLookupError');
     const btn = document.getElementById('inlineLookupBtn');
     if (!input) return;
-    const ref = input.value.trim().toUpperCase();
+    const ref = input.value.trim();
     if (!ref) return;
 
     if (errorBox) errorBox.classList.add('d-none');
@@ -657,13 +727,18 @@
       if (res.ok) {
         const data = await res.json();
         if (data && data.success) {
-          window.location.href = '/reservations/' + encodeURIComponent(ref);
+          const targetRef = data.reference || ref;
+          if (data.status === 'AWAITING_PAYMENT') {
+            window.location.href = '/payment/gcash?ref=' + encodeURIComponent(targetRef);
+          } else {
+            window.location.href = '/reservations/' + encodeURIComponent(targetRef);
+          }
           return;
         }
       }
       // If 404 or reservation not found
       if (errorBox) {
-        errorBox.textContent = `No reservation found with reference "${ref}". Please verify your reference number or check Messenger.`;
+        errorBox.textContent = `No reservation found for "${ref}". Please verify your reference or GCash mobile number.`;
         errorBox.classList.remove('d-none');
       } else {
         window.location.href = '/reservations/' + encodeURIComponent(ref);
@@ -826,6 +901,10 @@
         // Click handler for selection
         if (courtSlot.isAvailable) {
           td.addEventListener('click', () => handleSlotClick(court, slot));
+        } else if (courtSlot.status === 'AWAITING_PAYMENT' || courtSlot.status === 'PENDING') {
+          td.style.cursor = 'pointer';
+          td.title = 'Awaiting GCash Payment - Click to resume payment';
+          td.addEventListener('click', () => handlePendingSlotClick(court, courtSlot));
         }
 
         tr.appendChild(td);
@@ -833,6 +912,62 @@
 
       tbody.appendChild(tr);
     });
+  }
+
+  // Pending Slot Modal Handler
+  function handlePendingSlotClick(court, slot) {
+    const modalEl = document.getElementById('pendingSlotModal');
+    if (!modalEl) return;
+    document.getElementById('pendingSlotCourtName').innerText = court.name;
+    document.getElementById('pendingSlotTime').innerText = `${slot.startLabel} - ${slot.endLabel}`;
+    document.getElementById('pendingSlotRef').innerText = slot.referenceNumber || 'Pending Order';
+
+    const payBtn = document.getElementById('pendingSlotPayBtn');
+    if (slot.referenceNumber) {
+      payBtn.href = `/payment/gcash?ref=${encodeURIComponent(slot.referenceNumber)}`;
+      payBtn.classList.remove('d-none');
+    } else {
+      payBtn.classList.add('d-none');
+    }
+
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  }
+
+  // Active Unpaid Booking Recovery Banner
+  async function checkUnpaidBookingBanner() {
+    const pendingRef = localStorage.getItem('courtogo_pending_ref');
+    if (!pendingRef) return;
+
+    try {
+      const res = await fetch('/api/v1/reservations/' + encodeURIComponent(pendingRef) + '/status');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.status === 'AWAITING_PAYMENT' && !data.isExpired) {
+          const banner = document.getElementById('unpaidReservationBanner');
+          const refEl = document.getElementById('unpaidBannerRef');
+          const linkEl = document.getElementById('unpaidBannerLink');
+          if (banner && refEl && linkEl) {
+            refEl.innerText = data.reference;
+            linkEl.href = '/payment/gcash?ref=' + encodeURIComponent(data.reference);
+            banner.classList.remove('d-none');
+            banner.classList.add('d-flex');
+          }
+          return;
+        }
+      }
+      localStorage.removeItem('courtogo_pending_ref');
+    } catch (e) {
+      // Ignore network errors
+    }
+  }
+
+  function dismissUnpaidBanner() {
+    const banner = document.getElementById('unpaidReservationBanner');
+    if (banner) {
+      banner.classList.remove('d-flex');
+      banner.classList.add('d-none');
+    }
   }
 
   // Interactive Multi-Court & Multi-Time Slot Click Handler
