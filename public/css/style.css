@@ -845,22 +845,76 @@ h1, h2, h3, h4, .font-display {
     font-size: 10px;
   }
 
-  /* Floating rail safe-area for iPhone home bar */
+  /* Matrix Legend Scrollability on Mobile */
+  .matrix-legend-row {
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .matrix-legend-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Floating rail mobile layout & safe-area for iOS */
   .floating-booking-rail {
     padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 10px));
   }
 
+  .rail-summary-row {
+    width: 100%;
+  }
+
+  .rail-actions-row {
+    width: 100%;
+  }
+
   .rail-summary-pill {
     padding: 4px 10px;
+    gap: 6px;
+    max-width: calc(100% - 95px);
   }
 
   .rail-price-tag {
-    font-size: 17px;
+    font-size: 18px;
   }
 
-  .btn-book-now-gold {
-    font-size: 13px;
-    padding: 8px 16px;
+  .rail-actions-row .btn-book-now-gold {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  .venue-tab-pane,
+  #tab-content-book {
+    padding-bottom: calc(135px + env(safe-area-inset-bottom, 20px)) !important;
+  }
+
+  /* Selected Slots Drawer on Mobile */
+  .selected-slots-drawer {
+    margin-bottom: 8px;
+  }
+
+  .selected-slots-drawer .card {
+    border-radius: 14px !important;
+  }
+
+  .selected-slots-drawer table {
+    font-size: 11px;
+  }
+
+  .selected-slots-drawer th,
+  .selected-slots-drawer td {
+    padding: 6px 6px;
+  }
+
+  .selected-slots-drawer .drawer-remove-btn {
+    padding: 4px 8px;
+    min-width: 32px;
+    min-height: 32px;
   }
 }
 
