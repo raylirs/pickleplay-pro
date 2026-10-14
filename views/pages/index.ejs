@@ -467,19 +467,15 @@
         </div>
 
         <!-- Drawer Footer -->
-        <div class="p-3 bg-dark bg-opacity-50 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
-          <div>
-            <span class="text-white-50 small d-block" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Total Amount:</span>
-            <span class="fs-4 fw-bold font-display text-warning" id="drawerTotalPrice">₱0.00</span>
+        <div class="p-2.5 px-3 bg-dark bg-opacity-60 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <span class="text-white-50 small" id="drawerSlotsSummaryCount">4 slots selected</span>
+            <span class="text-white-50 small">·</span>
+            <span class="text-warning small fw-bold" id="drawerTotalPriceSummary">Total: ₱0.00</span>
           </div>
-          <div class="d-flex gap-2">
-            <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="clearSelectedSlots()">
-              Clear All
-            </button>
-            <button type="button" class="btn btn-book-now-gold btn-sm rounded-pill px-3 fw-bold" onclick="openCheckoutModal()">
-              <i class="bi bi-lightning-charge-fill me-1"></i> Continue to Booking &rarr;
-            </button>
-          </div>
+          <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-3 py-1 d-flex align-items-center gap-1.5" onclick="toggleSelectedSlotsDrawer(false)">
+            <i class="bi bi-chevron-down"></i> Collapse Table
+          </button>
         </div>
       </div>
     </div>
@@ -491,9 +487,9 @@
       <div class="rail-summary-pill d-flex align-items-center gap-2" role="button" onclick="toggleSelectedSlotsDrawer()" style="cursor: pointer;" title="Click to view full table of selected courts and slots">
         <span class="badge rounded-pill bg-warning text-dark fw-bold" id="railCourtBadge">Court 1</span>
         <span class="small text-white fw-bold" id="railTimeSlotsText">Select a time</span>
-        <span class="badge bg-white bg-opacity-20 text-white rounded-pill px-2 py-0.5 small d-inline-flex align-items-center gap-1" id="drawerToggleBtn" style="font-size: 10.5px;">
-          <i class="bi bi-table"></i> View Table <i class="bi bi-chevron-up" id="drawerToggleIcon"></i>
-        </span>
+        <button type="button" class="rail-table-btn" id="drawerToggleBtn" onclick="event.stopPropagation(); toggleSelectedSlotsDrawer();">
+          <i class="bi bi-table"></i> <span id="drawerToggleText">View Table</span> <i class="bi bi-chevron-up" id="drawerToggleIcon"></i>
+        </button>
       </div>
       <div>
         <span class="small text-white-50 d-block" style="font-size: 11px;">Total Price:</span>
@@ -1169,7 +1165,9 @@
 
   function toggleSelectedSlotsDrawer(forceState) {
     const drawer = document.getElementById('selectedSlotsDrawer');
+    const toggleBtn = document.getElementById('drawerToggleBtn');
     const icon = document.getElementById('drawerToggleIcon');
+    const textEl = document.getElementById('drawerToggleText');
     if (!drawer) return;
 
     if (typeof forceState === 'boolean') {
@@ -1181,22 +1179,23 @@
     if (isDrawerOpen && selectedSlotItems.length > 0) {
       renderSelectedSlotsDrawer();
       drawer.classList.remove('d-none');
-      if (icon) {
-        icon.className = 'bi bi-chevron-down';
-      }
+      if (toggleBtn) toggleBtn.classList.add('is-active');
+      if (icon) icon.className = 'bi bi-chevron-down';
+      if (textEl) textEl.innerText = 'Hide Table';
     } else {
       drawer.classList.add('d-none');
       isDrawerOpen = false;
-      if (icon) {
-        icon.className = 'bi bi-chevron-up';
-      }
+      if (toggleBtn) toggleBtn.classList.remove('is-active');
+      if (icon) icon.className = 'bi bi-chevron-up';
+      if (textEl) textEl.innerText = 'View Table';
     }
   }
 
   function renderSelectedSlotsDrawer() {
     const tbody = document.getElementById('drawerSlotsTableBody');
     const subtitleEl = document.getElementById('drawerSummarySubtitle');
-    const totalPriceEl = document.getElementById('drawerTotalPrice');
+    const countEl = document.getElementById('drawerSlotsSummaryCount');
+    const priceSummaryEl = document.getElementById('drawerTotalPriceSummary');
     if (!tbody) return;
 
     if (!selectedSlotItems || selectedSlotItems.length === 0) {
@@ -1212,8 +1211,11 @@
     if (subtitleEl) {
       subtitleEl.innerText = `${totalCount} slot${totalCount > 1 ? 's' : ''} across ${uniqueCourts.length} court${uniqueCourts.length > 1 ? 's' : ''} (${uniqueCourts.join(', ')})`;
     }
-    if (totalPriceEl) {
-      totalPriceEl.innerText = `₱${totalPrice.toFixed(2)}`;
+    if (countEl) {
+      countEl.innerText = `${totalCount} slot${totalCount > 1 ? 's' : ''} across ${uniqueCourts.length} court${uniqueCourts.length > 1 ? 's' : ''}`;
+    }
+    if (priceSummaryEl) {
+      priceSummaryEl.innerText = `Total: ₱${totalPrice.toFixed(2)}`;
     }
 
     let rowsHtml = '';
@@ -1226,9 +1228,9 @@
             </span>
           </td>
           <td>
-            <span class="d-inline-flex align-items-center gap-1.5 text-white fw-semibold small">
+            <span class="d-inline-flex align-items-center gap-2 text-white fw-semibold small">
               <i class="bi bi-clock-history text-warning"></i>
-              ${item.startLabel} – ${item.endLabel} <span class="text-white-50 small">(1 hr)</span>
+              ${item.startLabel} – ${item.endLabel} <span class="text-white-50 small ms-1">(1 hr)</span>
             </span>
           </td>
           <td class="text-end fw-bold font-monospace text-warning small">

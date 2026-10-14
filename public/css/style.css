@@ -576,6 +576,35 @@ h1, h2, h3, h4, .font-display {
   border-color: rgba(255, 255, 255, 0.35);
 }
 
+.rail-table-btn {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff !important;
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  text-decoration: none;
+}
+
+.rail-table-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #ffffff !important;
+}
+
+.rail-table-btn.is-active {
+  background: var(--gold-500);
+  border-color: var(--gold-400);
+  color: #0B2545 !important;
+}
+
 .selected-slots-drawer {
   width: 100%;
   animation: slideUpDrawer 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
