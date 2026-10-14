@@ -53,6 +53,7 @@ router.get('/reservations/lookup', reservationController.showLookupPage);
 router.get('/reservations/:reference', reservationController.getReservationByReference);
 
 // GCash QR Payment flow
+router.get('/payment/gcash', paymentController.showGcashPaymentPage);
 router.get('/payment/gcash-checkout', paymentController.showGcashPaymentPage);
 router.post('/payment/submit-proof', upload.single('screenshot'), paymentController.submitPaymentProof);
 

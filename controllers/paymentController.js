@@ -40,14 +40,15 @@ const paymentController = {
       const numSetting = await SystemSetting.findByPk('GCASH_ACCOUNT_NUMBER');
 
       res.render('pages/gcash-payment', {
-        title: 'GCash QR Payment - 3KS Pickleball Playground',
+        title: `GCash QR Payment - ${reservation.reference_number}`,
         reservation,
         gcashQrImage: qrSetting ? qrSetting.value : '/images/gcash-qr.jpg',
         gcashAccountName: nameSetting ? nameSetting.value : 'RY*N KR******R L.',
         gcashAccountNumber: numSetting ? numSetting.value : '0939-075-XXXX',
         formatCurrency,
         formatTime12,
-        user: req.session ? req.session.user : null
+        user: req.session ? req.session.user : null,
+        hideNavbar: true
       });
     } catch (err) {
       next(err);

@@ -382,7 +382,8 @@ const reservationController = {
         reservation,
         formatCurrency,
         formatTime12,
-        user: req.session ? req.session.user : null
+        user: req.session ? req.session.user : null,
+        hideNavbar: true
       });
     } catch (err) {
       next(err);
@@ -414,9 +415,10 @@ const reservationController = {
 
   showLookupPage(req, res) {
     res.render('pages/lookup', {
-      title: 'Find My Reservation - PicklePlay Pro',
+      title: 'Find My Reservation - The Playground Pickleball',
       user: req.session ? req.session.user : null,
-      error: req.flash('error')
+      error: req.flash('error'),
+      hideNavbar: true
     });
   }
 };

@@ -1,4 +1,4 @@
-﻿function errorHandler(err, req, res, next) {
+function errorHandler(err, req, res, next) {
   console.error('[Error Handler]:', err);
 
   if (res.headersSent) {
@@ -16,10 +16,11 @@
   }
 
   res.status(statusCode).render('pages/error', {
-    title: 'Error - PicklePlay Pro',
+    title: 'Error - The Playground Pickleball',
     message: err.message || 'An unexpected server error occurred.',
     statusCode,
-    user: req.session ? req.session.user : null
+    user: req.session ? req.session.user : null,
+    hideNavbar: true
   });
 }
 
@@ -33,7 +34,8 @@ function notFoundHandler(req, res, next) {
     title: 'Page Not Found',
     message: 'The page or resource you requested could not be found.',
     statusCode: 404,
-    user: req.session ? req.session.user : null
+    user: req.session ? req.session.user : null,
+    hideNavbar: true
   });
 }
 

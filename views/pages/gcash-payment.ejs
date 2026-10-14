@@ -1,103 +1,209 @@
-<div class="container py-5">
-  <div class="max-w-900 mx-auto" style="max-width: 850px;">
-    <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white">
-      <!-- Header -->
-      <div class="bg-primary text-white p-4" style="background: linear-gradient(135deg, #005ce6 0%, #003d99 100%) !important;">
+<!-- =========================================================
+     VENUE BRAND HEADER & NAVIGATION (Courtogo Architecture)
+========================================================= -->
+<section class="venue-header-banner py-3 py-md-4 border-bottom">
+  <div class="container max-w-6xl">
+    <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-3">
+      <!-- Venue Identity Left -->
+      <a href="/" class="text-decoration-none d-flex align-items-center gap-3">
+        <div class="venue-avatar-wrap">
+          <img src="/images/the-playground-logo.jpg" alt="The Playground Pickleball" class="venue-avatar-img">
+        </div>
+        <div>
+          <h1 class="h3 fw-bold mb-0 text-dark font-display" style="letter-spacing: -0.02em;">
+            The Playground Pickleball
+          </h1>
+          <p class="text-secondary small mb-0 mt-1 d-flex align-items-center gap-1">
+            <i class="bi bi-geo-alt-fill text-warning"></i>
+            <span class="fw-semibold text-dark">Camaman-an, Cagayan de Oro City</span>
+            <span class="text-muted">· Piot Heights Compound</span>
+          </p>
+        </div>
+      </a>
+
+      <!-- Quick Actions Right -->
+      <div class="d-flex align-items-center gap-2 mt-2 mt-lg-0">
+        <a href="/" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1 shadow-none">
+          <i class="bi bi-arrow-left"></i>
+          <span>Back to Court Matrix</span>
+        </a>
+        <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1 shadow-none" data-bs-toggle="modal" data-bs-target="#messengerModal">
+          <i class="bi bi-messenger text-primary"></i>
+          <span>Messenger Alerts</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     GCASH PAYMENT MAIN CONTENT
+========================================================= -->
+<div class="container py-4 py-md-5 max-w-6xl">
+  <div class="max-w-900 mx-auto" style="max-width: 920px;">
+    
+    <!-- Top Step Pill Bar -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center bg-white p-3 rounded-4 shadow-sm mb-4 border">
+      <div class="d-flex align-items-center gap-2 mb-2 mb-sm-0">
+        <span class="badge bg-primary text-white rounded-pill px-3 py-1.5 fw-bold">Step 2 of 2</span>
+        <span class="fw-bold text-dark font-display">Instant GCash Payment & Verification</span>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="small text-muted">Booking Reference:</span>
+        <span class="badge bg-light text-primary font-monospace fs-6 px-3 py-1 rounded-pill border"><%= reservation.reference_number %></span>
+      </div>
+    </div>
+
+    <!-- Main Payment Card -->
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white mb-4">
+      <!-- Dark Navy Brand Header Banner -->
+      <div class="p-4 p-md-4 text-white" style="background: linear-gradient(135deg, #07172C 0%, #0F2D52 100%); border-bottom: 2px solid #D4AF37;">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
           <div>
-            <span class="badge bg-white text-primary px-3 py-1 rounded-pill fw-bold mb-2">Step 2: Payment via GCash QR</span>
-            <h2 class="fw-bold mb-1"><i class="bi bi-qr-code-scan me-2"></i>Pay via GCash QR</h2>
-            <p class="mb-0 text-white-50 small">Scan the official QR code below with your GCash app and submit your reference number.</p>
+            <span class="badge px-3 py-1.5 rounded-pill fw-bold mb-2 text-dark" style="background-color: #E5C365;">
+              <i class="bi bi-qr-code-scan me-1"></i>Official Merchant QR
+            </span>
+            <h2 class="fw-bold font-display text-white mb-1">Pay via GCash QR Code</h2>
+            <p class="mb-0 text-white-50 small">Scan the QR code below, send exact payment, and attach your reference number.</p>
           </div>
           <div class="bg-white bg-opacity-10 p-3 rounded-4 border border-white border-opacity-25 text-md-end">
-            <span class="small text-white-50 d-block">Total Amount to Pay</span>
-            <h2 class="fw-extrabold text-warning mb-0"><%= formatCurrency(reservation.total_amount) %></h2>
+            <span class="small text-white-50 d-block text-uppercase" style="font-size: 10px; letter-spacing: 0.5px; font-weight: 600;">Total Amount Due</span>
+            <h2 class="fw-extrabold text-warning mb-0 font-display"><%= formatCurrency(reservation.total_amount) %></h2>
           </div>
         </div>
       </div>
 
       <div class="p-4 p-md-5">
-        <div class="row g-4 align-items-center">
-          <!-- Left: Official GCash QR Code -->
-          <div class="col-md-6 text-center border-end-md">
-            <div class="p-2 bg-light rounded-4 border mb-3 shadow-sm d-inline-block">
-              <img src="<%= gcashQrImage %>" alt="Official GCash QR Code" class="img-fluid rounded-3" style="max-width: 280px; width: 100%; object-fit: contain;">
+        <div class="row g-4 align-items-start">
+          
+          <!-- Left Column: Official GCash QR Code Box -->
+          <div class="col-md-5 text-center">
+            <div class="p-3 bg-light rounded-4 border shadow-sm mb-3">
+              <img src="<%= gcashQrImage %>" alt="The Playground Pickleball GCash QR Code" class="img-fluid rounded-3 shadow-xs" style="max-width: 260px; width: 100%; object-fit: contain;">
+              
+              <div class="mt-3 pt-2 border-top">
+                <a href="<%= gcashQrImage %>" download="The-Playground-GCash-QR.jpg" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1 shadow-none">
+                  <i class="bi bi-download"></i> Save QR to Gallery
+                </a>
+              </div>
             </div>
-            <div class="small text-secondary">
-              <p class="fw-bold text-dark mb-1">THE PLAYGROUND PICKLEBALL</p>
-              <p class="mb-0 text-muted">Account: <strong class="text-primary"><%= gcashAccountName %></strong></p>
+
+            <div class="p-3 rounded-3 bg-white border text-start small">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted">Merchant:</span>
+                <strong class="text-dark">THE PLAYGROUND</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted">Account Name:</span>
+                <strong class="text-primary"><%= gcashAccountName %></strong>
+              </div>
               <% if (gcashAccountNumber) { %>
-                <p class="small text-muted mb-0 font-monospace"><%= gcashAccountNumber %></p>
+                <div class="d-flex justify-content-between">
+                  <span class="text-muted">Mobile / Number:</span>
+                  <strong class="text-dark font-monospace"><%= gcashAccountNumber %></strong>
+                </div>
               <% } %>
             </div>
           </div>
 
-          <!-- Right: Instructions & Submission Form -->
-          <div class="col-md-6">
-            <div class="bg-light p-3 rounded-3 mb-4 small border">
-              <div class="d-flex justify-content-between mb-1">
-                <span class="text-secondary">Booking Ref:</span>
-                <strong class="font-monospace text-primary"><%= reservation.reference_number %></strong>
+          <!-- Right Column: Booking Details & Form -->
+          <div class="col-md-7">
+            
+            <!-- Structured Booking Summary Card -->
+            <div class="card border-0 rounded-4 mb-4 overflow-hidden" style="background: #f8fafc; border: 1px solid #e2e8f0 !important;">
+              <div class="px-3 py-2 bg-white border-bottom d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-primary-subtle text-primary rounded-circle p-1.5 d-inline-flex align-items-center justify-content-center" style="width: 26px; height: 26px;">
+                    <i class="bi bi-calendar3"></i>
+                  </span>
+                  <span class="fw-bold text-dark small"><%= reservation.reservation_date %></span>
+                </div>
+                <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold" style="font-size: 11px;">
+                  <%= reservation.court ? reservation.court.display_name : 'Pickleball Court' %>
+                </span>
               </div>
-              <div class="d-flex justify-content-between mb-1">
-                <span class="text-secondary">Court:</span>
-                <strong class="text-dark"><%= reservation.court ? reservation.court.display_name : 'Court' %></strong>
-              </div>
-              <div class="d-flex justify-content-between mb-1">
-                <span class="text-secondary">Date & Time:</span>
-                <% 
-                  let gcashTimeDisplay = formatTime12(reservation.start_time);
-                  if (reservation.slots_json) {
-                    try {
-                      const arr = JSON.parse(reservation.slots_json);
-                      if (Array.isArray(arr) && arr.length > 0) {
-                        gcashTimeDisplay = arr.map(t => formatTime12(t)).join(', ');
-                      }
-                    } catch (e) {}
-                  }
-                %>
-                <strong class="text-dark"><%= reservation.reservation_date %> (<%= gcashTimeDisplay %>)</strong>
-              </div>
-              <div class="d-flex justify-content-between">
-                <span class="text-secondary">Player Name:</span>
-                <strong class="text-dark"><%= reservation.user_name %></strong>
+
+              <div class="p-3">
+                <div class="mb-2 d-flex justify-content-between align-items-center">
+                  <span class="small text-muted fw-semibold">Reserved Time Slot(s):</span>
+                  <span class="badge bg-light text-dark border"><%= reservation.total_hours %> Hour<%= reservation.total_hours > 1 ? 's' : '' %></span>
+                </div>
+
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                  <% 
+                    let parsedSlots = [];
+                    if (reservation.slots_json) {
+                      try {
+                        const arr = JSON.parse(reservation.slots_json);
+                        if (Array.isArray(arr)) parsedSlots = arr;
+                      } catch (e) {}
+                    }
+                    if (parsedSlots.length === 0) {
+                      parsedSlots = [reservation.start_time];
+                    }
+                  %>
+                  <% parsedSlots.forEach(slotTime => { %>
+                    <span class="badge bg-white text-dark border px-2.5 py-1.5 rounded-3 fw-semibold d-inline-flex align-items-center gap-1 shadow-xs" style="font-size: 11px; border-color: #cbd5e1 !important;">
+                      <i class="bi bi-clock-history text-primary" style="font-size: 10px;"></i>
+                      <%= formatTime12(slotTime) %>
+                    </span>
+                  <% }); %>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top small">
+                  <span class="text-muted">Player: <strong class="text-dark"><%= reservation.user_name %></strong></span>
+                  <span class="text-muted">Contact: <strong class="text-dark font-monospace"><%= reservation.user_contact %></strong></span>
+                </div>
               </div>
             </div>
 
-            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-info-circle-fill text-primary me-1"></i>How to Pay:</h6>
-            <ol class="small text-secondary ps-3 mb-4">
-              <li class="mb-1">Open your <strong>GCash App</strong> and tap <strong>QR</strong> / <strong>Scan QR</strong>.</li>
-              <li class="mb-1">Scan the QR code on the left.</li>
-              <li class="mb-1">Enter the exact amount: <strong class="text-dark"><%= formatCurrency(reservation.total_amount) %></strong>.</li>
-              <li class="mb-1">In the message/remarks, type: <strong class="text-dark font-monospace"><%= reservation.reference_number %></strong>.</li>
-              <li>Type the <strong>GCash Reference No.</strong> from your receipt below and click submit.</li>
-            </ol>
+            <!-- How to Pay Step Checklist -->
+            <div class="p-3 bg-light rounded-4 border mb-4">
+              <h6 class="fw-bold text-dark mb-2 d-flex align-items-center gap-1.5" style="font-size: 13.5px;">
+                <i class="bi bi-info-circle-fill text-primary"></i> 4 Simple Steps to Complete:
+              </h6>
+              <ol class="small text-secondary ps-3 mb-0" style="line-height: 1.6;">
+                <li>Open <strong>GCash</strong> & tap <strong>Scan QR</strong> (or upload saved photo).</li>
+                <li>Send exact amount: <strong class="text-dark"><%= formatCurrency(reservation.total_amount) %></strong>.</li>
+                <li>Type your Reference <strong class="text-dark font-monospace"><%= reservation.reference_number %></strong> in remarks.</li>
+                <li>Type your <strong>GCash Reference No.</strong> & attach screenshot below.</li>
+              </ol>
+            </div>
 
+            <!-- Payment Proof Submission Form -->
             <form action="/payment/submit-proof" method="POST" enctype="multipart/form-data">
               <input type="hidden" name="reference_number" value="<%= reservation.reference_number %>">
               
               <div class="mb-3">
-                <label class="form-label small fw-bold text-dark">GCash Reference No. <span class="text-danger">*</span></label>
+                <label class="form-label small fw-bold text-dark">GCash Reference Number <span class="text-danger">*</span></label>
                 <div class="input-group">
-                  <span class="input-group-text bg-light"><i class="bi bi-receipt"></i></span>
-                  <input type="text" name="gcash_reference_no" class="form-control" placeholder="e.g. 1002 8394 1928" required>
+                  <span class="input-group-text bg-light text-primary border-end-0"><i class="bi bi-receipt"></i></span>
+                  <input type="text" name="gcash_reference_no" class="form-control font-monospace border-start-0" placeholder="e.g. 1002 8394 1928" required autocomplete="off">
                 </div>
-                <div class="form-text small">Enter the official reference number from your GCash payment receipt.</div>
+                <div class="form-text small text-muted">Found on your GCash transaction confirmation receipt screen.</div>
               </div>
 
               <div class="mb-4">
-                <label class="form-label small fw-bold text-dark">Payment Screenshot <span class="text-danger">*</span></label>
-                <input type="file" name="screenshot" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp" required>
-                <div class="form-text small">Upload your GCash confirmation screenshot as proof of payment.</div>
+                <label class="form-label small fw-bold text-dark">Payment Screenshot / Receipt <span class="text-danger">*</span></label>
+                <input type="file" name="screenshot" class="form-control rounded-3" accept=".jpg,.jpeg,.png,.webp" required>
+                <div class="form-text small text-muted">Upload the screenshot of your successful GCash transfer.</div>
               </div>
 
-              <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold rounded-pill shadow-sm" style="background-color: #005ce6; border-color: #005ce6;">
-                <i class="bi bi-send-check-fill me-1"></i>Submit Payment for Admin Approval
+              <button type="submit" class="btn btn-book-now-gold btn-lg w-100 fw-bold rounded-pill shadow">
+                <i class="bi bi-send-check-fill me-2"></i> Submit Payment for Admin Approval &rarr;
               </button>
             </form>
+
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Safety / Trust Note -->
+    <div class="text-center text-muted small">
+      <i class="bi bi-shield-check text-success me-1"></i>
+      Slots are reserved during verification. Once admin confirms your proof, you will receive your digital pass instantly.
+    </div>
+
   </div>
 </div>
