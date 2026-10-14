@@ -1,9 +1,65 @@
-﻿body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+:root {
+  --navy-900: #07172C;
+  --navy-800: #0B2545;
+  --navy-700: #133E68;
+  --gold-500: #D4AF37;
+  --gold-400: #E5C365;
+  --gold-300: #FFF0B3;
+  --court-blue: #0284C7;
+  --court-blue-light: #E0F2FE;
+  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
+
+body {
+  font-family: var(--font-body);
+  background-color: #F8FAFC !important;
+  color: #1E293B;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+}
+
+.gold-gradient-text {
+  background: linear-gradient(135deg, #FFF0B3 0%, #D4AF37 50%, #B8860B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 .card {
-  border: none;
+  border: 1px solid rgba(11, 37, 69, 0.08);
+  box-shadow: 0 4px 16px rgba(11, 37, 69, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
 .table > :not(caption) > * > * {
-  padding: 1rem 0.75rem;
+  padding: 1rem 0.85rem;
+  vertical-align: middle;
+}
+
+.table thead th {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--navy-800);
+  background-color: #F1F5F9;
+  border-bottom: 2px solid rgba(11, 37, 69, 0.1);
+}
+
+.badge {
+  letter-spacing: 0.02em;
+}
+
+.btn-warning {
+  background: linear-gradient(135deg, #FFF0B3 0%, #D4AF37 50%, #B8860B 100%) !important;
+  border: none !important;
+  color: #07172C !important;
+}
+
+.btn-warning:hover {
+  filter: brightness(1.05);
+  color: #000000 !important;
 }

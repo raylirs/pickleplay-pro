@@ -6,9 +6,9 @@
 <!-- =========================================================
      VENUE BRAND HEADER & QUICK STATS (Courtogo Architecture)
 ========================================================= -->
-<section class="venue-header-banner py-4 py-md-5">
+<section class="venue-header-banner py-4 py-md-4">
   <div class="container max-w-6xl">
-    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4">
+    <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-3">
       <!-- Venue Identity Left -->
       <div class="d-flex align-items-center gap-3">
         <div class="venue-avatar-wrap">
@@ -29,43 +29,33 @@
         </div>
       </div>
 
-      <!-- Right: Share & Messenger Alert Quick Actions -->
-      <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
-        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2 fw-semibold" onclick="shareVenueLink()">
-          <i class="bi bi-share-fill me-1"></i>Share
-        </button>
-        <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#messengerModal">
-          <i class="bi bi-messenger me-1 text-primary"></i>Messenger Alerts
-        </button>
-      </div>
-    </div>
+      <!-- 3-Item Quick Stat Bar Beside Header (Right) -->
+      <div class="stat-pill-group ms-lg-auto mt-2 mt-lg-0">
+        <div class="stat-pill-cell">
+          <div class="stat-pill-label">
+            <i class="bi bi-coin text-warning"></i> Hourly Rate
+          </div>
+          <div class="stat-pill-value">
+            <%= formatCurrency(defaultRate) %><span class="text-muted fs-6 fw-normal">/hr</span>
+          </div>
+        </div>
 
-    <!-- 3-Item Quick Stat Bar (Courtogo-Inspired) -->
-    <div class="stat-pill-group">
-      <div class="stat-pill-cell">
-        <div class="stat-pill-label">
-          <i class="bi bi-coin text-warning"></i> Hourly Rate
+        <div class="stat-pill-cell">
+          <div class="stat-pill-label">
+            <i class="bi bi-trophy-fill text-primary"></i> Courts
+          </div>
+          <div class="stat-pill-value">
+            <%= totalCourtsCount %> Covered <span class="badge rounded-pill bg-primary-subtle text-primary fw-bold ms-1" style="font-size: 11px;">Arena</span>
+          </div>
         </div>
-        <div class="stat-pill-value">
-          <%= formatCurrency(defaultRate) %><span class="text-muted fs-6 fw-normal">/hr</span>
-        </div>
-      </div>
 
-      <div class="stat-pill-cell">
-        <div class="stat-pill-label">
-          <i class="bi bi-trophy-fill text-primary"></i> Courts
-        </div>
-        <div class="stat-pill-value">
-          <%= totalCourtsCount %> Covered <span class="badge rounded-pill bg-primary-subtle text-primary fw-bold ms-1" style="font-size: 11px;">Arena</span>
-        </div>
-      </div>
-
-      <div class="stat-pill-cell">
-        <div class="stat-pill-label">
-          <i class="bi bi-clock-fill text-success"></i> Operating Hours
-        </div>
-        <div class="stat-pill-value">
-          8AM – 12 Midnight <span class="badge rounded-pill bg-success-subtle text-success fw-bold ms-1" style="font-size: 11px;">Daily</span>
+        <div class="stat-pill-cell">
+          <div class="stat-pill-label">
+            <i class="bi bi-clock-fill text-success"></i> Operating Hours
+          </div>
+          <div class="stat-pill-value">
+            8AM – 12 Midnight <span class="badge rounded-pill bg-success-subtle text-success fw-bold ms-1" style="font-size: 11px;">Daily</span>
+          </div>
         </div>
       </div>
     </div>
@@ -77,32 +67,47 @@
 ========================================================= -->
 <div class="bg-white border-bottom venue-tabs-container">
   <div class="container max-w-6xl">
-    <div class="courtogo-tabs-bar" role="tablist">
-      <button class="courtogo-tab-btn active" id="tab-btn-book" onclick="switchVenueTab('book')">
-        <i class="bi bi-calendar2-check-fill text-warning"></i>
-        <span>Book Court</span>
-      </button>
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+      <!-- Tabs Left -->
+      <div class="courtogo-tabs-bar flex-grow-1" role="tablist">
+        <button class="courtogo-tab-btn active" id="tab-btn-book" onclick="switchVenueTab('book')">
+          <i class="bi bi-calendar2-check-fill text-warning"></i>
+          <span>Book Court</span>
+        </button>
 
-      <button class="courtogo-tab-btn" id="tab-btn-about" onclick="switchVenueTab('about')">
-        <i class="bi bi-info-circle-fill"></i>
-        <span>About Facility</span>
-      </button>
+        <button class="courtogo-tab-btn" id="tab-btn-about" onclick="switchVenueTab('about')">
+          <i class="bi bi-info-circle-fill"></i>
+          <span>About Facility</span>
+        </button>
 
-      <button class="courtogo-tab-btn" id="tab-btn-photos" onclick="switchVenueTab('photos')">
-        <i class="bi bi-images"></i>
-        <span>Photos</span>
-        <span class="courtogo-tab-badge">4</span>
-      </button>
+        <button class="courtogo-tab-btn" id="tab-btn-photos" onclick="switchVenueTab('photos')">
+          <i class="bi bi-images"></i>
+          <span>Photos</span>
+          <span class="courtogo-tab-badge">4</span>
+        </button>
 
-      <button class="courtogo-tab-btn" id="tab-btn-location" onclick="switchVenueTab('location')">
-        <i class="bi bi-geo-alt-fill text-danger"></i>
-        <span>Location & Map</span>
-      </button>
+        <button class="courtogo-tab-btn" id="tab-btn-location" onclick="switchVenueTab('location')">
+          <i class="bi bi-geo-alt-fill text-danger"></i>
+          <span>Location & Map</span>
+        </button>
 
-      <a href="/reservations/lookup" class="courtogo-tab-btn text-decoration-none">
-        <i class="bi bi-search"></i>
-        <span>Find Booking</span>
-      </a>
+        <a href="/reservations/lookup" class="courtogo-tab-btn text-decoration-none">
+          <i class="bi bi-search"></i>
+          <span>Find Booking</span>
+        </a>
+      </div>
+
+      <!-- Action Buttons In-Line with Tabs (Right) -->
+      <div class="d-flex align-items-center gap-2 py-2 py-md-0 ms-md-3 justify-content-end flex-shrink-0">
+        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-none" onclick="shareVenueLink()">
+          <i class="bi bi-share-fill"></i>
+          <span>Share</span>
+        </button>
+        <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-none" data-bs-toggle="modal" data-bs-target="#messengerModal">
+          <i class="bi bi-messenger text-primary"></i>
+          <span>Messenger Alerts</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>
