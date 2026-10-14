@@ -540,6 +540,58 @@ h1, h2, h3, h4, .font-display {
   border-radius: 12px;
   padding: 6px 14px;
   color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.rail-summary-pill:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.selected-slots-drawer {
+  width: 100%;
+  animation: slideUpDrawer 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpDrawer {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.drawer-slot-row {
+  transition: background-color 0.15s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.drawer-slot-row:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+.drawer-remove-btn {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.drawer-remove-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  transform: scale(1.05);
+}
+
+#tab-content-book {
+  padding-bottom: 95px;
 }
 
 .rail-price-tag {

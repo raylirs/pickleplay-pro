@@ -428,12 +428,68 @@
      FLOATING BOTTOM BOOKING RAIL (Courtogo Interaction)
 ========================================================= -->
 <div class="floating-booking-rail" id="bookingActionBar">
+  <!-- Expandable Selected Courts Summary Drawer -->
+  <div class="selected-slots-drawer d-none" id="selectedSlotsDrawer">
+    <div class="container max-w-6xl px-0 mb-3">
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="background: rgba(11, 37, 69, 0.98); backdrop-filter: blur(20px); border: 1.5px solid var(--gold-400) !important;">
+        <!-- Drawer Header -->
+        <div class="p-3 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold" style="font-size: 11.5px;">
+              <i class="bi bi-grid-fill me-1"></i>Selected Courts & Slots
+            </span>
+            <span class="text-white-50 small fw-semibold" id="drawerSummarySubtitle">Selected courts summary</span>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-light rounded-circle d-flex align-items-center justify-content-center" onclick="toggleSelectedSlotsDrawer(false)" style="width: 30px; height: 30px;" title="Close table view">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <!-- Drawer Table Body -->
+        <div class="p-2 p-sm-3" style="max-height: 260px; overflow-y: auto;">
+          <table class="table table-dark table-hover align-middle mb-0 text-white" style="background: transparent;">
+            <thead class="small text-uppercase text-secondary border-bottom border-secondary border-opacity-25" style="font-size: 11px;">
+              <tr>
+                <th style="width: 25%;">Court</th>
+                <th style="width: 45%;">Time Slot</th>
+                <th style="width: 20%;" class="text-end">Rate</th>
+                <th style="width: 10%;" class="text-center">Remove</th>
+              </tr>
+            </thead>
+            <tbody id="drawerSlotsTableBody">
+              <!-- Dynamic rows injected here -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="p-3 bg-dark bg-opacity-50 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-white-50 small d-block" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Total Amount:</span>
+            <span class="fs-4 fw-bold font-display text-warning" id="drawerTotalPrice">₱0.00</span>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="clearSelectedSlots()">
+              Clear All
+            </button>
+            <button type="button" class="btn btn-book-now-gold btn-sm rounded-pill px-3 fw-bold" onclick="openCheckoutModal()">
+              <i class="bi bi-lightning-charge-fill me-1"></i> Continue to Booking &rarr;
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="container max-w-6xl d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3">
     <!-- Selected Info Pill -->
     <div class="d-flex align-items-center gap-3">
-      <div class="rail-summary-pill d-flex align-items-center gap-2">
+      <div class="rail-summary-pill d-flex align-items-center gap-2" role="button" onclick="toggleSelectedSlotsDrawer()" style="cursor: pointer;" title="Click to view full table of selected courts and slots">
         <span class="badge rounded-pill bg-warning text-dark fw-bold" id="railCourtBadge">Court 1</span>
         <span class="small text-white fw-bold" id="railTimeSlotsText">Select a time</span>
+        <span class="badge bg-white bg-opacity-20 text-white rounded-pill px-2 py-0.5 small d-inline-flex align-items-center gap-1" id="drawerToggleBtn" style="font-size: 10.5px;">
+          <i class="bi bi-table"></i> View Table <i class="bi bi-chevron-up" id="drawerToggleIcon"></i>
+        </span>
       </div>
       <div>
         <span class="small text-white-50 d-block" style="font-size: 11px;">Total Price:</span>
@@ -1031,10 +1087,107 @@
     return `${h}:${m} ${ampm}`;
   }
 
+  // Expandable Selected Slots Table Drawer
+  let isDrawerOpen = false;
+
+  function toggleSelectedSlotsDrawer(forceState) {
+    const drawer = document.getElementById('selectedSlotsDrawer');
+    const icon = document.getElementById('drawerToggleIcon');
+    if (!drawer) return;
+
+    if (typeof forceState === 'boolean') {
+      isDrawerOpen = forceState;
+    } else {
+      isDrawerOpen = !isDrawerOpen;
+    }
+
+    if (isDrawerOpen && selectedSlotItems.length > 0) {
+      renderSelectedSlotsDrawer();
+      drawer.classList.remove('d-none');
+      if (icon) {
+        icon.className = 'bi bi-chevron-down';
+      }
+    } else {
+      drawer.classList.add('d-none');
+      isDrawerOpen = false;
+      if (icon) {
+        icon.className = 'bi bi-chevron-up';
+      }
+    }
+  }
+
+  function renderSelectedSlotsDrawer() {
+    const tbody = document.getElementById('drawerSlotsTableBody');
+    const subtitleEl = document.getElementById('drawerSummarySubtitle');
+    const totalPriceEl = document.getElementById('drawerTotalPrice');
+    if (!tbody) return;
+
+    if (!selectedSlotItems || selectedSlotItems.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">No slots selected</td></tr>';
+      toggleSelectedSlotsDrawer(false);
+      return;
+    }
+
+    const totalCount = selectedSlotItems.length;
+    const totalPrice = selectedSlotItems.reduce((sum, item) => sum + item.rate, 0);
+    const uniqueCourts = [...new Set(selectedSlotItems.map(item => item.courtName))];
+
+    if (subtitleEl) {
+      subtitleEl.innerText = `${totalCount} slot${totalCount > 1 ? 's' : ''} across ${uniqueCourts.length} court${uniqueCourts.length > 1 ? 's' : ''} (${uniqueCourts.join(', ')})`;
+    }
+    if (totalPriceEl) {
+      totalPriceEl.innerText = `₱${totalPrice.toFixed(2)}`;
+    }
+
+    let rowsHtml = '';
+    selectedSlotItems.forEach(item => {
+      rowsHtml += `
+        <tr class="drawer-slot-row">
+          <td>
+            <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold" style="font-size: 11.5px;">
+              ${item.courtName}
+            </span>
+          </td>
+          <td>
+            <span class="d-inline-flex align-items-center gap-1.5 text-white fw-semibold small">
+              <i class="bi bi-clock-history text-warning"></i>
+              ${item.startLabel} – ${item.endLabel} <span class="text-white-50 small">(1 hr)</span>
+            </span>
+          </td>
+          <td class="text-end fw-bold font-monospace text-warning small">
+            ₱${item.rate.toFixed(2)}
+          </td>
+          <td class="text-center">
+            <button type="button" class="drawer-remove-btn" onclick="removeSingleSlot(${item.courtId}, '${item.startTime}')" title="Remove this slot">
+              <i class="bi bi-trash3-fill"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = rowsHtml;
+  }
+
+  function removeSingleSlot(courtId, startTime) {
+    const idx = selectedSlotItems.findIndex(item => item.courtId === courtId && item.startTime === startTime);
+    if (idx > -1) {
+      selectedSlotItems.splice(idx, 1);
+      updateMatrixVisualSelection();
+      updateFloatingRail();
+      if (selectedSlotItems.length === 0) {
+        toggleSelectedSlotsDrawer(false);
+      } else {
+        renderSelectedSlotsDrawer();
+      }
+    }
+  }
+
   function updateFloatingRail() {
     const rail = document.getElementById('bookingActionBar');
     if (!selectedSlotItems || selectedSlotItems.length === 0) {
       rail.classList.remove('is-visible');
+      toggleSelectedSlotsDrawer(false);
       return;
     }
 
@@ -1063,17 +1216,23 @@
     document.getElementById('railTotalPrice').innerText = `₱${totalPrice.toFixed(2)}`;
 
     rail.classList.add('is-visible');
+
+    if (isDrawerOpen) {
+      renderSelectedSlotsDrawer();
+    }
   }
 
   function clearSelectedSlots() {
     selectedSlotItems = [];
     updateMatrixVisualSelection();
+    toggleSelectedSlotsDrawer(false);
     document.getElementById('bookingActionBar').classList.remove('is-visible');
   }
 
   // Open Checkout Modal
   function openCheckoutModal() {
     if (!selectedSlotItems || selectedSlotItems.length === 0) return;
+    toggleSelectedSlotsDrawer(false);
 
     const totalCount = selectedSlotItems.length;
     const totalPrice = selectedSlotItems.reduce((sum, item) => sum + item.rate, 0);
