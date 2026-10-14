@@ -485,22 +485,33 @@
 
       <div class="modal-body p-4">
         <!-- Order Summary Box -->
-        <div class="checkout-summary-box mb-4">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="fw-bold text-dark" id="modalSummaryCourt">Court 1</span>
-            <span class="badge rounded-pill bg-primary fw-bold" id="modalSummaryHours">1 hr</span>
+        <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" style="background: #f8fafc; border: 1px solid #e2e8f0 !important;">
+          <!-- Top Row: Date & Total Slots Pill -->
+          <div class="px-3 py-2.5 bg-white border-bottom d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-primary-subtle text-primary rounded-circle p-2 d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                <i class="bi bi-calendar3"></i>
+              </span>
+              <div>
+                <span class="small text-muted d-block" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Date</span>
+                <span class="fw-bold text-dark small" id="modalSummaryDate">Today</span>
+              </div>
+            </div>
+            <span class="badge bg-primary text-white rounded-pill px-3 py-1.5 fw-bold" id="modalSummaryHours">1 Slot</span>
           </div>
-          <div class="d-flex justify-content-between align-items-center small text-secondary mb-1">
-            <span>Date:</span>
-            <strong class="text-dark" id="modalSummaryDate">Today</strong>
+
+          <!-- Courts & Time Slots List -->
+          <div class="p-3" id="modalSummarySlots">
+            <!-- Dynamic court blocks injected here -->
           </div>
-          <div class="d-flex justify-content-between align-items-center small text-secondary mb-2">
-            <span>Selected Slot(s):</span>
-            <strong class="text-dark font-monospace" id="modalSummarySlots">8:00 AM - 9:00 AM</strong>
-          </div>
-          <div class="d-flex justify-content-between align-items-center pt-2 border-top border-warning">
-            <span class="fw-bold text-dark">Total Amount Due:</span>
-            <span class="fs-5 fw-extrabold text-primary price-nums" id="modalSummaryTotal">₱350.00</span>
+
+          <!-- Bottom Row: Subtotal & Total Amount Due -->
+          <div class="px-3 py-2.5 bg-white border-top d-flex justify-content-between align-items-center">
+            <div>
+              <span class="small text-muted d-block" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Total Amount Due</span>
+              <span class="small text-secondary" id="modalSummaryBreakdown" style="font-size: 11px;">1 hour total</span>
+            </div>
+            <span class="fs-4 fw-extrabold text-primary font-display" id="modalSummaryTotal">₱0.00</span>
           </div>
         </div>
 
@@ -520,7 +531,7 @@
           <div class="row g-2 mb-3">
             <div class="col-sm-6">
               <label class="form-label small fw-bold text-dark">GCash Mobile <span class="text-danger">*</span></label>
-              <input type="tel" name="user_contact" class="form-control rounded-3 font-monospace" placeholder="09171234567" required>
+              <input type="tel" name="user_contact" class="form-control rounded-3 font-monospace" required>
             </div>
             <div class="col-sm-6">
               <label class="form-label small fw-bold text-dark">Email <span class="text-muted fw-normal">(Optional)</span></label>
@@ -927,21 +938,59 @@
     const courtNames = Object.keys(courtMap);
     let slotsDetailHtml = '';
 
-    courtNames.forEach(cName => {
+    courtNames.forEach((cName, idx) => {
       const items = courtMap[cName];
-      const timeStrs = items.map(i => `${i.startLabel}–${i.endLabel}`).join(', ');
-      slotsDetailHtml += `<div class="mb-1 d-flex justify-content-between align-items-center">
-        <span><strong class="text-dark">${cName}:</strong> <span class="font-monospace text-secondary">${timeStrs}</span></span>
-        <span class="badge bg-light text-dark border">${items.length} hr${items.length > 1 ? 's' : ''}</span>
-      </div>`;
+      const courtTotal = items.reduce((sum, i) => sum + i.rate, 0);
+
+      // Sort items chronologically
+      items.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+      // Build clean time slot badge pills
+      const slotPills = items.map(item => `
+        <span class="badge bg-white text-dark border px-2.5 py-1.5 rounded-3 fw-semibold d-inline-flex align-items-center gap-1 shadow-xs" style="font-size: 11px; border-color: #cbd5e1 !important;">
+          <i class="bi bi-clock-history text-primary" style="font-size: 10px;"></i>
+          ${item.startLabel} – ${item.endLabel}
+        </span>
+      `).join('');
+
+      slotsDetailHtml += `
+        <div class="${idx > 0 ? 'mt-3 pt-3 border-top' : ''}">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold" style="font-size: 11.5px;">${cName}</span>
+              <span class="text-secondary small fw-medium">${items.length} hr${items.length > 1 ? 's' : ''}</span>
+            </div>
+            <span class="fw-bold text-dark font-monospace small">₱${courtTotal.toFixed(2)}</span>
+          </div>
+          <div class="d-flex flex-wrap gap-1">
+            ${slotPills}
+          </div>
+        </div>
+      `;
     });
 
     // Populate Modal Summary
-    document.getElementById('modalSummaryCourt').innerText = courtNames.join(', ');
-    document.getElementById('modalSummaryHours').innerText = `${totalCount} Slot${totalCount > 1 ? 's' : ''}`;
-    document.getElementById('modalSummaryDate').innerText = document.getElementById('dateDisplayText').innerText;
-    document.getElementById('modalSummarySlots').innerHTML = slotsDetailHtml;
-    document.getElementById('modalSummaryTotal').innerText = `₱${totalPrice.toFixed(2)}`;
+    const hoursEl = document.getElementById('modalSummaryHours');
+    if (hoursEl) hoursEl.innerText = `${totalCount} Slot${totalCount > 1 ? 's' : ''}`;
+
+    const dateEl = document.getElementById('modalSummaryDate');
+    const displayDateEl = document.getElementById('dateDisplayText');
+    if (dateEl && displayDateEl) dateEl.innerText = displayDateEl.innerText;
+
+    const slotsEl = document.getElementById('modalSummarySlots');
+    if (slotsEl) slotsEl.innerHTML = slotsDetailHtml;
+
+    const breakdownEl = document.getElementById('modalSummaryBreakdown');
+    if (breakdownEl) {
+      if (courtNames.length > 1) {
+        breakdownEl.innerText = `${totalCount} hours total across ${courtNames.length} courts`;
+      } else {
+        breakdownEl.innerText = `${totalCount} hour${totalCount > 1 ? 's' : ''} on ${courtNames[0]}`;
+      }
+    }
+
+    const totalEl = document.getElementById('modalSummaryTotal');
+    if (totalEl) totalEl.innerText = `₱${totalPrice.toFixed(2)}`;
 
     // Populate Hidden Form Fields
     document.getElementById('formCourtId').value = selectedSlotItems[0].courtId;
