@@ -345,16 +345,52 @@ const adminController = {
       const reservations = await Reservation.findAll({
         where,
         include: [{ model: Court, as: 'court', include: [{ model: CourtCategory, as: 'category' }] }],
-        order: [['reservation_date', 'DESC'], ['start_time', 'ASC']]
+        order: [['reservation_date', 'DESC'], ['id', 'DESC']]
       });
 
+      // Group multi-court reservations that share the same booking order into 1 unified row
+      const orderMap = new Map();
+      reservations.forEach(res => {
+        const refKey = res.reference_number.split('-')[0];
+        if (!orderMap.has(refKey)) {
+          orderMap.set(refKey, {
+            id: res.id,
+            reference_number: refKey,
+            user_name: res.user_name,
+            user_contact: res.user_contact,
+            user_email: res.user_email,
+            reservation_date: res.reservation_date,
+            start_time: res.start_time,
+            end_time: res.end_time,
+            total_hours: res.total_hours,
+            total_amount: parseFloat(res.total_amount || 0),
+            gcash_reference_no: res.gcash_reference_no,
+            payment_screenshot: res.payment_screenshot,
+            status: res.status,
+            court: res.court,
+            courts: [res.court ? res.court.display_name : 'Court'],
+            court_display: res.court ? res.court.display_name : 'N/A'
+          });
+        } else {
+          const order = orderMap.get(refKey);
+          order.total_amount += parseFloat(res.total_amount || 0);
+          order.total_hours += res.total_hours;
+          const cName = res.court ? res.court.display_name : 'Court';
+          if (!order.courts.includes(cName)) {
+            order.courts.push(cName);
+          }
+          order.court_display = `${order.courts.length} Courts (${order.courts.join(', ')})`;
+        }
+      });
+
+      const groupedReservations = Array.from(orderMap.values());
       const courts = await Court.findAll({ order: [['display_name', 'ASC']] });
 
       res.render('admin/reservations', {
         title: 'Manage Reservations - PicklePlay Pro',
         layout: 'layouts/admin',
         user: req.session.user,
-        reservations,
+        reservations: groupedReservations,
         courts,
         filters: { status: status || 'ALL', court_id: court_id || 'ALL', date: date || '', search: search || '' },
         formatCurrency,
@@ -380,9 +416,26 @@ const adminController = {
         return res.redirect('/admin/reservations');
       }
 
+      const masterRef = reservation.reference_number.split('-')[0];
+      const siblingReservations = await Reservation.findAll({
+        where: {
+          reference_number: {
+            [Op.or]: [
+              masterRef,
+              reservation.reference_number,
+              { [Op.like]: `${masterRef}-%` }
+            ]
+          }
+        },
+        include: [{ model: Court, as: 'court', include: [{ model: CourtCategory, as: 'category' }] }],
+        order: [['id', 'ASC']]
+      });
+
+      const totalOrderAmount = siblingReservations.reduce((sum, r) => sum + parseFloat(r.total_amount || 0), 0);
+
       const auditLogs = await AuditLog.findAll({
         where: {
-          details: { [Op.like]: `%${reservation.reference_number}%` }
+          details: { [Op.like]: `%${masterRef}%` }
         },
         order: [['created_at', 'DESC']]
       });
@@ -392,6 +445,8 @@ const adminController = {
         layout: 'layouts/admin',
         user: req.session.user,
         reservation,
+        siblingReservations,
+        totalOrderAmount,
         auditLogs,
         formatCurrency,
         formatDate,

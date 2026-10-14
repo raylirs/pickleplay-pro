@@ -83,7 +83,7 @@
                   </a>
                 </td>
                 <td>
-                  <span class="fw-semibold text-dark"><%= res.court ? res.court.display_name : 'N/A' %></span>
+                  <span class="fw-semibold text-dark"><%= res.court_display || (res.court ? res.court.display_name : 'N/A') %></span>
                 </td>
                 <td>
                   <div><%= res.reservation_date %></div>

@@ -158,7 +158,7 @@ const reservationController = {
           const totalAmount = pricePerHour * hours;
           totalBookingAmount += totalAmount;
 
-          const refNum = i === 0 ? masterReference : `${masterReference}-${i + 1}`;
+          const refNum = masterReference;
 
           const resv = await Reservation.create({
             reference_number: refNum,

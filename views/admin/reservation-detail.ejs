@@ -40,10 +40,14 @@
         <div class="col-md-6">
           <div class="p-3 bg-light rounded-3 h-100 border">
             <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">Court & Schedule</h6>
-            <p class="mb-2 small"><strong>Court:</strong> <%= reservation.court ? reservation.court.display_name : 'N/A' %></p>
+            <% if (typeof siblingReservations !== 'undefined' && siblingReservations.length > 1) { %>
+              <p class="mb-2 small"><strong>Courts:</strong> <span class="badge bg-primary rounded-pill me-1"><%= siblingReservations.length %> Courts</span> <span class="text-dark fw-semibold"><%= siblingReservations.map(s => s.court ? s.court.display_name : 'Court').join(', ') %></span></p>
+            <% } else { %>
+              <p class="mb-2 small"><strong>Court:</strong> <%= reservation.court ? reservation.court.display_name : 'N/A' %></p>
+            <% } %>
             <p class="mb-2 small"><strong>Date:</strong> <%= reservation.reservation_date %></p>
             <p class="mb-2 small"><strong>Time:</strong> <%= formatTime12(reservation.start_time) %> - <%= formatTime12(reservation.end_time) %> (<%= reservation.total_hours %> hours)</p>
-            <p class="mb-0 small"><strong>Total Amount:</strong> <span class="fw-bold text-success"><%= formatCurrency(reservation.total_amount) %></span></p>
+            <p class="mb-0 small"><strong>Total Amount:</strong> <span class="fw-bold text-success fs-6"><%= formatCurrency(typeof totalOrderAmount !== 'undefined' && totalOrderAmount > 0 ? totalOrderAmount : reservation.total_amount) %></span></p>
           </div>
         </div>
       </div>

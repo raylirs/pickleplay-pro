@@ -9,7 +9,6 @@ const Reservation = sequelize.define('Reservation', {
   },
   reference_number: {
     type: DataTypes.STRING(50),
-    unique: true,
     allowNull: false
   },
   court_id: {
