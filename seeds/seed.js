@@ -150,12 +150,12 @@ async function seedDatabase() {
     await SystemSetting.upsert({
       key: 'fb_page_id',
       value: '1224751467396635',
-      description: 'Facebook Page ID (3KS Reservation)'
+      description: 'Facebook Page ID (The Playground Pickleball)'
     });
 
     await SystemSetting.upsert({
       key: 'fb_page_name',
-      value: '3KS Reservation',
+      value: 'The Playground Pickleball',
       description: 'Facebook Page Name'
     });
 
