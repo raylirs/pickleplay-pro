@@ -180,13 +180,17 @@
             <div class="legend-swatch legend-selected"></div>
             <span>Selected</span>
           </div>
-          <div class="matrix-legend-item">
+          <div class="matrix-legend-item" title="Awaiting GCash Payment Transfer">
+            <div class="legend-swatch legend-pending"></div>
+            <span>Awaiting Pay</span>
+          </div>
+          <div class="matrix-legend-item" title="Payment Proof Uploaded - Admin Verifying">
+            <div class="legend-swatch legend-verifying"></div>
+            <span>Verifying</span>
+          </div>
+          <div class="matrix-legend-item" title="Confirmed Booking">
             <div class="legend-swatch legend-taken"></div>
             <span>Booked</span>
-          </div>
-          <div class="matrix-legend-item" title="Awaiting Payment Approval">
-            <div class="legend-swatch legend-pending"></div>
-            <span>Pending</span>
           </div>
         </div>
       </div>
@@ -593,6 +597,49 @@
 </div>
 
 <!-- =========================================================
+     SLOT VERIFYING INFO MODAL (Awaiting Admin Review)
+========================================================= -->
+<div class="modal fade" id="verifyingSlotModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+      <div class="modal-header modal-checkout-header p-4">
+        <div>
+          <h5 class="modal-title fw-bold font-display text-white mb-0">Payment Received & Verifying</h5>
+          <span class="text-white-50 small">The Playground Pickleball · Admin Review</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <div class="mb-3">
+          <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-1.5 rounded-pill fw-bold" style="font-size: 13px;">
+            <i class="bi bi-clock-history me-1"></i> Under Admin Verification
+          </span>
+        </div>
+        <p class="text-secondary small mb-3">
+          This slot on <strong id="verifyingSlotCourtName" class="text-dark">Court</strong> at <strong id="verifyingSlotTime" class="text-dark">Time</strong> has been submitted with GCash payment proof and is currently awaiting admin verification.
+        </p>
+        <div class="bg-light p-3 rounded-4 border mb-4 text-start">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="text-muted small">Booking Reference:</span>
+            <span class="fw-bold font-monospace text-primary" id="verifyingSlotRef">PKL-XXXXXX</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted small">Current Status:</span>
+            <span class="badge bg-info-subtle text-info-emphasis fw-bold">Awaiting Admin Confirmation</span>
+          </div>
+        </div>
+        <div class="d-flex flex-column gap-2">
+          <a id="verifyingSlotPassBtn" href="#" class="btn btn-outline-primary fw-bold rounded-pill py-2.5">
+            <i class="bi bi-ticket-perforated me-1"></i> View Booking Pass / Check Status &rarr;
+          </a>
+          <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
      SLIDE-OUT / MODAL BOOKING CHECKOUT
 ========================================================= -->
 <div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">
@@ -929,7 +976,13 @@
 
         let stateClass = 'state-available';
         if (!courtSlot.isAvailable) {
-          stateClass = (courtSlot.status === 'AWAITING_PAYMENT' || courtSlot.status === 'PENDING') ? 'state-processing' : 'state-booked';
+          if (courtSlot.status === 'AWAITING_PAYMENT' || courtSlot.status === 'PENDING') {
+            stateClass = 'state-processing';
+          } else if (courtSlot.status === 'AWAITING_CONFIRMATION') {
+            stateClass = 'state-verifying';
+          } else {
+            stateClass = 'state-booked';
+          }
         }
 
         // Check if currently selected
@@ -954,13 +1007,17 @@
           </div>
         `;
 
-        // Click handler for selection
+        // Click handler for selection or status modals
         if (courtSlot.isAvailable) {
           td.addEventListener('click', () => handleSlotClick(court, slot));
         } else if (courtSlot.status === 'AWAITING_PAYMENT' || courtSlot.status === 'PENDING') {
           td.style.cursor = 'pointer';
           td.title = 'Awaiting GCash Payment - Click to resume payment';
           td.addEventListener('click', () => handlePendingSlotClick(court, courtSlot));
+        } else if (courtSlot.status === 'AWAITING_CONFIRMATION') {
+          td.style.cursor = 'pointer';
+          td.title = 'Payment Received - Admin Verifying (Click to check status)';
+          td.addEventListener('click', () => handleVerifyingSlotClick(court, courtSlot));
         }
 
         tr.appendChild(td);
@@ -984,6 +1041,26 @@
       payBtn.classList.remove('d-none');
     } else {
       payBtn.classList.add('d-none');
+    }
+
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  }
+
+  // Verifying Slot Modal Handler (Payment Proof Uploaded, Awaiting Admin Review)
+  function handleVerifyingSlotClick(court, slot) {
+    const modalEl = document.getElementById('verifyingSlotModal');
+    if (!modalEl) return;
+    document.getElementById('verifyingSlotCourtName').innerText = court.name;
+    document.getElementById('verifyingSlotTime').innerText = `${slot.startLabel} - ${slot.endLabel}`;
+    document.getElementById('verifyingSlotRef').innerText = slot.referenceNumber || 'Verification In Progress';
+
+    const passBtn = document.getElementById('verifyingSlotPassBtn');
+    if (slot.referenceNumber) {
+      passBtn.href = `/reservations/${encodeURIComponent(slot.referenceNumber)}`;
+      passBtn.classList.remove('d-none');
+    } else {
+      passBtn.classList.add('d-none');
     }
 
     const modal = new bootstrap.Modal(modalEl);
@@ -1064,7 +1141,7 @@
       const cId = parseInt(cell.dataset.courtId, 10);
       const sTime = cell.dataset.startTime;
 
-      if (cell.classList.contains('state-booked') || cell.classList.contains('state-processing')) {
+      if (cell.classList.contains('state-booked') || cell.classList.contains('state-processing') || cell.classList.contains('state-verifying')) {
         return;
       }
 

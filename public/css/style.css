@@ -336,6 +336,11 @@ h1, h2, h3, h4, .font-display {
   border: 1.5px solid #F59E0B;
 }
 
+.legend-verifying {
+  background: #EFF6FF;
+  border: 1.5px solid #3B82F6;
+}
+
 /* Matrix Table Viewport */
 .schedule-matrix-wrapper {
   overflow-x: auto;
@@ -510,6 +515,29 @@ h1, h2, h3, h4, .font-display {
   content: "Awaiting Pay";
   font-size: 10px;
   color: #B45309;
+}
+
+/* 5. VERIFYING / AWAITING ADMIN CONFIRMATION */
+.matrix-slot-cell.state-verifying {
+  cursor: pointer;
+}
+
+.matrix-slot-cell.state-verifying .slot-inner {
+  background: #EFF6FF;
+  border: 1.5px solid #3B82F6;
+  color: #1D4ED8;
+}
+
+.matrix-slot-cell.state-verifying .slot-inner::after {
+  content: "Verifying";
+  font-size: 10px;
+  color: #2563EB;
+  font-weight: 700;
+}
+
+.matrix-slot-cell.state-verifying:hover .slot-inner {
+  border-color: #1D4ED8;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
 }
 
 /* =========================================================
