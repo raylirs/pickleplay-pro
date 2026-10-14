@@ -29,7 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!time24) return '';
     const [hStr, mStr] = time24.split(':');
     let hour = parseInt(hStr, 10);
-    if (hour === 24 || hour === 0) return `12:${mStr} AM`;
+    if (hour === 24) return `12:${mStr} Midnight`;
+    if (hour === 0) return `12:${mStr} AM`;
     const ampm = hour >= 12 ? 'PM' : 'AM';
     hour = hour % 12;
     hour = hour ? hour : 12;

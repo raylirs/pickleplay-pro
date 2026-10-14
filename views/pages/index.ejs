@@ -63,10 +63,10 @@
 
       <div class="stat-pill-cell">
         <div class="stat-pill-label">
-          <i class="bi bi-clock-fill text-success"></i> Hours
+          <i class="bi bi-clock-fill text-success"></i> Operating Hours
         </div>
         <div class="stat-pill-value">
-          8AM – 12MN <span class="badge rounded-pill bg-success-subtle text-success fw-bold ms-1" style="font-size: 11px;">Daily</span>
+          8AM – 12 Midnight <span class="badge rounded-pill bg-success-subtle text-success fw-bold ms-1" style="font-size: 11px;">Daily</span>
         </div>
       </div>
     </div>
@@ -632,7 +632,12 @@
       // 1. Time Label Cell (Sticky Left)
       const timeTd = document.createElement('td');
       timeTd.className = 'matrix-time-cell';
-      timeTd.innerHTML = `<span>${slot.startLabel}</span>`;
+      const isMidnight = slot.endTime === '24:00' || slot.endTime === '00:00';
+      const endLabelFormatted = isMidnight ? '12:00 Midnight' : slot.endLabel;
+      timeTd.innerHTML = `
+        <span class="matrix-time-start fw-bold text-dark d-block" style="font-size: 11px;">${slot.startLabel}</span>
+        <span class="matrix-time-end text-muted d-block" style="font-size: 9px; line-height: 1.1;">to ${endLabelFormatted}</span>
+      `;
       tr.appendChild(timeTd);
 
       // 2. Court Slot Cells
@@ -720,6 +725,16 @@
     });
   }
 
+  function formatSlotTimeLabel(timeStr) {
+    if (timeStr === '24:00' || timeStr === '00:00') return '12:00 Midnight';
+    const parts = timeStr.split(':');
+    let h = parseInt(parts[0], 10);
+    const m = parts[1] || '00';
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${h}:${m} ${ampm}`;
+  }
+
   function updateFloatingRail(court) {
     const rail = document.getElementById('bookingActionBar');
     if (!selectedCourtId || selectedSlots.length === 0) {
@@ -737,8 +752,11 @@
     const lastTimeHour = parseInt(selectedSlots[selectedSlots.length - 1].split(':')[0], 10) + 1;
     const lastEndTime = `${lastTimeHour.toString().padStart(2, '0')}:00`;
 
+    const startDisplay = formatSlotTimeLabel(firstTime);
+    const endDisplay = formatSlotTimeLabel(lastEndTime);
+
     document.getElementById('railCourtBadge').innerText = currentCourt ? currentCourt.name : 'Court';
-    document.getElementById('railTimeSlotsText').innerText = `${firstTime} - ${lastEndTime} (${count} hr${count > 1 ? 's' : ''})`;
+    document.getElementById('railTimeSlotsText').innerText = `${startDisplay} - ${endDisplay} (${count} hr${count > 1 ? 's' : ''})`;
     document.getElementById('railTotalPrice').innerText = `₱${total.toFixed(2)}`;
 
     rail.classList.add('is-visible');
@@ -764,11 +782,14 @@
     const lastTimeHour = parseInt(selectedSlots[selectedSlots.length - 1].split(':')[0], 10) + 1;
     const lastEndTime = `${lastTimeHour.toString().padStart(2, '0')}:00`;
 
+    const startDisplay = formatSlotTimeLabel(firstTime);
+    const endDisplay = formatSlotTimeLabel(lastEndTime);
+
     // Populate Modal Summary
     document.getElementById('modalSummaryCourt').innerText = currentCourt ? currentCourt.name : 'Championship Court';
     document.getElementById('modalSummaryHours').innerText = `${count} Hour${count > 1 ? 's' : ''}`;
     document.getElementById('modalSummaryDate').innerText = document.getElementById('dateDisplayText').innerText;
-    document.getElementById('modalSummarySlots').innerText = `${firstTime} to ${lastEndTime}`;
+    document.getElementById('modalSummarySlots').innerText = `${startDisplay} to ${endDisplay}`;
     document.getElementById('modalSummaryTotal').innerText = `₱${total.toFixed(2)}`;
 
     // Populate Hidden Form Fields

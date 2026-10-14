@@ -20,7 +20,10 @@ function formatTime12(time24) {
   const hStr = parts[0];
   const mStr = parts[1];
   let hour = parseInt(hStr, 10);
-  if (hour === 24 || hour === 0) {
+  if (hour === 24) {
+    return `12:${mStr} Midnight`;
+  }
+  if (hour === 0) {
     return `12:${mStr} AM`;
   }
   const ampm = hour >= 12 ? 'PM' : 'AM';
