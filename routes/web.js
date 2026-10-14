@@ -31,7 +31,8 @@ router.get('/', async (req, res, next) => {
       formatCurrency,
       formatTime12,
       formatDate,
-      user: req.session ? req.session.user : null
+      user: req.session ? req.session.user : null,
+      hideNavbar: true
     });
   } catch (err) {
     next(err);

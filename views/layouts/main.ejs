@@ -17,7 +17,10 @@
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body class="d-flex flex-column min-vh-100">
-  <%- include('../partials/navbar') %>
+  <% if (typeof hideNavbar === 'undefined' || !hideNavbar) { %>
+    <%- include('../partials/navbar') %>
+  <% } %>
+  <%- include('../partials/messenger-modal') %>
 
   <!-- Flash Messages -->
   <div class="container mt-3">
