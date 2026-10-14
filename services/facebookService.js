@@ -56,15 +56,45 @@ async function sendMessengerNotify(psid, payload) {
 }
 
 /**
- * Fetch all Facebook Pages for a user using User Access Token
+ * Fetch all Facebook Pages for a user using User Access Token or Page Access Token
  */
-async function fetchUserPages(userToken) {
-  if (!userToken) throw new Error('User access token is required');
+async function fetchUserPages(token) {
+  if (!token) throw new Error('Access token is required');
+  const cleanToken = token.trim();
   const fields = 'id,name,access_token,category,picture{url}';
-  const response = await fetch(`https://graph.facebook.com/${FB_VERSION}/me/accounts?fields=${fields}&access_token=${userToken}`);
-  const data = await response.json();
-  if (data.error) throw new Error(data.error.message);
-  return data.data || [];
+
+  // 1. Try fetching via /me/accounts (works when given a User Access Token)
+  try {
+    const response = await fetch(`https://graph.facebook.com/${FB_VERSION}/me/accounts?fields=${fields}&access_token=${cleanToken}`);
+    const data = await response.json();
+    if (!data.error && Array.isArray(data.data) && data.data.length > 0) {
+      return data.data;
+    }
+  } catch (err) {
+    // Continue to Page token fallback
+  }
+
+  // 2. If token is a Page Access Token, /me/accounts fails. Query /me directly for the Page
+  try {
+    const pageRes = await fetch(`https://graph.facebook.com/${FB_VERSION}/me?fields=id,name,category,picture{url}&access_token=${cleanToken}`);
+    const pageData = await pageRes.json();
+    if (pageData && pageData.id && pageData.name) {
+      return [{
+        id: pageData.id,
+        name: pageData.name,
+        access_token: cleanToken,
+        category: pageData.category || 'Facebook Page',
+        picture: pageData.picture
+      }];
+    }
+    if (pageData && pageData.error) {
+      throw new Error(pageData.error.message);
+    }
+  } catch (err) {
+    throw new Error(err.message || 'Failed to authenticate token with Meta API');
+  }
+
+  return [];
 }
 
 /**

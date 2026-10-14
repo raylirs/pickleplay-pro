@@ -93,10 +93,10 @@
       <!-- 1-Click Page Fetcher -->
       <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
         <h5 class="fw-bold text-dark mb-2"><i class="bi bi-magic text-warning me-2"></i>1-Click Page Auto-Connect</h5>
-        <p class="small text-secondary mb-3">Paste your User Access Token from Graph API Explorer to automatically retrieve your Facebook Pages and tokens.</p>
+        <p class="small text-secondary mb-3">Paste your User or Page Access Token from Graph API Explorer to automatically retrieve your Facebook Pages and connect in 1 click.</p>
 
         <div class="mb-3">
-          <input type="text" id="userTokenInput" class="form-control rounded-3 font-monospace small" placeholder="Paste User Token (EAAB...)">
+          <input type="text" id="userTokenInput" class="form-control rounded-3 font-monospace small" placeholder="Paste User or Page Token (EAAB...)">
         </div>
         <button type="button" id="btnFetchPages" class="btn btn-dark fw-bold rounded-pill w-100 mb-3">
           <i class="bi bi-arrow-repeat me-1"></i>Fetch My Facebook Pages
@@ -124,12 +124,12 @@
 document.getElementById('btnFetchPages').addEventListener('click', async () => {
   const userToken = document.getElementById('userTokenInput').value.trim();
   if (!userToken) {
-    alert('Please paste your User Access Token first.');
+    alert('Please paste your User or Page Access Token first.');
     return;
   }
 
   const container = document.getElementById('pagesContainer');
-  container.innerHTML = '<div class="text-center py-3 text-muted small"><i class="bi bi-arrow-repeat spin me-1"></i>Fetching pages from Meta Graph API...</div>';
+  container.innerHTML = '<div class="text-center py-3 text-muted small"><i class="bi bi-arrow-repeat spin me-1"></i>Connecting to Meta Graph API...</div>';
 
   try {
     const res = await fetch('/admin/facebook/fetch-pages', {
@@ -137,16 +137,24 @@ document.getElementById('btnFetchPages').addEventListener('click', async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userToken })
     });
-    const data = await res.json();
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (parseErr) {
+      container.innerHTML = '<div class="text-center py-2 text-danger small">Server returned an unexpected response. Please refresh or retry in a few seconds.</div>';
+      return;
+    }
 
     if (data.success && data.pages && data.pages.length > 0) {
       container.innerHTML = '';
       data.pages.forEach(p => {
         const div = document.createElement('div');
         div.className = 'p-3 border rounded-3 bg-white d-flex align-items-center justify-content-between shadow-sm';
+        const imgUrl = (p.picture && p.picture.data && p.picture.data.url) ? p.picture.data.url : '/images/logo.png';
         div.innerHTML = `
           <div class="d-flex align-items-center">
-            <img src="${p.picture ? p.picture.data.url : '/images/logo.png'}" class="rounded-circle me-2" width="40" height="40">
+            <img src="${imgUrl}" class="rounded-circle me-2" width="40" height="40" onerror="this.src='/images/logo.png'">
             <div>
               <strong class="text-dark d-block small">${p.name}</strong>
               <span class="text-muted" style="font-size: 11px;">ID: ${p.id}</span>
@@ -156,16 +164,16 @@ document.getElementById('btnFetchPages').addEventListener('click', async () => {
             <input type="hidden" name="page_id" value="${p.id}">
             <input type="hidden" name="page_name" value="${p.name}">
             <input type="hidden" name="page_token" value="${p.access_token}">
-            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">Connect</button>
+            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">Connect</button>
           </form>
         `;
         container.appendChild(div);
       });
     } else {
-      container.innerHTML = '<div class="text-center py-2 text-danger small">No pages found or token expired. Error: ' + (data.error || 'Unknown') + '</div>';
+      container.innerHTML = '<div class="text-center py-2 text-danger small">No pages found. Error: ' + (data.error || 'Unknown error') + '</div>';
     }
   } catch (err) {
-    container.innerHTML = '<div class="text-center py-2 text-danger small">Failed to connect to Meta API.</div>';
+    container.innerHTML = '<div class="text-center py-2 text-danger small">Network error connecting to server: ' + (err.message || 'Check connection') + '</div>';
   }
 });
 </script>
