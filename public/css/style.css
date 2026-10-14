@@ -648,6 +648,30 @@ h1, h2, h3, h4, .font-display {
    Mobile Optimization
 ========================================================= */
 @media (max-width: 768px) {
+  /* Prevent iOS automatic zoom on text input focus */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="date"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Add clearance at the bottom of the page so the floating rail doesn't cover content */
+  .venue-tab-pane {
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 20px));
+  }
+
+  .schedule-matrix-wrapper {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .courtogo-tabs-bar {
+    -webkit-overflow-scrolling: touch;
+  }
+
   .venue-avatar-wrap {
     width: 68px;
     height: 68px;
@@ -677,6 +701,7 @@ h1, h2, h3, h4, .font-display {
 
   .matrix-header-cell {
     padding: 8px 4px;
+    min-width: 120px;
   }
 
   .matrix-header-court-title {
@@ -696,12 +721,17 @@ h1, h2, h3, h4, .font-display {
     font-size: 10px;
   }
 
+  /* Floating rail safe-area for iPhone home bar */
   .floating-booking-rail {
-    padding: 10px 14px;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 10px));
+  }
+
+  .rail-summary-pill {
+    padding: 4px 10px;
   }
 
   .rail-price-tag {
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .btn-book-now-gold {
