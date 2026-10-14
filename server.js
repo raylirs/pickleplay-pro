@@ -79,8 +79,17 @@ app.use(errorHandler);
 
 // Database Sync & Startup
 const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0';
 
-async function bootstrap() {
+server.listen(PORT, HOST, async () => {
+  console.log('====================================================');
+  console.log(`The Playground Pickleball Server running on http://${HOST}:${PORT}`);
+  console.log(`Admin Dashboard available at:  http://${HOST}:${PORT}/admin`);
+  console.log(`Real-Time Socket.io: Enabled`);
+  console.log(`GCash Payment System: Enabled`);
+  console.log(`Render Port Binding: Confirmed on ${PORT}`);
+  console.log('====================================================');
+
   try {
     await sequelize.authenticate();
     console.log('[Database] Connection established successfully.');
@@ -90,19 +99,8 @@ async function bootstrap() {
     startExpirationWorker();
     const { startMessengerSyncWorker } = require('./services/messengerSyncWorker');
     startMessengerSyncWorker();
-
-    server.listen(PORT, () => {
-      console.log('====================================================');
-      console.log(`3KS Playground Server running at: http://localhost:${PORT}`);
-      console.log(`Admin Dashboard available at:  http://localhost:${PORT}/admin`);
-      console.log(`Real-Time Socket.io: Enabled`);
-      console.log(`GCash Payment System: Enabled`);
-      console.log('====================================================');
-    });
+    console.log('[Bootstrap] All background workers and database initialized.');
   } catch (err) {
-    console.error('[Bootstrap Error]:', err);
-    process.exit(1);
+    console.error('[Database/Worker Init Warning]:', err.message || err);
   }
-}
-
-bootstrap();
+});
