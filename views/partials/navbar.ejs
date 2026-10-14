@@ -1,8 +1,11 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top py-2 shadow">
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top py-2 shadow-lg">
   <div class="container">
-    <a class="navbar-brand d-flex align-items-center fw-bold fs-4" href="/">
-      <img src="/images/logo.png" alt="3KS Playground" height="44" class="rounded-circle me-2 shadow-sm border border-success">
-      <span>3KS <span class="text-success">Playground</span></span>
+    <a class="navbar-brand d-flex align-items-center fw-bold fs-4 text-decoration-none" href="/">
+      <img src="/images/the-playground-logo.jpg" alt="The Playground Pickleball" height="46" class="rounded-circle me-2 brand-logo-ring">
+      <div class="d-flex flex-column leading-none">
+        <span class="fs-5 text-white fw-bold"><span style="font-family: 'Brush Script MT', cursive; font-size: 1.25rem; color: #E5C365;">The</span> <span class="gold-gradient-text brand-font">PLAYGROUND</span></span>
+        <span class="text-uppercase tracking-wider fw-bold text-white-50" style="font-size: 9px; letter-spacing: 0.2em;">PICKLEBALL CLUB</span>
+      </div>
     </a>
     <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -10,23 +13,26 @@
     <div class="collapse navbar-collapse" id="navbarContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
         <li class="nav-item">
-          <a class="nav-link fw-semibold text-white px-3" href="/"><i class="bi bi-house-door me-1"></i>Home</a>
+          <a class="nav-link fw-semibold text-white px-3" href="/#book"><i class="bi bi-calendar2-check-fill me-1 text-warning"></i>Book Court</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link fw-semibold text-white-50 px-3 hover-text-white" href="/courts"><i class="bi bi-grid-fill me-1"></i>Our Courts</a>
+          <a class="nav-link fw-semibold text-white-50 px-3 hover-text-white" href="/#about"><i class="bi bi-info-circle-fill me-1"></i>About Facility</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link fw-semibold text-white-50 px-3 hover-text-white" href="/reservations"><i class="bi bi-calendar2-check me-1"></i>Book a Court</a>
+          <a class="nav-link fw-semibold text-white-50 px-3 hover-text-white" href="/#photos"><i class="bi bi-images me-1"></i>Photos</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link fw-semibold text-white-50 px-3 hover-text-white" href="/reservations/lookup"><i class="bi bi-search me-1"></i>Find Reservation</a>
+          <a class="nav-link fw-semibold text-white-50 px-3 hover-text-white" href="/#location"><i class="bi bi-geo-alt-fill me-1"></i>Location & Map</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link fw-semibold text-white-50 px-3 hover-text-white" href="/reservations/lookup"><i class="bi bi-search me-1"></i>Find Booking</a>
         </li>
       </ul>
       <div class="d-flex align-items-center gap-2">
-        <button type="button" class="btn btn-outline-info btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#messengerModal">
+        <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#messengerModal">
           <i class="bi bi-messenger me-1"></i>Messenger Alerts
         </button>
-        <a href="/reservations" class="btn btn-success fw-semibold px-4 rounded-pill shadow-sm">
+        <a href="/#book" class="btn btn-book-now-gold btn-sm px-4 rounded-pill shadow-sm">
           <i class="bi bi-lightning-charge-fill me-1"></i>Reserve Now
         </a>
       </div>

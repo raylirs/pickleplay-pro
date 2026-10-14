@@ -1,288 +1,722 @@
+/* =========================================================
+   THE PLAYGROUND PICKLEBALL - LUXURY SPORTS RESORT DESIGN SYSTEM
+   Palette Inspired by Official Brand Emblem:
+   - Deep Midnight Navy: #07172C, #0B2545, #132E52
+   - Metallic Prestige Gold: #D4AF37, #C5A059, #F5E8BE, #A6801C
+   - Electric Court Cerulean: #0284C7, #0096C7, #38BDF8, #E0F2FE
+   - Pickleball Neon Lime: #CCFF00, #D4F71E, #A3E635
+   - Clean Slate Canvas: #F8FAFC, #FFFFFF, #E2E8F0
+========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cinzel:wght@600;700;800&display=swap');
+
 :root {
-  --primary-color: #198754;
-  --primary-dark: #157347;
-  --accent-color: #0d6efd;
-  --dark-bg: #121824;
+  /* Brand Navy */
+  --navy-950: #040d1a;
+  --navy-900: #07172C;
+  --navy-800: #0B2545;
+  --navy-700: #13335e;
+  --navy-600: #1d457b;
+  --navy-500: #2a5a9e;
+
+  /* Brand Metallic Gold */
+  --gold-500: #D4AF37;
+  --gold-400: #E5C365;
+  --gold-600: #B8860B;
+  --gold-700: #936B07;
+  --gold-light: #FFF9E6;
+  --gold-glow: rgba(212, 175, 55, 0.35);
+
+  /* Electric Court Cerulean */
+  --court-blue: #0284C7;
+  --court-blue-dark: #0369A1;
+  --court-blue-light: #E0F2FE;
+  --court-blue-glow: rgba(2, 132, 199, 0.3);
+
+  /* Pickleball Neon Lime */
+  --lime-neon: #CCFF00;
+  --lime-dark: #84CC16;
+  --lime-soft: #F4FDE8;
+
+  /* Surface & Canvas */
+  --bg-canvas: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --text-main: #0B2545;
+  --text-muted: #64748B;
+  --border-subtle: #E2E8F0;
+  --border-focus: #D4AF37;
+
+  /* Fonts */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Outfit', sans-serif;
+  --font-brand: 'Cinzel', serif;
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  color: #2b303a;
-  background-color: #f8fafc;
+  font-family: var(--font-sans);
+  color: var(--text-main);
+  background-color: var(--bg-canvas);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-.hero-section {
-  background: linear-gradient(135deg, #0b3b24 0%, #157347 50%, #198754 100%) !important;
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
 }
 
-.hero-section h1, 
-.hero-section p, 
-.hero-section span,
-.hero-section div {
-  color: #ffffff;
+.brand-font {
+  font-family: var(--font-brand);
+  letter-spacing: 0.05em;
 }
 
-.hero-section .text-warning {
-  color: #ffc107 !important;
+/* =========================================================
+   Navbar & Header Brand Styling
+========================================================= */
+.navbar-custom {
+  background: linear-gradient(180deg, rgba(7, 23, 44, 0.98) 0%, rgba(11, 37, 69, 0.98) 100%);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.25);
 }
 
-.court-card {
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+.brand-logo-ring {
+  border: 2px solid var(--gold-500);
+  box-shadow: 0 0 12px var(--gold-glow);
+  transition: transform 0.3s ease;
 }
 
-.court-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+.brand-logo-ring:hover {
+  transform: scale(1.05);
 }
 
-.slot-btn {
-  font-size: 13px;
+.gold-gradient-text {
+  background: linear-gradient(135deg, #FFF0B3 0%, #D4AF37 50%, #B8860B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-badge {
+  background: linear-gradient(135deg, #13335e 0%, #0B2545 100%);
+  border: 1px solid var(--gold-500);
+  color: #FFF0B3;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.2);
+}
+
+/* =========================================================
+   Venue Hero & Stats Card (Courtogo-Inspired Architecture)
+========================================================= */
+.venue-header-banner {
+  background: radial-gradient(circle at top right, rgba(2, 132, 199, 0.12), transparent 50%),
+              radial-gradient(circle at bottom left, rgba(212, 175, 55, 0.08), transparent 50%),
+              linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.venue-avatar-wrap {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(135deg, var(--gold-400), var(--navy-800), var(--court-blue));
+  box-shadow: 0 8px 24px rgba(11, 37, 69, 0.15);
+  flex-shrink: 0;
+}
+
+.venue-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.verified-icon {
+  color: var(--gold-500);
+  filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.4));
+}
+
+/* Quick Stat Pill Grid */
+.stat-pill-group {
+  display: inline-grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: #ffffff;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(11, 37, 69, 0.06);
+  overflow: hidden;
+}
+
+.stat-pill-cell {
+  padding: 10px 18px;
+  border-right: 1px solid var(--border-subtle);
+  transition: background-color 0.2s ease;
+}
+
+.stat-pill-cell:last-child {
+  border-right: none;
+}
+
+.stat-pill-cell:hover {
+  background-color: var(--gold-light);
+}
+
+.stat-pill-label {
+  font-size: 11px;
   font-weight: 600;
-  padding: 10px 8px;
-  border-radius: 10px;
-  transition: 0.15s ease-in-out;
-  cursor: pointer;
-  min-height: 44px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
+  gap: 5px;
+}
+
+.stat-pill-value {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--navy-800);
+  margin-top: 2px;
+}
+
+/* =========================================================
+   Courtogo-Style Tab Navigation
+========================================================= */
+.courtogo-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 2px solid var(--border-subtle);
+  background: #ffffff;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.courtogo-tabs-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.courtogo-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+}
+
+.courtogo-tab-btn:hover {
+  color: var(--navy-800);
+  background: rgba(11, 37, 69, 0.03);
+}
+
+.courtogo-tab-btn.active {
+  color: var(--navy-800);
+  border-bottom-color: var(--gold-500);
+  background: linear-gradient(180deg, rgba(212, 175, 55, 0.06) 0%, transparent 100%);
+}
+
+.courtogo-tab-badge {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: rgba(11, 37, 69, 0.08);
+  color: var(--navy-800);
+  font-weight: 700;
+}
+
+.courtogo-tab-btn.active .courtogo-tab-badge {
+  background: var(--navy-800);
+  color: #FFF0B3;
+}
+
+/* =========================================================
+   Interactive Multi-Court Schedule Matrix
+========================================================= */
+.matrix-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 10px 30px rgba(11, 37, 69, 0.06);
+  overflow: hidden;
+}
+
+.matrix-date-toolbar {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.matrix-date-btn {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  color: var(--navy-800);
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 8px 14px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  min-height: 42px;
 }
 
-.slot-btn.available {
-  background-color: #e8f5e9;
-  border: 1.5px solid #a5d6a7;
-  color: #1b5e20;
+.matrix-date-btn:hover {
+  border-color: var(--gold-500);
+  background: var(--gold-light);
+  color: var(--navy-800);
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.15);
 }
 
-.slot-btn.available:hover, .slot-btn.available:active {
-  background-color: #c8e6c9;
-  border-color: #81c784;
+.matrix-date-center-btn {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--navy-800);
+  min-width: 200px;
+  background: #ffffff;
+  border: 1.5px solid rgba(11, 37, 69, 0.15);
+  box-shadow: 0 2px 6px rgba(11, 37, 69, 0.04);
 }
 
-.slot-btn.selected {
-  background-color: #198754 !important;
-  border-color: #198754 !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 10px rgba(25, 135, 84, 0.35);
+/* Status Legend */
+.matrix-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
-.slot-btn.processing {
-  background-color: #fffbeb !important;
-  border: 1.5px dashed #f59e0b !important;
-  color: #b45309 !important;
-  cursor: not-allowed;
-  opacity: 0.9;
+.legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  flex-shrink: 0;
 }
 
-.slot-btn.booked {
-  background-color: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  color: #94a3b8;
-  cursor: not-allowed;
-  opacity: 0.7;
+.legend-open {
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
 }
 
-/* =========================================================
-   Ultra-Compact Mobile / Cellphone (CP) Experience
-========================================================= */
-@media (max-width: 768px) {
-  /* Prevent iOS automatic zoom on text inputs */
-  input[type="text"],
-  input[type="email"],
-  input[type="tel"],
-  input[type="date"],
-  input[type="number"],
-  select,
-  textarea {
-    font-size: 15px !important;
-  }
-
-  /* Compact padding for cards on cellphones to minimize scrolling */
-  .container {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
-  }
-
-  .py-5 {
-    padding-top: 1.25rem !important;
-    padding-bottom: 1.25rem !important;
-  }
-
-  .card {
-    border-radius: 14px !important;
-    margin-bottom: 0.75rem !important;
-  }
-  
-  .card.p-4, .p-md-5 {
-    padding: 1rem !important;
-  }
-
-  /* Compact Hero */
-  .hero-section {
-    padding-top: 1.25rem !important;
-    padding-bottom: 1.25rem !important;
-  }
-
-  .hero-section h1.display-4 {
-    font-size: 1.6rem !important;
-    margin-bottom: 0.5rem !important;
-  }
-
-  .hero-section .lead {
-    font-size: 0.9rem !important;
-    margin-bottom: 0.85rem !important;
-    line-height: 1.4 !important;
-  }
-
-  .hero-section .badge {
-    font-size: 0.75rem !important;
-    padding: 0.3rem 0.65rem !important;
-    margin-bottom: 0.5rem !important;
-  }
-
-  /* Compact stats in hero */
-  .hero-stats-box {
-    margin-top: 0.75rem !important;
-    padding-top: 0.75rem !important;
-  }
-
-  .hero-stats-box h3 {
-    font-size: 1.2rem !important;
-  }
-
-  .hero-stats-box p {
-    font-size: 0.75rem !important;
-  }
-
-  /* Compact slot buttons (3 per row on mobile) */
-  .slot-btn {
-    font-size: 12px !important;
-    padding: 6px 4px !important;
-    min-height: 38px !important;
-  }
-
-  .slot-btn .small {
-    font-size: 10px !important;
-  }
-
-  /* Touch-friendly full width buttons on CP */
-  .btn-lg {
-    min-height: 44px;
-    font-size: 0.95rem;
-    padding: 0.6rem 1.25rem;
-  }
-
-  /* QR Code scaling on small screens */
-  .col-md-6 img[alt*="QR"] {
-    max-width: 190px !important;
-  }
-
-  /* Sticky Mobile Bottom Booking Bar */
-  .mobile-sticky-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #ffffff;
-    padding: 10px 16px;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-    z-index: 1050;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-top: 1px solid #e2e8f0;
-  }
+.legend-selected {
+  background: var(--court-blue);
+  border: 1.5px solid var(--navy-800);
+  box-shadow: 0 0 6px var(--court-blue-glow);
 }
 
-@media (min-width: 769px) {
-  .mobile-sticky-bar {
-    display: none !important;
-  }
+.legend-taken {
+  background: #E2E8F0;
+  border: 1.5px solid #CBD5E1;
 }
 
-/* =========================================================
-   Image Pan & Zoom Lightbox Styles
-========================================================= */
-.image-viewer-backdrop {
-  position: fixed;
+.legend-pending {
+  background: #FEF3C7;
+  border: 1.5px solid #F59E0B;
+}
+
+/* Matrix Table Viewport */
+.schedule-matrix-wrapper {
+  overflow-x: auto;
+  position: relative;
+  background: #ffffff;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-500) var(--border-subtle);
+}
+
+.matrix-table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Headers */
+.matrix-header-cell {
+  background: linear-gradient(180deg, #F8FAFC 0%, #EEF2F6 100%);
+  border-bottom: 2px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
+  padding: 12px 10px;
+  text-align: center;
+  position: sticky;
   top: 0;
+  z-index: 20;
+}
+
+.matrix-header-court-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--navy-800);
+  display: block;
+}
+
+.matrix-header-court-rate {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--court-blue);
+  background: var(--court-blue-light);
+  padding: 2px 8px;
+  border-radius: 12px;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+/* Sticky Time Column */
+.matrix-time-header {
+  position: sticky;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(10, 15, 25, 0.95);
-  backdrop-filter: blur(8px);
-  z-index: 9999;
+  z-index: 30;
+  background: #0B2545 !important;
+  color: #FFF0B3;
+  width: 100px;
+  min-width: 95px;
+  border-right: 2px solid var(--gold-500) !important;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.matrix-time-cell {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: #F8FAFC;
+  border-right: 2px solid rgba(11, 37, 69, 0.15);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--navy-800);
+  text-align: center;
+  height: 52px;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  overflow: hidden;
+}
+
+/* Slot Cell States */
+.matrix-slot-cell {
+  border-right: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  height: 52px;
+  padding: 4px;
+  text-align: center;
+  transition: all 0.15s ease;
   user-select: none;
 }
 
-.image-viewer-toolbar {
-  position: absolute;
-  top: 18px;
-  right: 20px;
-  z-index: 10001;
-  display: flex;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 6px 12px;
-  border-radius: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.image-viewer-canvas {
+.slot-inner {
   width: 100%;
   height: 100%;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
   overflow: hidden;
-  touch-action: none;
-  cursor: grab;
 }
 
-.image-viewer-img {
-  max-width: 90vw;
-  max-height: 85vh;
-  object-fit: contain;
+/* 1. AVAILABLE */
+.matrix-slot-cell.state-available {
+  cursor: pointer;
+}
+
+.matrix-slot-cell.state-available .slot-inner {
+  background: #ffffff;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+}
+
+.matrix-slot-cell.state-available:hover .slot-inner {
+  background: #E0F2FE;
+  border-color: var(--court-blue);
+  color: var(--court-blue-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(2, 132, 199, 0.15);
+}
+
+/* 2. SELECTED */
+.matrix-slot-cell.state-selected .slot-inner {
+  background: linear-gradient(135deg, #0B2545 0%, #0369A1 100%);
+  border: 1.5px solid var(--gold-400);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(11, 37, 69, 0.35);
+  transform: scale(0.98);
+}
+
+.matrix-slot-cell.state-selected .slot-inner::after {
+  content: "✓ Selected";
+  font-size: 10px;
+  color: var(--lime-neon);
+  font-weight: 800;
+}
+
+/* 3. BOOKED / TAKEN */
+.matrix-slot-cell.state-booked {
+  cursor: not-allowed;
+}
+
+.matrix-slot-cell.state-booked .slot-inner {
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  color: #94A3B8;
+  opacity: 0.8;
+}
+
+.matrix-slot-cell.state-booked .slot-inner::after {
+  content: "Taken";
+  font-size: 10px;
+  color: #94A3B8;
+}
+
+/* 4. PROCESSING / AWAITING PAYMENT */
+.matrix-slot-cell.state-processing {
+  cursor: not-allowed;
+}
+
+.matrix-slot-cell.state-processing .slot-inner {
+  background: #FEF3C7;
+  border: 1.5px dashed #F59E0B;
+  color: #B45309;
+}
+
+.matrix-slot-cell.state-processing .slot-inner::after {
+  content: "Awaiting Pay";
+  font-size: 10px;
+  color: #B45309;
+}
+
+/* =========================================================
+   Floating Sticky Bottom Booking Action Rail
+========================================================= */
+.floating-booking-rail {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(7, 23, 44, 0.95);
+  backdrop-filter: blur(14px);
+  border-top: 2px solid var(--gold-500);
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.35);
+  z-index: 1080;
+  padding: 12px 20px;
+  transform: translateY(120%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.floating-booking-rail.is-visible {
+  transform: translateY(0);
+}
+
+.rail-summary-pill {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  transition: transform 0.08s ease-out;
-  transform-origin: center center;
-  pointer-events: auto;
+  padding: 6px 14px;
+  color: #ffffff;
 }
 
-.image-viewer-hint {
+.rail-price-tag {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--lime-neon);
+}
+
+.btn-book-now-gold {
+  background: linear-gradient(135deg, #D4AF37 0%, #C5A059 100%);
+  color: #07172C;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 15px;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 30px;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-book-now-gold:hover {
+  background: linear-gradient(135deg, #FFF0B3 0%, #D4AF37 100%);
+  color: #040d1a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+}
+
+/* =========================================================
+   Luxury Checkout Modal
+========================================================= */
+.modal-checkout-header {
+  background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 100%);
+  color: #ffffff;
+  border-bottom: 2px solid var(--gold-500);
+}
+
+.checkout-summary-box {
+  background: var(--gold-light);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 14px;
+  padding: 14px 18px;
+}
+
+/* =========================================================
+   Facility Amenities Cards ("About" Tab)
+========================================================= */
+.amenity-card {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 20px;
+  transition: all 0.25s ease;
+  height: 100%;
+}
+
+.amenity-card:hover {
+  border-color: var(--gold-500);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 25px rgba(11, 37, 69, 0.08);
+}
+
+.amenity-icon-circle {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(11, 37, 69, 0.08) 0%, rgba(2, 132, 199, 0.1) 100%);
+  color: var(--navy-800);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
+/* =========================================================
+   Photo Gallery Grid ("Photos" Tab)
+========================================================= */
+.gallery-photo-card {
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  background: #0B2545;
+  box-shadow: 0 8px 20px rgba(11, 37, 69, 0.1);
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.gallery-photo-card:hover {
+  transform: scale(1.02);
+}
+
+.gallery-photo-card img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  transition: opacity 0.3s ease;
+}
+
+.gallery-photo-caption {
   position: absolute;
-  bottom: 18px;
-  background: rgba(0, 0, 0, 0.6);
-  color: rgba(255, 255, 255, 0.8);
-  padding: 4px 16px;
-  border-radius: 20px;
-  font-size: 12px;
-  z-index: 10001;
-  pointer-events: none;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(7, 23, 44, 0.85) 100%);
+  color: #ffffff;
+  padding: 20px 14px 10px;
+  font-size: 13px;
+  font-weight: 700;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.spin {
-  animation: spin 1s linear infinite;
-  display: inline-block;
-}
-
-@media print {
-  body {
-    background-color: #fff !important;
+/* =========================================================
+   Mobile Optimization
+========================================================= */
+@media (max-width: 768px) {
+  .venue-avatar-wrap {
+    width: 68px;
+    height: 68px;
   }
-  .d-print-none, .mobile-sticky-bar, .image-viewer-backdrop {
-    display: none !important;
+
+  .stat-pill-group {
+    width: 100%;
   }
+
+  .stat-pill-cell {
+    padding: 8px 10px;
+  }
+
+  .stat-pill-value {
+    font-size: 13px;
+  }
+
+  .matrix-date-toolbar {
+    padding: 10px;
+  }
+
+  .matrix-date-center-btn {
+    min-width: 150px;
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+
+  .matrix-header-cell {
+    padding: 8px 4px;
+  }
+
+  .matrix-header-court-title {
+    font-size: 13px;
+  }
+
+  .matrix-header-court-rate {
+    font-size: 10px;
+    padding: 1px 6px;
+  }
+
+  .matrix-slot-cell {
+    height: 48px;
+  }
+
+  .slot-inner {
+    font-size: 10px;
+  }
+
+  .floating-booking-rail {
+    padding: 10px 14px;
+  }
+
+  .rail-price-tag {
+    font-size: 18px;
+  }
+
+  .btn-book-now-gold {
+    font-size: 13px;
+    padding: 8px 16px;
+  }
+}
+
+/* Real-Time Pulse Animation for Socket updates */
+@keyframes slotPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); box-shadow: 0 0 15px var(--gold-glow); }
+  100% { transform: scale(1); }
+}
+
+.slot-just-updated {
+  animation: slotPulse 0.8s ease-in-out;
 }

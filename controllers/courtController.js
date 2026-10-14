@@ -66,6 +66,34 @@ const courtController = {
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });
     }
+  },
+
+  async getAllCourtsAvailabilityJson(req, res, next) {
+    try {
+      const date = req.query.date || formatDate(new Date());
+      const courts = await Court.findAll({
+        where: { is_active: true },
+        include: [{ model: CourtCategory, as: 'category' }],
+        order: [['court_number', 'ASC'], ['id', 'ASC']]
+      });
+
+      const availabilityPromises = courts.map(async (c) => {
+        const avail = await getCourtAvailability(c.id, date);
+        return {
+          id: c.id,
+          name: c.display_name,
+          courtNumber: c.court_number,
+          pricePerHour: c.category ? parseFloat(c.category.price_per_hour) : 350,
+          categoryName: c.category ? c.category.name : 'Championship Court',
+          slots: avail.slots
+        };
+      });
+
+      const courtsData = await Promise.all(availabilityPromises);
+      res.json({ success: true, date, courts: courtsData });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
   }
 };
 

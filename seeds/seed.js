@@ -7,14 +7,20 @@ async function seedDatabase() {
     console.log('[Database] Schema synchronized.');
 
     // Ensure new columns exist on PostgreSQL / SQLite
-    try {
-      await sequelize.query('ALTER TABLE reservations ADD COLUMN IF NOT EXISTS gcash_reference_no VARCHAR(100);');
-      await sequelize.query('ALTER TABLE reservations ADD COLUMN IF NOT EXISTS payment_screenshot VARCHAR(255);');
-      await sequelize.query('ALTER TABLE reservations ADD COLUMN IF NOT EXISTS slots_json TEXT;');
-      await sequelize.query('ALTER TABLE reservations ADD COLUMN IF NOT EXISTS fb_psid VARCHAR(100);');
-      await sequelize.query('ALTER TABLE reservations ADD COLUMN IF NOT EXISTS binding_code VARCHAR(20);');
-    } catch (colErr) {
-      // Ignored if already present or SQLite
+    const newColumns = [
+      { name: 'gcash_reference_no', type: 'VARCHAR(100)' },
+      { name: 'payment_screenshot', type: 'VARCHAR(255)' },
+      { name: 'slots_json', type: 'TEXT' },
+      { name: 'fb_psid', type: 'VARCHAR(100)' },
+      { name: 'binding_code', type: 'VARCHAR(20)' }
+    ];
+
+    for (const col of newColumns) {
+      try {
+        await sequelize.query(`ALTER TABLE reservations ADD COLUMN ${col.name} ${col.type};`);
+      } catch (colErr) {
+        // Ignored if column already exists
+      }
     }
 
     // 1. Seed Admin User

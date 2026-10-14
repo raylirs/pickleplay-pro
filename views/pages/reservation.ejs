@@ -1,9 +1,12 @@
 <div class="container py-3 py-md-5">
   <div class="max-w-900 mx-auto">
     <!-- Compact Title -->
-    <div class="text-center mb-3">
-      <h2 class="fw-bold text-dark mb-1 fs-3">Reserve Your 3KS Court</h2>
-      <p class="text-secondary small mb-0">Select court & time slots, then pay with GCash QR</p>
+    <div class="text-center mb-4">
+      <div class="d-inline-flex align-items-center gap-2 mb-2">
+        <img src="/images/the-playground-logo.jpg" alt="The Playground Pickleball" height="54" class="rounded-circle brand-logo-ring">
+      </div>
+      <h2 class="fw-bold text-dark mb-1 fs-3 font-display">Reserve Your Championship Court</h2>
+      <p class="text-secondary small mb-0">Select your preferred court & time slots at <strong>The Playground Pickleball</strong>, then pay via official GCash QR</p>
     </div>
 
     <form id="reservationForm" action="/reservations" method="POST" class="needs-validation" novalidate>
@@ -13,7 +16,7 @@
           <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 mb-3 bg-white">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <h6 class="fw-bold text-dark mb-0 d-flex align-items-center">
-                <span class="badge bg-success me-2 rounded-circle p-1 d-inline-flex align-items-center justify-content-center" style="width: 22px; height: 22px; font-size: 11px;">1</span>
+                <span class="badge bg-primary text-white me-2 rounded-circle p-1 d-inline-flex align-items-center justify-content-center" style="width: 22px; height: 22px; font-size: 11px;">1</span>
                 Court & Time Slots
               </h6>
               <div class="d-flex align-items-center gap-2">
@@ -114,16 +117,16 @@
               </div>
               <div class="d-flex justify-content-between align-items-center border-top pt-1 mt-1">
                 <span class="text-secondary">Total (<span id="summaryDuration">0 Hours</span>):</span>
-                <span class="fs-5 fw-extrabold text-success" id="summaryTotal">₱0.00</span>
+                <span class="fs-5 fw-extrabold text-primary" id="summaryTotal">₱0.00</span>
               </div>
             </div>
 
-            <button type="submit" id="submitBtn" class="btn btn-success btn-lg w-100 fw-bold rounded-pill shadow-sm d-flex align-items-center justify-content-center" disabled>
-              <i class="bi bi-wallet2 me-2"></i>Proceed to GCash
+            <button type="submit" id="submitBtn" class="btn btn-book-now-gold w-100 fw-bold d-flex align-items-center justify-content-center" disabled>
+              <i class="bi bi-wallet2 me-2"></i>Proceed to GCash Payment
             </button>
 
             <div class="text-center mt-2 small text-muted" style="font-size: 11px;">
-              <i class="bi bi-shield-lock-fill text-success me-1"></i>Official 3KS Playground System
+              <i class="bi bi-shield-lock-fill text-warning me-1"></i>Official The Playground Pickleball System
             </div>
           </div>
         </div>
@@ -133,9 +136,9 @@
       <div class="mobile-sticky-bar">
         <div>
           <span class="small text-muted d-block" style="font-size: 11px;" id="mobileStickyCount">0 slots selected</span>
-          <strong class="fs-6 text-success" id="mobileStickyTotal">₱0.00</strong>
+          <strong class="fs-6 text-primary" id="mobileStickyTotal">₱0.00</strong>
         </div>
-        <button type="submit" id="mobileSubmitBtn" class="btn btn-success fw-bold rounded-pill px-4 py-2" disabled>
+        <button type="submit" id="mobileSubmitBtn" class="btn btn-book-now-gold px-4 py-2" disabled>
           Proceed <i class="bi bi-arrow-right ms-1"></i>
         </button>
       </div>
