@@ -814,20 +814,37 @@ const adminController = {
 
   async testFacebookNotification(req, res, next) {
     try {
-      const { sendMessengerNotify, getSetting } = require('../services/facebookService');
+      const { sendMessengerNotify, getSetting, getAllAdminPsids } = require('../services/facebookService');
       const { test_message } = req.body;
-      const psid = await getSetting('fb_admin_psid');
+      const token = await getSetting('fb_page_token');
 
-      if (!psid) {
-        req.flash('error', 'Please configure your Profile PSID first.');
+      if (!token) {
+        req.flash('error', 'Page Access Token is missing. Please paste your Page Access Token in Step 1 and click "Save Facebook Settings" first.');
         return res.redirect('/admin/facebook');
       }
 
-      const sent = await sendMessengerNotify(psid, test_message || 'Test notification from 3KS Playground');
-      if (sent) {
-        req.flash('success', 'Test Messenger notification sent successfully to your Facebook Profile!');
+      const adminPsids = await getAllAdminPsids();
+      if (!adminPsids || adminPsids.length === 0) {
+        req.flash('error', 'No Admin Profile PSID configured. Please enter your PSID in Step 2 and click "Save Facebook Settings".');
+        return res.redirect('/admin/facebook');
+      }
+
+      let successCount = 0;
+      let errorDetails = [];
+
+      for (const singlePsid of adminPsids) {
+        const result = await sendMessengerNotify(singlePsid, test_message || '🔔 Test notification from 3KS Playground');
+        if (result && result.success) {
+          successCount++;
+        } else {
+          errorDetails.push(`PSID ${singlePsid}: ${(result && result.error) || 'Failed'}`);
+        }
+      }
+
+      if (successCount > 0) {
+        req.flash('success', `Test Messenger notification sent successfully to ${successCount} admin recipient(s)!`);
       } else {
-        req.flash('error', 'Failed to send Messenger notification. Check your Page Access Token and PSID.');
+        req.flash('error', `Failed to send Messenger notification: ${errorDetails.join(' | ')}`);
       }
       res.redirect('/admin/facebook');
     } catch (err) {
@@ -899,10 +916,10 @@ const adminController = {
       }
 
       const sent = await sendMessengerNotify(psid.trim(), message.trim());
-      if (sent) {
+      if (sent && sent.success) {
         req.flash('success', 'Direct Messenger alert sent successfully!');
       } else {
-        req.flash('error', 'Could not deliver message. User might need to interact with the page first.');
+        req.flash('error', `Could not deliver message. ${sent && sent.error ? 'Meta Error: ' + sent.error : 'User might need to message the page first.'}`);
       }
       res.redirect(req.headers.referer || '/admin/facebook/subscribers');
     } catch (err) {

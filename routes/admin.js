@@ -34,6 +34,7 @@ router.post('/settings', requireAuth, upload.single('qr_image'), adminController
 
 // Facebook & Meta Notification Settings
 router.get('/facebook', requireAuth, adminController.showFacebookSettings);
+router.get('/facebook/save-settings', requireAuth, (req, res) => res.redirect('/admin/facebook'));
 router.get('/facebook/subscribers', requireAuth, adminController.showFacebookSubscribers);
 router.post('/facebook/save-settings', requireAuth, adminController.saveFacebookSettings);
 router.post('/facebook/fetch-pages', requireAuth, adminController.fetchFacebookPages);

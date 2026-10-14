@@ -17,34 +17,41 @@ async function getSetting(key) {
  */
 async function sendMessengerNotify(psid, payload) {
   const token = await getSetting('fb_page_token');
-  if (!token || !psid) {
-    console.log('[FB Service] Page token or PSID missing, skipping FB notification.');
-    return false;
+  if (!token) {
+    console.log('[FB Service] Page access token is missing in settings.');
+    return { success: false, error: 'Page access token is missing in Facebook settings.' };
+  }
+  if (!psid) {
+    console.log('[FB Service] PSID missing, skipping FB notification.');
+    return { success: false, error: 'Recipient PSID is missing.' };
   }
 
   try {
+    const cleanPsid = String(psid).trim();
     const url = `https://graph.facebook.com/${FB_VERSION}/me/messages?access_token=${token}`;
     let messageBody = typeof payload === 'string' ? { text: payload } : payload;
+
+    const requestBody = {
+      recipient: { id: cleanPsid },
+      message: messageBody
+    };
 
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        recipient: { id: psid },
-        message: messageBody
-      })
+      body: JSON.stringify(requestBody)
     });
 
     const data = await response.json();
     if (data.error) {
       console.error('[FB Messenger Error]:', data.error.message);
-      return false;
+      return { success: false, error: data.error.message };
     }
-    console.log('[FB Service] Message delivered to PSID:', psid, 'ID:', data.message_id);
-    return true;
+    console.log('[FB Service] Message delivered to PSID:', cleanPsid, 'ID:', data.message_id);
+    return { success: true, messageId: data.message_id };
   } catch (error) {
     console.error('[FB Messenger Service Error]:', error.message);
-    return false;
+    return { success: false, error: error.message };
   }
 }
 
@@ -61,25 +68,29 @@ async function fetchUserPages(userToken) {
 }
 
 /**
- * Helper to get all Admin PSIDs (supports multiple comma/space-separated PSIDs and active toggle states)
+ * Helper to get all Admin PSIDs (supports multiple comma/space-separated PSIDs)
  */
 async function getAllAdminPsids() {
-  const ryanActive = (await getSetting('fb_admin_ryan_active')) !== 'false';
-  const karloActive = (await getSetting('fb_admin_karlo_active')) !== 'false';
-
-  const activePsids = [];
-  if (ryanActive) activePsids.push('27030144379994794');
-  if (karloActive) activePsids.push('38090624017219189');
-
   const raw = await getSetting('fb_admin_psid');
+  const activePsids = [];
+
   if (raw) {
     const parsed = raw.split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
     for (const p of parsed) {
-      if (p !== '27030144379994794' && p !== '38090624017219189' && !activePsids.includes(p)) {
+      if (!activePsids.includes(p)) {
         activePsids.push(p);
       }
     }
   }
+
+  // Fallback to legacy default PSIDs only if none configured
+  if (activePsids.length === 0) {
+    const ryanActive = (await getSetting('fb_admin_ryan_active')) !== 'false';
+    const karloActive = (await getSetting('fb_admin_karlo_active')) !== 'false';
+    if (ryanActive) activePsids.push('27030144379994794');
+    if (karloActive) activePsids.push('38090624017219189');
+  }
+
   return activePsids;
 }
 
