@@ -90,10 +90,10 @@
           <span>Location & Map</span>
         </button>
 
-        <a href="/reservations/lookup" class="courtogo-tab-btn text-decoration-none">
+        <button class="courtogo-tab-btn" id="tab-btn-lookup" onclick="switchVenueTab('lookup')">
           <i class="bi bi-search"></i>
           <span>Find Booking</span>
-        </a>
+        </button>
       </div>
 
       <!-- Action Buttons In-Line with Tabs (Right) -->
@@ -373,6 +373,47 @@
     </div>
   </div>
 
+  <!-- =========================================================
+       TAB 5: FIND BOOKING (Inline Reservation Lookup)
+  ========================================================= -->
+  <div id="tab-content-lookup" class="venue-tab-pane d-none">
+    <div class="row justify-content-center">
+      <div class="col-lg-6 col-md-8">
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white mb-4">
+          <div class="text-center mb-4">
+            <div class="badge bg-primary-subtle text-primary rounded-circle p-3 mb-3 fs-3 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+              <i class="bi bi-search"></i>
+            </div>
+            <h3 class="fw-bold text-dark font-display mb-1">Find Your Booking</h3>
+            <p class="text-secondary small mb-0">Enter your booking reference number to view your digital pass, QR code, and payment status.</p>
+          </div>
+
+          <form id="inlineLookupForm" onsubmit="handleInlineLookup(event)">
+            <div class="mb-3">
+              <label for="inlineRefInput" class="form-label small fw-bold text-dark">Booking Reference Number</label>
+              <div class="input-group input-group-lg">
+                <span class="input-group-text bg-light text-primary border-end-0"><i class="bi bi-ticket-perforated"></i></span>
+                <input type="text" class="form-control font-monospace border-start-0 text-uppercase" id="inlineRefInput" placeholder="e.g. PLAY2026..." required autocomplete="off">
+              </div>
+              <div id="inlineLookupError" class="alert alert-danger py-2 px-3 small mt-2 d-none rounded-3" role="alert"></div>
+            </div>
+
+            <button type="submit" id="inlineLookupBtn" class="btn btn-book-now-gold btn-lg w-100 fw-bold rounded-pill shadow">
+              <i class="bi bi-search me-1"></i>Search Reservation
+            </button>
+          </form>
+
+          <div class="text-center mt-4 pt-3 border-top">
+            <span class="small text-muted d-block mb-2">Can't find your reference number?</span>
+            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#messengerModal">
+              <i class="bi bi-messenger me-1"></i>Get Pass on Messenger
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- =========================================================
@@ -507,7 +548,7 @@
     // 4. Handle direct tab routing via URL hash
     if (window.location.hash) {
       const targetTab = window.location.hash.replace('#', '');
-      if (['book', 'about', 'photos', 'location'].includes(targetTab)) {
+      if (['book', 'about', 'photos', 'location', 'lookup'].includes(targetTab)) {
         switchVenueTab(targetTab);
       }
     }
@@ -524,10 +565,68 @@
     if (contentPane) contentPane.classList.remove('d-none');
     if (btn) btn.classList.add('active');
 
+    // Manage bottom floating booking rail visibility
+    const rail = document.getElementById('bookingActionBar');
+    if (rail) {
+      if (tabName === 'book' && typeof selectedSlotItems !== 'undefined' && selectedSlotItems.length > 0) {
+        rail.classList.add('is-visible');
+      } else {
+        rail.classList.remove('is-visible');
+      }
+    }
+
     if (tabName === 'location') {
       setTimeout(initLeafletMap, 200);
+    } else if (tabName === 'lookup') {
+      setTimeout(() => {
+        const input = document.getElementById('inlineRefInput');
+        if (input) input.focus();
+      }, 150);
     }
     history.replaceState(null, null, '#' + tabName);
+  }
+
+  // Inline Lookup Handler
+  async function handleInlineLookup(e) {
+    e.preventDefault();
+    const input = document.getElementById('inlineRefInput');
+    const errorBox = document.getElementById('inlineLookupError');
+    const btn = document.getElementById('inlineLookupBtn');
+    if (!input) return;
+    const ref = input.value.trim().toUpperCase();
+    if (!ref) return;
+
+    if (errorBox) errorBox.classList.add('d-none');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Checking...';
+    }
+
+    try {
+      const res = await fetch('/api/v1/reservations/' + encodeURIComponent(ref) + '/status');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success) {
+          window.location.href = '/reservations/' + encodeURIComponent(ref);
+          return;
+        }
+      }
+      // If 404 or reservation not found
+      if (errorBox) {
+        errorBox.textContent = `No reservation found with reference "${ref}". Please verify your reference number or check Messenger.`;
+        errorBox.classList.remove('d-none');
+      } else {
+        window.location.href = '/reservations/' + encodeURIComponent(ref);
+      }
+    } catch (err) {
+      // In case of network glitch, fallback directly to the reservation pass route
+      window.location.href = '/reservations/' + encodeURIComponent(ref);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-search me-1"></i>Search Reservation';
+      }
+    }
   }
 
   // Date Controls
