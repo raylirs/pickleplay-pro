@@ -82,7 +82,7 @@
         <button class="courtogo-tab-btn" id="tab-btn-photos" onclick="switchVenueTab('photos')">
           <i class="bi bi-images"></i>
           <span>Photos</span>
-          <span class="courtogo-tab-badge">4</span>
+          <span class="courtogo-tab-badge">2</span>
         </button>
 
         <button class="courtogo-tab-btn" id="tab-btn-location" onclick="switchVenueTab('location')">
@@ -308,8 +308,9 @@
       <div class="col-md-6">
         <div class="gallery-photo-card" onclick="openPhotoLightbox('/images/3ks-playground.jpg', 'Championship 4-Court Covered Arena')">
           <img src="/images/3ks-playground.jpg" alt="Championship Covered Arena">
-          <div class="gallery-photo-caption">
-            <i class="bi bi-zoom-in me-1"></i> Championship 4-Court Covered Arena
+          <div class="gallery-photo-caption d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-camera me-1"></i> Championship 4-Court Covered Arena</span>
+            <span class="badge bg-white text-dark rounded-pill px-2 py-1 shadow-sm"><i class="bi bi-zoom-in me-1"></i>Preview</span>
           </div>
         </div>
       </div>
@@ -317,26 +318,9 @@
       <div class="col-md-6">
         <div class="gallery-photo-card" onclick="openPhotoLightbox('/images/3ks-layout.jpg', 'Architectural Court Layout & 5M Center Walkway')">
           <img src="/images/3ks-layout.jpg" alt="Architectural Court Layout">
-          <div class="gallery-photo-caption">
-            <i class="bi bi-zoom-in me-1"></i> Architectural Layout & Dimensions (Courts 1 to 4)
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-6">
-        <div class="gallery-photo-card" onclick="openPhotoLightbox('/images/the-playground-logo.jpg', 'Official Club Emblem')">
-          <img src="/images/the-playground-logo.jpg" alt="The Playground Pickleball Emblem" class="object-fit-contain bg-dark p-3">
-          <div class="gallery-photo-caption">
-            <i class="bi bi-zoom-in me-1"></i> Official Club Emblem & Color Standard
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-6">
-        <div class="gallery-photo-card" onclick="openPhotoLightbox('/images/gcash-qr.jpg', 'Official Merchant GCash Payment QR')">
-          <img src="/images/gcash-qr.jpg" alt="Official GCash QR" class="object-fit-contain bg-white p-3">
-          <div class="gallery-photo-caption">
-            <i class="bi bi-zoom-in me-1"></i> Official Merchant GCash Payment QR Code
+          <div class="gallery-photo-caption d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-diagram-3 me-1"></i> Architectural Layout & Dimensions (Courts 1 to 4)</span>
+            <span class="badge bg-white text-dark rounded-pill px-2 py-1 shadow-sm"><i class="bi bi-zoom-in me-1"></i>Preview</span>
           </div>
         </div>
       </div>
@@ -441,6 +425,46 @@
       <button type="button" class="btn-book-now-gold" onclick="openCheckoutModal()">
         <i class="bi bi-lightning-charge-fill me-1"></i> Continue to Booking &rarr;
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     PHOTO LIGHTBOX PREVIEW MODAL
+========================================================= -->
+<div class="modal fade" id="photoLightboxModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(10px); background-color: rgba(5, 12, 22, 0.9);">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content bg-transparent border-0 shadow-none text-white">
+      <!-- Modal Top Toolbar -->
+      <div class="d-flex justify-content-between align-items-center px-2 py-2 mb-2">
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-primary px-3 py-1 rounded-pill fw-bold" id="lightboxModalCounter">1 / 2</span>
+          <h5 class="modal-title font-display fw-bold text-white mb-0 fs-6 fs-md-5" id="lightboxModalTitle">Photo Preview</h5>
+        </div>
+        <button type="button" class="btn btn-dark btn-sm rounded-circle d-flex align-items-center justify-content-center shadow" data-bs-dismiss="modal" aria-label="Close" style="width: 40px; height: 40px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);">
+          <i class="bi bi-x-lg text-white fs-5"></i>
+        </button>
+      </div>
+
+      <!-- Image Display Area with Navigation Arrows -->
+      <div class="modal-body text-center p-0 position-relative d-flex align-items-center justify-content-center" style="min-height: 380px; max-height: 78vh;">
+        <img id="lightboxModalImg" src="" alt="Photo Preview" class="img-fluid rounded-4 shadow-lg border border-secondary border-opacity-25" style="max-height: 78vh; max-width: 100%; object-fit: contain;">
+
+        <!-- Previous Button -->
+        <button type="button" class="btn btn-dark rounded-circle position-absolute top-50 start-0 translate-middle-y ms-2 ms-md-4 p-3 shadow-lg d-flex align-items-center justify-content-center" id="lightboxPrevBtn" onclick="navigateLightbox(-1)" title="Previous photo" style="background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.3); width: 48px; height: 48px;">
+          <i class="bi bi-chevron-left text-white fs-4"></i>
+        </button>
+
+        <!-- Next Button -->
+        <button type="button" class="btn btn-dark rounded-circle position-absolute top-50 end-0 translate-middle-y me-2 me-md-4 p-3 shadow-lg d-flex align-items-center justify-content-center" id="lightboxNextBtn" onclick="navigateLightbox(1)" title="Next photo" style="background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.3); width: 48px; height: 48px;">
+          <i class="bi bi-chevron-right text-white fs-4"></i>
+        </button>
+      </div>
+
+      <!-- Footer Info -->
+      <div class="text-center pt-3 text-white-50 small">
+        <span><i class="bi bi-arrow-left-right me-1"></i>Navigate with &larr; &rarr; arrow keys &bull; Press <kbd class="bg-secondary text-white px-2 py-0.5 rounded">Esc</kbd> to close</span>
+      </div>
     </div>
   </div>
 </div>
@@ -1015,10 +1039,63 @@
     mapInitialized = true;
   }
 
-  // Lightbox Viewer
+  // Lightbox Photo Viewer
+  const galleryItems = [
+    {
+      src: '/images/3ks-playground.jpg',
+      title: 'Championship 4-Court Covered Arena'
+    },
+    {
+      src: '/images/3ks-layout.jpg',
+      title: 'Architectural Court Layout & 5M Center Walkway'
+    }
+  ];
+
+  let currentLightboxIndex = 0;
+  let lightboxModalInstance = null;
+
   function openPhotoLightbox(src, title) {
-    if (typeof openImageViewer === 'function') {
-      openImageViewer(src, title);
+    const idx = galleryItems.findIndex(item => item.src === src);
+    currentLightboxIndex = idx >= 0 ? idx : 0;
+    updateLightboxContent();
+
+    const modalEl = document.getElementById('photoLightboxModal');
+    if (modalEl) {
+      if (!lightboxModalInstance) {
+        lightboxModalInstance = new bootstrap.Modal(modalEl);
+      }
+      lightboxModalInstance.show();
     }
   }
+
+  function updateLightboxContent() {
+    const item = galleryItems[currentLightboxIndex];
+    if (!item) return;
+    const imgEl = document.getElementById('lightboxModalImg');
+    const titleEl = document.getElementById('lightboxModalTitle');
+    const counterEl = document.getElementById('lightboxModalCounter');
+    if (imgEl) {
+      imgEl.src = item.src;
+      imgEl.alt = item.title;
+    }
+    if (titleEl) titleEl.textContent = item.title;
+    if (counterEl) counterEl.textContent = `${currentLightboxIndex + 1} / ${galleryItems.length}`;
+  }
+
+  function navigateLightbox(direction) {
+    currentLightboxIndex = (currentLightboxIndex + direction + galleryItems.length) % galleryItems.length;
+    updateLightboxContent();
+  }
+
+  // Keyboard navigation for lightbox
+  document.addEventListener('keydown', function(e) {
+    const modalEl = document.getElementById('photoLightboxModal');
+    if (modalEl && modalEl.classList.contains('show')) {
+      if (e.key === 'ArrowLeft') {
+        navigateLightbox(-1);
+      } else if (e.key === 'ArrowRight') {
+        navigateLightbox(1);
+      }
+    }
+  });
 </script>
