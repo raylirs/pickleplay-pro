@@ -73,13 +73,159 @@ const reservationController = {
       } = req.body;
 
       let slotsArray = [];
-      if (selected_slots) {
+      let rawSlots = selected_slots;
+      if (typeof rawSlots === 'string') {
         try {
-          slotsArray = typeof selected_slots === 'string' ? JSON.parse(selected_slots) : selected_slots;
+          rawSlots = JSON.parse(rawSlots);
         } catch (e) {
-          slotsArray = selected_slots.split(',').map(s => s.trim()).filter(Boolean);
+          rawSlots = rawSlots.split(',').map(s => s.trim()).filter(Boolean);
         }
       }
+
+      // Check if multi-court object structure: [{ courtId, startTime }, ...]
+      const isObjectSlots = Array.isArray(rawSlots) && rawSlots.length > 0 && typeof rawSlots[0] === 'object' && rawSlots[0].startTime;
+
+      if (isObjectSlots) {
+        // Group by courtId
+        const byCourt = {};
+        rawSlots.forEach(item => {
+          const cId = item.courtId || court_id;
+          if (!byCourt[cId]) byCourt[cId] = [];
+          byCourt[cId].push(item.startTime);
+        });
+
+        const courtIdKeys = Object.keys(byCourt);
+
+        if (!user_name || !user_contact || !reservation_date || courtIdKeys.length === 0) {
+          const errorMsg = 'Please select at least one time slot and fill in all required fields.';
+          if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.status(400).json({ success: false, error: errorMsg });
+          }
+          req.flash('error', errorMsg);
+          return res.redirect('/');
+        }
+
+        if (!isValidPhilippineMobile(user_contact)) {
+          const errorMsg = 'Please provide a valid Philippine contact number (e.g., 09171234567).';
+          if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.status(400).json({ success: false, error: errorMsg });
+          }
+          req.flash('error', errorMsg);
+          return res.redirect('/');
+        }
+
+        if (user_email && !isValidEmail(user_email)) {
+          const errorMsg = 'Please provide a valid email address.';
+          if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.status(400).json({ success: false, error: errorMsg });
+          }
+          req.flash('error', errorMsg);
+          return res.redirect('/');
+        }
+
+        // Validate availability on each court
+        for (const cId of courtIdKeys) {
+          const cSlots = byCourt[cId];
+          const isAvail = await areSlotsAvailable(cId, reservation_date, cSlots);
+          if (!isAvail) {
+            const courtObj = await Court.findByPk(cId);
+            const errorMsg = `Sorry, one or more selected slots on ${courtObj ? courtObj.display_name : 'court'} are no longer available. Please choose other available times.`;
+            if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+              return res.status(409).json({ success: false, error: errorMsg });
+            }
+            req.flash('error', errorMsg);
+            return res.redirect('/');
+          }
+        }
+
+        const masterReference = generateReferenceNumber();
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+        const bindingCode = 'PLAY-' + Math.floor(1000 + Math.random() * 9000);
+
+        let primaryReservation = null;
+        let totalBookingAmount = 0;
+
+        for (let i = 0; i < courtIdKeys.length; i++) {
+          const cId = courtIdKeys[i];
+          const cSlots = byCourt[cId].sort();
+          const court = await Court.findByPk(cId, { include: [{ model: CourtCategory, as: 'category' }] });
+          const hours = cSlots.length;
+          const firstSlot = cSlots[0];
+          const lastSlot = cSlots[cSlots.length - 1];
+          const endTime = addHoursToTime(lastSlot, 1);
+          const pricePerHour = parseFloat(court && court.category ? court.category.price_per_hour : 350);
+          const totalAmount = pricePerHour * hours;
+          totalBookingAmount += totalAmount;
+
+          const refNum = i === 0 ? masterReference : `${masterReference}-${i + 1}`;
+
+          const resv = await Reservation.create({
+            reference_number: refNum,
+            court_id: court.id,
+            user_name: user_name.trim(),
+            user_contact: user_contact.trim(),
+            user_email: user_email ? user_email.trim().toLowerCase() : null,
+            reservation_date,
+            start_time: firstSlot,
+            end_time: endTime,
+            slots_json: JSON.stringify(cSlots),
+            total_hours: hours,
+            total_amount: totalAmount,
+            status: 'AWAITING_PAYMENT',
+            payment_provider: 'GCASH_QR',
+            special_requests: special_requests ? special_requests.trim() : null,
+            binding_code: bindingCode,
+            expires_at: expiresAt
+          });
+
+          if (i === 0) {
+            primaryReservation = resv;
+          }
+
+          await logAudit('RESERVATION_CREATED', {
+            referenceNumber: refNum,
+            court: court.display_name,
+            date: reservation_date,
+            time: `${firstSlot} - ${endTime}`,
+            amount: totalAmount
+          });
+
+          try {
+            const io = getIO();
+            const availabilityData = await getCourtAvailability(court.id, reservation_date);
+            io.emit('court_availability_updated', {
+              courtId: court.id,
+              date: reservation_date,
+              slots: availabilityData.slots
+            });
+          } catch (sockErr) {}
+        }
+
+        // If multiple courts booked under one order, update primary reservation amount to total combined amount
+        if (courtIdKeys.length > 1 && primaryReservation) {
+          primaryReservation.total_amount = totalBookingAmount;
+          await primaryReservation.save();
+        }
+
+        if (primaryReservation) {
+          try {
+            const { sendReservationCreatedNotification } = require('../services/facebookService');
+            sendReservationCreatedNotification(primaryReservation).catch(() => {});
+          } catch (e) {}
+
+          if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.json({
+              success: true,
+              reference_number: primaryReservation.reference_number,
+              redirect_url: `/payment/gcash?ref=${primaryReservation.reference_number}`
+            });
+          }
+
+          return res.redirect(`/payment/gcash?ref=${primaryReservation.reference_number}`);
+        }
+      }
+
+      slotsArray = Array.isArray(rawSlots) ? rawSlots : [];
 
       if (!slotsArray || slotsArray.length === 0) {
         if (start_time) {

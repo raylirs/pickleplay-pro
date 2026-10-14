@@ -490,8 +490,7 @@
   // Global State for Courtogo Matrix
   let currentDate = '<%= today %>';
   let matrixCourtsData = [];
-  let selectedCourtId = null;
-  let selectedSlots = []; // Array of time strings ['08:00', '09:00']
+  let selectedSlotItems = []; // Array of { courtId, courtName, startTime, endTime, rate, startLabel, endLabel }
   let mapInitialized = false;
   let leafletMap = null;
 
@@ -654,7 +653,8 @@
         }
 
         // Check if currently selected
-        if (selectedCourtId === court.id && selectedSlots.includes(slot.startTime)) {
+        const isSelected = selectedSlotItems.some(item => item.courtId === court.id && item.startTime === slot.startTime);
+        if (isSelected) {
           stateClass = 'state-selected';
         }
 
@@ -670,7 +670,7 @@
 
         td.innerHTML = `
           <div class="slot-inner">
-            ${stateClass === 'state-available' ? `<span>₱${court.pricePerHour}</span>` : ''}
+            <span>₱${court.pricePerHour}</span>
           </div>
         `;
 
@@ -686,29 +686,37 @@
     });
   }
 
-  // Interactive Slot Click Handler
+  // Interactive Multi-Court & Multi-Time Slot Click Handler
   function handleSlotClick(court, slot) {
-    // If switching to a different court, clear prior selections
-    if (selectedCourtId && selectedCourtId !== court.id) {
-      selectedSlots = [];
-    }
+    const existingIndex = selectedSlotItems.findIndex(
+      item => item.courtId === court.id && item.startTime === slot.startTime
+    );
 
-    selectedCourtId = court.id;
-
-    const timeIndex = selectedSlots.indexOf(slot.startTime);
-    if (timeIndex > -1) {
-      // Unselect
-      selectedSlots.splice(timeIndex, 1);
-      if (selectedSlots.length === 0) selectedCourtId = null;
+    if (existingIndex > -1) {
+      // Toggle OFF
+      selectedSlotItems.splice(existingIndex, 1);
     } else {
-      // Select
-      selectedSlots.push(slot.startTime);
-      selectedSlots.sort();
+      // Toggle ON
+      selectedSlotItems.push({
+        courtId: court.id,
+        courtName: court.name,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        startLabel: slot.startLabel,
+        endLabel: slot.endLabel,
+        rate: parseFloat(court.pricePerHour || 350)
+      });
     }
 
-    // Re-render selection states
+    // Sort by court then start time
+    selectedSlotItems.sort((a, b) => {
+      if (a.courtId !== b.courtId) return a.courtId - b.courtId;
+      return a.startTime.localeCompare(b.startTime);
+    });
+
+    // Re-render visual selection and bottom action rail
     updateMatrixVisualSelection();
-    updateFloatingRail(court);
+    updateFloatingRail();
   }
 
   function updateMatrixVisualSelection() {
@@ -720,7 +728,8 @@
         return;
       }
 
-      if (selectedCourtId === cId && selectedSlots.includes(sTime)) {
+      const isSelected = selectedSlotItems.some(item => item.courtId === cId && item.startTime === sTime);
+      if (isSelected) {
         cell.className = 'matrix-slot-cell state-selected';
       } else {
         cell.className = 'matrix-slot-cell state-available';
@@ -738,69 +747,85 @@
     return `${h}:${m} ${ampm}`;
   }
 
-  function updateFloatingRail(court) {
+  function updateFloatingRail() {
     const rail = document.getElementById('bookingActionBar');
-    if (!selectedCourtId || selectedSlots.length === 0) {
+    if (!selectedSlotItems || selectedSlotItems.length === 0) {
       rail.classList.remove('is-visible');
       return;
     }
 
-    const currentCourt = court || matrixCourtsData.find(c => c.id === selectedCourtId);
-    const count = selectedSlots.length;
-    const rate = currentCourt ? currentCourt.pricePerHour : 350;
-    const total = count * rate;
+    const totalCount = selectedSlotItems.length;
+    const totalPrice = selectedSlotItems.reduce((sum, item) => sum + item.rate, 0);
 
-    // Time span label
-    const firstTime = selectedSlots[0];
-    const lastTimeHour = parseInt(selectedSlots[selectedSlots.length - 1].split(':')[0], 10) + 1;
-    const lastEndTime = `${lastTimeHour.toString().padStart(2, '0')}:00`;
+    // Group by unique courts
+    const uniqueCourts = [...new Set(selectedSlotItems.map(item => item.courtName))];
+    let badgeText = '';
+    if (uniqueCourts.length === 1) {
+      badgeText = uniqueCourts[0];
+    } else {
+      badgeText = `${uniqueCourts.length} Courts (${uniqueCourts.join(', ')})`;
+    }
 
-    const startDisplay = formatSlotTimeLabel(firstTime);
-    const endDisplay = formatSlotTimeLabel(lastEndTime);
+    let timeSummaryText = '';
+    if (totalCount === 1) {
+      const item = selectedSlotItems[0];
+      timeSummaryText = `${item.startLabel} - ${item.endLabel} (1 hr)`;
+    } else {
+      timeSummaryText = `${totalCount} Hours / Slots Selected`;
+    }
 
-    document.getElementById('railCourtBadge').innerText = currentCourt ? currentCourt.name : 'Court';
-    document.getElementById('railTimeSlotsText').innerText = `${startDisplay} - ${endDisplay} (${count} hr${count > 1 ? 's' : ''})`;
-    document.getElementById('railTotalPrice').innerText = `₱${total.toFixed(2)}`;
+    document.getElementById('railCourtBadge').innerText = badgeText;
+    document.getElementById('railTimeSlotsText').innerText = timeSummaryText;
+    document.getElementById('railTotalPrice').innerText = `₱${totalPrice.toFixed(2)}`;
 
     rail.classList.add('is-visible');
   }
 
   function clearSelectedSlots() {
-    selectedCourtId = null;
-    selectedSlots = [];
+    selectedSlotItems = [];
     updateMatrixVisualSelection();
     document.getElementById('bookingActionBar').classList.remove('is-visible');
   }
 
   // Open Checkout Modal
   function openCheckoutModal() {
-    if (!selectedCourtId || selectedSlots.length === 0) return;
+    if (!selectedSlotItems || selectedSlotItems.length === 0) return;
 
-    const currentCourt = matrixCourtsData.find(c => c.id === selectedCourtId);
-    const count = selectedSlots.length;
-    const rate = currentCourt ? currentCourt.pricePerHour : 350;
-    const total = count * rate;
+    const totalCount = selectedSlotItems.length;
+    const totalPrice = selectedSlotItems.reduce((sum, item) => sum + item.rate, 0);
 
-    const firstTime = selectedSlots[0];
-    const lastTimeHour = parseInt(selectedSlots[selectedSlots.length - 1].split(':')[0], 10) + 1;
-    const lastEndTime = `${lastTimeHour.toString().padStart(2, '0')}:00`;
+    // Group items by court
+    const courtMap = {};
+    selectedSlotItems.forEach(item => {
+      if (!courtMap[item.courtName]) courtMap[item.courtName] = [];
+      courtMap[item.courtName].push(item);
+    });
 
-    const startDisplay = formatSlotTimeLabel(firstTime);
-    const endDisplay = formatSlotTimeLabel(lastEndTime);
+    const courtNames = Object.keys(courtMap);
+    let slotsDetailHtml = '';
+
+    courtNames.forEach(cName => {
+      const items = courtMap[cName];
+      const timeStrs = items.map(i => `${i.startLabel}–${i.endLabel}`).join(', ');
+      slotsDetailHtml += `<div class="mb-1 d-flex justify-content-between align-items-center">
+        <span><strong class="text-dark">${cName}:</strong> <span class="font-monospace text-secondary">${timeStrs}</span></span>
+        <span class="badge bg-light text-dark border">${items.length} hr${items.length > 1 ? 's' : ''}</span>
+      </div>`;
+    });
 
     // Populate Modal Summary
-    document.getElementById('modalSummaryCourt').innerText = currentCourt ? currentCourt.name : 'Championship Court';
-    document.getElementById('modalSummaryHours').innerText = `${count} Hour${count > 1 ? 's' : ''}`;
+    document.getElementById('modalSummaryCourt').innerText = courtNames.join(', ');
+    document.getElementById('modalSummaryHours').innerText = `${totalCount} Slot${totalCount > 1 ? 's' : ''}`;
     document.getElementById('modalSummaryDate').innerText = document.getElementById('dateDisplayText').innerText;
-    document.getElementById('modalSummarySlots').innerText = `${startDisplay} to ${endDisplay}`;
-    document.getElementById('modalSummaryTotal').innerText = `₱${total.toFixed(2)}`;
+    document.getElementById('modalSummarySlots').innerHTML = slotsDetailHtml;
+    document.getElementById('modalSummaryTotal').innerText = `₱${totalPrice.toFixed(2)}`;
 
     // Populate Hidden Form Fields
-    document.getElementById('formCourtId').value = selectedCourtId;
+    document.getElementById('formCourtId').value = selectedSlotItems[0].courtId;
     document.getElementById('formDate').value = currentDate;
-    document.getElementById('formStartTime').value = firstTime;
-    document.getElementById('formTotalHours').value = count;
-    document.getElementById('formSelectedSlots').value = JSON.stringify(selectedSlots);
+    document.getElementById('formStartTime').value = selectedSlotItems[0].startTime;
+    document.getElementById('formTotalHours').value = totalCount;
+    document.getElementById('formSelectedSlots').value = JSON.stringify(selectedSlotItems);
 
     const modal = new bootstrap.Modal(document.getElementById('checkoutModal'));
     modal.show();
