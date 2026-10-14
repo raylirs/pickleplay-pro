@@ -417,28 +417,42 @@ const adminController = {
         return res.redirect('/admin/reservations');
       }
 
-      reservation.status = 'CANCELLED';
-      reservation.cancellation_reason = cancellation_reason || 'Cancelled by Administrator';
-      await reservation.save();
+      const masterRef = reservation.reference_number.split('-')[0];
+      const allSiblings = await Reservation.findAll({
+        where: {
+          reference_number: {
+            [Op.or]: [
+              masterRef,
+              { [Op.like]: `${masterRef}-%` }
+            ]
+          }
+        }
+      });
+
+      for (const resv of allSiblings) {
+        resv.status = 'CANCELLED';
+        resv.cancellation_reason = cancellation_reason || 'Cancelled by Administrator';
+        await resv.save();
+
+        try {
+          const io = getIO();
+          const avail = await getCourtAvailability(resv.court_id, resv.reservation_date);
+          io.emit('court_availability_updated', {
+            courtId: resv.court_id,
+            date: resv.reservation_date,
+            slots: avail.slots
+          });
+        } catch (e) {
+          console.warn('Socket error on cancel:', e.message);
+        }
+      }
 
       await logAudit('RESERVATION_CANCELLED_BY_ADMIN', {
         referenceNumber: reservation.reference_number,
-        reason: reservation.cancellation_reason
+        reason: cancellation_reason || 'Cancelled by Administrator'
       }, req.session.user.id);
 
-      try {
-        const io = getIO();
-        const avail = await getCourtAvailability(reservation.court_id, reservation.reservation_date);
-        io.emit('court_availability_updated', {
-          courtId: reservation.court_id,
-          date: reservation.reservation_date,
-          slots: avail.slots
-        });
-      } catch (e) {
-        console.warn('Socket error on cancel:', e.message);
-      }
-
-      req.flash('success', `Reservation ${reservation.reference_number} cancelled.`);
+      req.flash('success', `Reservation order ${masterRef} cancelled.`);
       res.redirect(req.headers.referer || '/admin/reservations');
     } catch (err) {
       next(err);
@@ -457,14 +471,49 @@ const adminController = {
         return res.redirect('/admin/reservations');
       }
 
-      reservation.status = 'CONFIRMED';
-      reservation.payment_transaction_id = `ADMIN-MANUAL-${Date.now()}`;
-      await reservation.save();
+      const masterRef = reservation.reference_number.split('-')[0];
+      const allSiblings = await Reservation.findAll({
+        where: {
+          reference_number: {
+            [Op.or]: [
+              masterRef,
+              { [Op.like]: `${masterRef}-%` }
+            ]
+          }
+        },
+        include: [{ model: Court, as: 'court', include: [{ model: CourtCategory, as: 'category' }] }]
+      });
 
-      await logAudit('RESERVATION_MANUALLY_CONFIRMED', {
-        referenceNumber: reservation.reference_number,
-        adminUser: req.session.user.username
-      }, req.session.user.id);
+      const txId = `ADMIN-MANUAL-${Date.now()}`;
+      for (const resv of allSiblings) {
+        resv.status = 'CONFIRMED';
+        resv.payment_transaction_id = txId;
+        await resv.save();
+
+        await logAudit('RESERVATION_MANUALLY_CONFIRMED', {
+          referenceNumber: resv.reference_number,
+          adminUser: req.session.user.username
+        }, req.session.user.id);
+
+        try {
+          const io = getIO();
+          const avail = await getCourtAvailability(resv.court_id, resv.reservation_date);
+          io.emit('court_availability_updated', {
+            courtId: resv.court_id,
+            date: resv.reservation_date,
+            slots: avail.slots
+          });
+          io.emit('payment_confirmed', {
+            reference: resv.reference_number,
+            courtId: resv.court_id,
+            courtName: resv.court ? resv.court.display_name : 'Court',
+            date: resv.reservation_date,
+            startTime: resv.start_time,
+            endTime: resv.end_time,
+            amount: resv.total_amount
+          });
+        } catch (e) {}
+      }
 
       await sendReservationConfirmation(reservation, reservation.court);
       await sendReservationSMS(reservation, reservation.court);
@@ -475,28 +524,7 @@ const adminController = {
         notifyPlayerBookingConfirmed(reservation).catch(e => console.warn('[FB Player Notify Error]:', e.message));
       } catch (e) {}
 
-      try {
-        const io = getIO();
-        const avail = await getCourtAvailability(reservation.court_id, reservation.reservation_date);
-        io.emit('court_availability_updated', {
-          courtId: reservation.court_id,
-          date: reservation.reservation_date,
-          slots: avail.slots
-        });
-        io.emit('payment_confirmed', {
-          reference: reservation.reference_number,
-          courtId: reservation.court_id,
-          courtName: reservation.court.display_name,
-          date: reservation.reservation_date,
-          startTime: reservation.start_time,
-          endTime: reservation.end_time,
-          amount: reservation.total_amount
-        });
-      } catch (e) {
-        console.warn('Socket error on manual confirm:', e.message);
-      }
-
-      req.flash('success', `Reservation ${reservation.reference_number} confirmed manually.`);
+      req.flash('success', `Reservation order ${masterRef} confirmed manually.`);
       res.redirect(req.headers.referer || '/admin/reservations');
     } catch (err) {
       next(err);

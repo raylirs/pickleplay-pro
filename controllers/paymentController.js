@@ -1,4 +1,5 @@
 const { Reservation, Court, CourtCategory, SystemSetting } = require('../models');
+const { Op } = require('sequelize');
 const { getIO } = require('../config/socket');
 const { formatCurrency, formatTime12 } = require('../utils/dateTimeUtils');
 const { logAudit } = require('../utils/helpers');
@@ -39,9 +40,30 @@ const paymentController = {
       const nameSetting = await SystemSetting.findByPk('GCASH_ACCOUNT_NAME');
       const numSetting = await SystemSetting.findByPk('GCASH_ACCOUNT_NUMBER');
 
+      // Find all sibling court reservations booked in the same order
+      const masterRef = ref.split('-')[0];
+      const siblingReservations = await Reservation.findAll({
+        where: {
+          reference_number: {
+            [Op.or]: [
+              masterRef,
+              { [Op.like]: `${masterRef}-%` }
+            ]
+          }
+        },
+        include: [{ model: Court, as: 'court', include: [{ model: CourtCategory, as: 'category' }] }],
+        order: [['id', 'ASC']]
+      });
+
+      const totalOrderAmount = siblingReservations.length > 0
+        ? siblingReservations.reduce((sum, r) => sum + parseFloat(r.total_amount || 0), 0)
+        : parseFloat(reservation.total_amount || 0);
+
       res.render('pages/gcash-payment', {
         title: `GCash QR Payment - ${reservation.reference_number}`,
         reservation,
+        siblingReservations,
+        totalOrderAmount,
         gcashQrImage: qrSetting ? qrSetting.value : '/images/gcash-qr.jpg',
         gcashAccountName: nameSetting ? nameSetting.value : 'RY*N KR******R L.',
         gcashAccountNumber: numSetting ? numSetting.value : '0939-075-XXXX',
@@ -80,10 +102,29 @@ const paymentController = {
         return res.redirect(`/payment/gcash-checkout?ref=${ref}`);
       }
 
-      reservation.gcash_reference_no = gcash_reference_no.trim();
-      reservation.payment_screenshot = `/uploads/courts/${req.file.filename}`;
-      reservation.status = 'AWAITING_CONFIRMATION';
-      await reservation.save();
+      const screenshotPath = `/uploads/courts/${req.file.filename}`;
+      const gcashRefClean = gcash_reference_no.trim();
+
+      // Find and update all sibling court reservations under this master order
+      const masterRef = ref.split('-')[0];
+      const allSiblings = await Reservation.findAll({
+        where: {
+          reference_number: {
+            [Op.or]: [
+              masterRef,
+              { [Op.like]: `${masterRef}-%` }
+            ]
+          }
+        },
+        include: [{ model: Court, as: 'court' }]
+      });
+
+      for (const resv of allSiblings) {
+        resv.gcash_reference_no = gcashRefClean;
+        resv.payment_screenshot = screenshotPath;
+        resv.status = 'AWAITING_CONFIRMATION';
+        await resv.save();
+      }
 
       await logAudit('PAYMENT_PROOF_SUBMITTED', {
         referenceNumber: reservation.reference_number,

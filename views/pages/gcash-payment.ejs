@@ -68,7 +68,7 @@
           </div>
           <div class="bg-white bg-opacity-10 p-3 rounded-4 border border-white border-opacity-25 text-md-end">
             <span class="small text-white-50 d-block text-uppercase" style="font-size: 10px; letter-spacing: 0.5px; font-weight: 600;">Total Amount Due</span>
-            <h2 class="fw-extrabold text-warning mb-0 font-display"><%= formatCurrency(reservation.total_amount) %></h2>
+            <h2 class="fw-extrabold text-warning mb-0 font-display"><%= formatCurrency(typeof totalOrderAmount !== 'undefined' && totalOrderAmount > 0 ? totalOrderAmount : reservation.total_amount) %></h2>
           </div>
         </div>
       </div>
@@ -118,39 +118,79 @@
                   </span>
                   <span class="fw-bold text-dark small"><%= reservation.reservation_date %></span>
                 </div>
-                <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold" style="font-size: 11px;">
-                  <%= reservation.court ? reservation.court.display_name : 'Pickleball Court' %>
-                </span>
+                <% if (typeof siblingReservations !== 'undefined' && siblingReservations.length > 1) { %>
+                  <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 fw-bold" style="font-size: 11px;">
+                    <%= siblingReservations.length %> Courts Combined
+                  </span>
+                <% } else { %>
+                  <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold" style="font-size: 11px;">
+                    <%= reservation.court ? reservation.court.display_name : 'Pickleball Court' %>
+                  </span>
+                <% } %>
               </div>
 
               <div class="p-3">
-                <div class="mb-2 d-flex justify-content-between align-items-center">
-                  <span class="small text-muted fw-semibold">Reserved Time Slot(s):</span>
-                  <span class="badge bg-light text-dark border"><%= reservation.total_hours %> Hour<%= reservation.total_hours > 1 ? 's' : '' %></span>
-                </div>
-
-                <div class="d-flex flex-wrap gap-1 mb-2">
-                  <% 
-                    let parsedSlots = [];
-                    if (reservation.slots_json) {
-                      try {
-                        const arr = JSON.parse(reservation.slots_json);
-                        if (Array.isArray(arr)) parsedSlots = arr;
-                      } catch (e) {}
-                    }
-                    if (parsedSlots.length === 0) {
-                      parsedSlots = [reservation.start_time];
-                    }
-                  %>
-                  <% parsedSlots.forEach(slotTime => { %>
-                    <span class="badge bg-white text-dark border px-2.5 py-1.5 rounded-3 fw-semibold d-inline-flex align-items-center gap-1 shadow-xs" style="font-size: 11px; border-color: #cbd5e1 !important;">
-                      <i class="bi bi-clock-history text-primary" style="font-size: 10px;"></i>
-                      <%= formatTime12(slotTime) %>
-                    </span>
+                <% if (typeof siblingReservations !== 'undefined' && siblingReservations.length > 1) { %>
+                  <% siblingReservations.forEach(function(sib, sIdx) { %>
+                    <div class="<%= sIdx > 0 ? 'mt-3 pt-3 border-top' : '' %>">
+                      <div class="d-flex justify-content-between align-items-center mb-1.5">
+                        <div class="d-flex align-items-center gap-2">
+                          <span class="badge bg-warning text-dark rounded-pill px-2.5 py-0.5 fw-bold" style="font-size: 11px;">
+                            <%= sib.court ? sib.court.display_name : 'Court' %>
+                          </span>
+                          <span class="text-secondary small fw-medium"><%= sib.total_hours %> hr<%= sib.total_hours > 1 ? 's' : '' %></span>
+                        </div>
+                        <span class="fw-bold text-dark font-monospace small"><%= formatCurrency(sib.total_amount) %></span>
+                      </div>
+                      <div class="d-flex flex-wrap gap-1">
+                        <% 
+                          let sSlots = [];
+                          if (sib.slots_json) {
+                            try {
+                              const arr = JSON.parse(sib.slots_json);
+                              if (Array.isArray(arr)) sSlots = arr;
+                            } catch(e) {}
+                          }
+                          if (sSlots.length === 0) sSlots = [sib.start_time];
+                        %>
+                        <% sSlots.forEach(function(st) { %>
+                          <span class="badge bg-white text-dark border px-2 py-1 rounded-2 fw-semibold d-inline-flex align-items-center gap-1 shadow-xs" style="font-size: 10.5px; border-color: #cbd5e1 !important;">
+                            <i class="bi bi-clock-history text-primary" style="font-size: 10px;"></i>
+                            <%= formatTime12(st) %>
+                          </span>
+                        <% }); %>
+                      </div>
+                    </div>
                   <% }); %>
-                </div>
+                <% } else { %>
+                  <div class="mb-2 d-flex justify-content-between align-items-center">
+                    <span class="small text-muted fw-semibold">Reserved Time Slot(s):</span>
+                    <span class="badge bg-light text-dark border"><%= reservation.total_hours %> Hour<%= reservation.total_hours > 1 ? 's' : '' %></span>
+                  </div>
 
-                <div class="d-flex justify-content-between align-items-center pt-2 border-top small">
+                  <div class="d-flex flex-wrap gap-1 mb-2">
+                    <% 
+                      let parsedSlots = [];
+                      if (reservation.slots_json) {
+                        try {
+                          const arr = JSON.parse(reservation.slots_json);
+                          if (Array.isArray(arr)) parsedSlots = arr;
+                        } catch (e) {}
+                      }
+                      if (parsedSlots.length === 0) {
+                        parsedSlots = [reservation.start_time];
+                      }
+                    %>
+                    <% parsedSlots.forEach(slotTime => { %>
+                      <span class="badge bg-white text-dark border px-2.5 py-1.5 rounded-3 fw-semibold d-inline-flex align-items-center gap-1 shadow-xs" style="font-size: 11px; border-color: #cbd5e1 !important;">
+                        <i class="bi bi-clock-history text-primary" style="font-size: 10px;"></i>
+                        <%= formatTime12(slotTime) %>
+                      </span>
+                    <% }); %>
+                  </div>
+                <% } %>
+
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top small mt-3">
                   <span class="text-muted">Player: <strong class="text-dark"><%= reservation.user_name %></strong></span>
                   <span class="text-muted">Contact: <strong class="text-dark font-monospace"><%= reservation.user_contact %></strong></span>
                 </div>
@@ -164,7 +204,7 @@
               </h6>
               <ol class="small text-secondary ps-3 mb-0" style="line-height: 1.6;">
                 <li>Open <strong>GCash</strong> & tap <strong>Scan QR</strong> (or upload saved photo).</li>
-                <li>Send exact amount: <strong class="text-dark"><%= formatCurrency(reservation.total_amount) %></strong>.</li>
+                <li>Send exact amount: <strong class="text-dark"><%= formatCurrency(typeof totalOrderAmount !== 'undefined' && totalOrderAmount > 0 ? totalOrderAmount : reservation.total_amount) %></strong>.</li>
                 <li>Type your Reference <strong class="text-dark font-monospace"><%= reservation.reference_number %></strong> in remarks.</li>
                 <li>Type your <strong>GCash Reference No.</strong> & attach screenshot below.</li>
               </ol>

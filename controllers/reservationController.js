@@ -1,4 +1,5 @@
 const { Reservation, Court, CourtCategory } = require('../models');
+const { Op } = require('sequelize');
 const { isSlotRangeAvailable, areSlotsAvailable, getCourtAvailability } = require('../services/availabilityService');
 const paymentService = require('../services/paymentService');
 const { getIO } = require('../config/socket');
@@ -201,11 +202,7 @@ const reservationController = {
           } catch (sockErr) {}
         }
 
-        // If multiple courts booked under one order, update primary reservation amount to total combined amount
-        if (courtIdKeys.length > 1 && primaryReservation) {
-          primaryReservation.total_amount = totalBookingAmount;
-          await primaryReservation.save();
-        }
+        // Each court preserves its individual accurate court total_amount (no double-counting)
 
         if (primaryReservation) {
           try {
@@ -377,9 +374,27 @@ const reservationController = {
         });
       }
 
+      const masterRef = reference.split('-')[0];
+      const siblingReservations = await Reservation.findAll({
+        where: {
+          reference_number: {
+            [Op.or]: [
+              masterRef,
+              { [Op.like]: `${masterRef}-%` }
+            ]
+          }
+        },
+        include: [{ model: Court, as: 'court', include: [{ model: CourtCategory, as: 'category' }] }],
+        order: [['id', 'ASC']]
+      });
+
+      const totalOrderAmount = siblingReservations.reduce((sum, r) => sum + parseFloat(r.total_amount || 0), 0);
+
       res.render('pages/reservation-success', {
         title: `Booking Details - ${reservation.reference_number}`,
         reservation,
+        siblingReservations,
+        totalOrderAmount,
         formatCurrency,
         formatTime12,
         user: req.session ? req.session.user : null,

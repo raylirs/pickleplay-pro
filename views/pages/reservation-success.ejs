@@ -93,8 +93,12 @@
         <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Court & Schedule Details</h5>
         <div class="row g-3 mb-4">
           <div class="col-6">
-            <span class="small text-secondary d-block">Court Assigned</span>
-            <strong class="text-dark"><%= reservation.court ? reservation.court.display_name : 'Pickleball Court' %></strong>
+            <span class="small text-secondary d-block">Court(s) Assigned</span>
+            <% if (typeof siblingReservations !== 'undefined' && siblingReservations.length > 1) { %>
+              <strong class="text-primary"><%= siblingReservations.length %> Courts (<%= siblingReservations.map(s => s.court ? s.court.display_name : 'Court').join(', ') %>)</strong>
+            <% } else { %>
+              <strong class="text-dark"><%= reservation.court ? reservation.court.display_name : 'Pickleball Court' %></strong>
+            <% } %>
           </div>
           <div class="col-6">
             <span class="small text-secondary d-block">Venue</span>
@@ -190,21 +194,21 @@
           <hr class="my-2">
           <div class="d-flex justify-content-between align-items-center">
             <span class="fw-bold text-dark">Total Amount:</span>
-            <span class="fs-5 fw-bold text-success"><%= formatCurrency(reservation.total_amount) %></span>
+            <span class="fs-5 fw-bold text-success"><%= formatCurrency(typeof totalOrderAmount !== 'undefined' && totalOrderAmount > 0 ? totalOrderAmount : reservation.total_amount) %></span>
           </div>
         </div>
 
         <!-- Actions -->
         <div class="d-flex flex-wrap gap-2 d-print-none">
           <% if (reservation.status === 'AWAITING_PAYMENT') { %>
-            <a href="/payment/gcash-checkout?ref=<%= reservation.reference_number %>" class="btn btn-primary flex-fill rounded-pill py-2 fw-semibold">
+            <a href="/payment/gcash?ref=<%= reservation.reference_number %>" class="btn btn-primary flex-fill rounded-pill py-2 fw-semibold">
               <i class="bi bi-qr-code me-1"></i>Pay via GCash QR Now
             </a>
           <% } %>
           <button onclick="window.print()" class="btn btn-outline-secondary flex-fill rounded-pill py-2 fw-semibold">
             <i class="bi bi-printer me-1"></i>Print Pass
           </button>
-          <a href="/reservations" class="btn btn-success flex-fill rounded-pill py-2 fw-semibold">
+          <a href="/#book" class="btn btn-book-now-gold flex-fill rounded-pill py-2 fw-semibold">
             <i class="bi bi-plus-circle me-1"></i>Book Another Court
           </a>
         </div>
