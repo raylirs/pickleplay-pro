@@ -146,16 +146,16 @@
 
     <div class="matrix-card">
       <!-- Matrix Toolbar: Date Navigation & Quick Actions -->
-      <div class="matrix-date-toolbar d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+      <div class="matrix-date-toolbar d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2 gap-md-3">
         <!-- Date Navigator Buttons (Far Left) -->
-        <div class="d-flex align-items-center gap-2 justify-content-start">
+        <div class="d-flex align-items-center gap-1.5 gap-sm-2 justify-content-between w-100 w-md-auto">
           <button type="button" class="matrix-date-btn" id="btnPrevDate" title="Previous Day">
             <i class="bi bi-chevron-left"></i>
           </button>
 
-          <div class="position-relative">
-            <button type="button" class="matrix-date-btn matrix-date-center-btn" id="btnDisplayDate">
-              <i class="bi bi-calendar3 me-2 text-warning"></i>
+          <div class="position-relative flex-grow-1 flex-md-grow-0">
+            <button type="button" class="matrix-date-btn matrix-date-center-btn w-100" id="btnDisplayDate">
+              <i class="bi bi-calendar3 me-1.5 text-warning"></i>
               <span id="dateDisplayText">Loading date...</span>
             </button>
             <input type="date" id="nativeDatePicker" min="<%= today %>" value="<%= today %>" style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
@@ -165,13 +165,13 @@
             <i class="bi bi-chevron-right"></i>
           </button>
 
-          <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-bold ms-1" id="btnTodayShortcut">
+          <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-2.5 py-1.5 fw-bold flex-shrink-0 ms-1" id="btnTodayShortcut">
             Today
           </button>
         </div>
 
-        <!-- Legend Swatches (Single-Line Row) -->
-        <div class="matrix-legend-row d-flex align-items-center gap-2 gap-sm-3 flex-shrink-0">
+        <!-- Legend Swatches (Single-Line Row with clean wrapping on mobile) -->
+        <div class="matrix-legend-row d-flex align-items-center gap-2 gap-sm-3 flex-wrap">
           <div class="matrix-legend-item">
             <div class="legend-swatch legend-open"></div>
             <span>Available</span>
@@ -449,21 +449,11 @@
           </button>
         </div>
 
-        <!-- Drawer Table Body -->
-        <div class="p-2 p-sm-3" style="max-height: 260px; overflow-y: auto;">
-          <table class="table table-dark table-hover align-middle mb-0 text-white" style="background: transparent;">
-            <thead class="small text-uppercase text-secondary border-bottom border-secondary border-opacity-25" style="font-size: 11px;">
-              <tr>
-                <th style="width: 25%;">Court</th>
-                <th style="width: 45%;">Time Slot</th>
-                <th style="width: 20%;" class="text-end">Rate</th>
-                <th style="width: 10%;" class="text-center">Remove</th>
-              </tr>
-            </thead>
-            <tbody id="drawerSlotsTableBody">
-              <!-- Dynamic rows injected here -->
-            </tbody>
-          </table>
+        <!-- Drawer Body: Responsive Card List -->
+        <div class="p-2 p-sm-3" style="max-height: 270px; overflow-y: auto;">
+          <div id="drawerSlotsTableBody" class="d-flex flex-column gap-2">
+            <!-- Dynamic rows injected here -->
+          </div>
         </div>
 
         <!-- Drawer Footer -->
@@ -481,30 +471,55 @@
     </div>
   </div>
 
-  <div class="container max-w-6xl d-flex flex-column flex-sm-row align-items-center justify-content-between gap-2 gap-sm-3">
-    <!-- Selected Info Pill & Price -->
-    <div class="rail-summary-row d-flex align-items-center justify-content-between justify-content-sm-start gap-2 gap-sm-3 w-100 w-sm-auto">
-      <div class="rail-summary-pill d-flex align-items-center gap-2" role="button" onclick="toggleSelectedSlotsDrawer()" style="cursor: pointer;" title="Click to view full table of selected courts and slots">
-        <span class="badge rounded-pill bg-warning text-dark fw-bold" id="railCourtBadge">Court 1</span>
-        <span class="small text-white fw-bold" id="railTimeSlotsText">Select a time</span>
-        <button type="button" class="rail-table-btn" id="drawerToggleBtn" onclick="event.stopPropagation(); toggleSelectedSlotsDrawer();">
-          <i class="bi bi-table"></i> <span id="drawerToggleText">View Table</span> <i class="bi bi-chevron-up" id="drawerToggleIcon"></i>
-        </button>
+  <div class="container max-w-6xl">
+    <!-- Desktop Layout (sm and up) -->
+    <div class="d-none d-sm-flex align-items-center justify-content-between gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rail-summary-pill d-flex align-items-center gap-2" role="button" onclick="toggleSelectedSlotsDrawer()" style="cursor: pointer;" title="Click to view full table of selected courts and slots">
+          <span class="badge rounded-pill bg-warning text-dark fw-bold" id="railCourtBadge">Court 1</span>
+          <span class="small text-white fw-bold" id="railTimeSlotsText">Select a time</span>
+          <button type="button" class="rail-table-btn" id="drawerToggleBtn" onclick="event.stopPropagation(); toggleSelectedSlotsDrawer();">
+            <i class="bi bi-table"></i> <span id="drawerToggleText">View Table</span> <i class="bi bi-chevron-up" id="drawerToggleIcon"></i>
+          </button>
+        </div>
+        <div>
+          <span class="small text-white-50 d-block" style="font-size: 11px;">Total Price:</span>
+          <span class="rail-price-tag" id="railTotalPrice">₱0.00</span>
+        </div>
       </div>
-      <div class="text-end text-sm-start flex-shrink-0">
-        <span class="small text-white-50 d-block" style="font-size: 11px;">Total Price:</span>
-        <span class="rail-price-tag" id="railTotalPrice">₱0.00</span>
+      <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="clearSelectedSlots()">
+          Clear
+        </button>
+        <button type="button" class="btn-book-now-gold" onclick="openCheckoutModal()">
+          <i class="bi bi-lightning-charge-fill me-1"></i> Continue to Booking &rarr;
+        </button>
       </div>
     </div>
 
-    <!-- Booking CTA Buttons -->
-    <div class="rail-actions-row d-flex align-items-center gap-2 w-100 w-sm-auto">
-      <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-3 py-2" onclick="clearSelectedSlots()">
-        Clear
-      </button>
-      <button type="button" class="btn-book-now-gold flex-grow-1 flex-sm-grow-0" onclick="openCheckoutModal()">
-        <i class="bi bi-lightning-charge-fill me-1"></i> Continue to Booking &rarr;
-      </button>
+    <!-- Mobile Layout (< sm / smartphones) -->
+    <div class="d-flex d-sm-none flex-column gap-2">
+      <!-- Top Line: Court & Slot Count on left, Details button on right -->
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-1.5" role="button" onclick="toggleSelectedSlotsDrawer()" style="cursor: pointer;">
+          <span class="badge rounded-pill bg-warning text-dark fw-bold" id="mobileRailCourtBadge" style="font-size: 11px;">1 Court</span>
+          <span class="text-white small fw-bold" id="mobileRailSlotsText" style="font-size: 12px;">1 Slot</span>
+        </div>
+        <button type="button" class="rail-table-btn py-1 px-2.5" id="mobileDrawerToggleBtn" onclick="event.stopPropagation(); toggleSelectedSlotsDrawer();" style="font-size: 11px;">
+          <i class="bi bi-table"></i> <span id="mobileDrawerToggleText">Details</span> <i class="bi bi-chevron-up" id="mobileDrawerToggleIcon"></i>
+        </button>
+      </div>
+
+      <!-- Bottom Line: Total Price and Clear link on left, Continue button on right -->
+      <div class="d-flex align-items-center justify-content-between pt-1.5 border-top border-secondary border-opacity-25">
+        <div class="d-flex align-items-baseline gap-2">
+          <span class="rail-price-tag text-warning fw-bold mb-0" id="mobileRailTotalPrice" style="font-size: 18px; line-height: 1;">₱0.00</span>
+          <button type="button" class="btn btn-link text-white-50 text-decoration-none p-0 small" onclick="clearSelectedSlots()" style="font-size: 11px;">Clear</button>
+        </div>
+        <button type="button" class="btn btn-book-now-gold btn-sm px-3 py-1.5 fw-bold rounded-pill" onclick="openCheckoutModal()" style="font-size: 13px;">
+          <i class="bi bi-lightning-charge-fill me-1"></i> Continue &rarr;
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -1168,6 +1183,11 @@
     const toggleBtn = document.getElementById('drawerToggleBtn');
     const icon = document.getElementById('drawerToggleIcon');
     const textEl = document.getElementById('drawerToggleText');
+
+    const mobileToggleBtn = document.getElementById('mobileDrawerToggleBtn');
+    const mobileIcon = document.getElementById('mobileDrawerToggleIcon');
+    const mobileTextEl = document.getElementById('mobileDrawerToggleText');
+
     if (!drawer) return;
 
     if (typeof forceState === 'boolean') {
@@ -1182,24 +1202,32 @@
       if (toggleBtn) toggleBtn.classList.add('is-active');
       if (icon) icon.className = 'bi bi-chevron-down';
       if (textEl) textEl.innerText = 'Hide Table';
+
+      if (mobileToggleBtn) mobileToggleBtn.classList.add('is-active');
+      if (mobileIcon) mobileIcon.className = 'bi bi-chevron-down';
+      if (mobileTextEl) mobileTextEl.innerText = 'Hide';
     } else {
       drawer.classList.add('d-none');
       isDrawerOpen = false;
       if (toggleBtn) toggleBtn.classList.remove('is-active');
       if (icon) icon.className = 'bi bi-chevron-up';
       if (textEl) textEl.innerText = 'View Table';
+
+      if (mobileToggleBtn) mobileToggleBtn.classList.remove('is-active');
+      if (mobileIcon) mobileIcon.className = 'bi bi-chevron-up';
+      if (mobileTextEl) mobileTextEl.innerText = 'Details';
     }
   }
 
   function renderSelectedSlotsDrawer() {
-    const tbody = document.getElementById('drawerSlotsTableBody');
+    const container = document.getElementById('drawerSlotsTableBody');
     const subtitleEl = document.getElementById('drawerSummarySubtitle');
     const countEl = document.getElementById('drawerSlotsSummaryCount');
     const priceSummaryEl = document.getElementById('drawerTotalPriceSummary');
-    if (!tbody) return;
+    if (!container) return;
 
     if (!selectedSlotItems || selectedSlotItems.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">No slots selected</td></tr>';
+      container.innerHTML = '<div class="text-center py-3 text-white-50 small">No slots selected</div>';
       toggleSelectedSlotsDrawer(false);
       return;
     }
@@ -1209,10 +1237,10 @@
     const uniqueCourts = [...new Set(selectedSlotItems.map(item => item.courtName))];
 
     if (subtitleEl) {
-      subtitleEl.innerText = `${totalCount} slot${totalCount > 1 ? 's' : ''} across ${uniqueCourts.length} court${uniqueCourts.length > 1 ? 's' : ''} (${uniqueCourts.join(', ')})`;
+      subtitleEl.innerText = `${totalCount} slot${totalCount > 1 ? 's' : ''} across ${uniqueCourts.length} court${uniqueCourts.length > 1 ? 's' : ''}`;
     }
     if (countEl) {
-      countEl.innerText = `${totalCount} slot${totalCount > 1 ? 's' : ''} across ${uniqueCourts.length} court${uniqueCourts.length > 1 ? 's' : ''}`;
+      countEl.innerText = `${totalCount} slot${totalCount > 1 ? 's' : ''} selected`;
     }
     if (priceSummaryEl) {
       priceSummaryEl.innerText = `Total: ₱${totalPrice.toFixed(2)}`;
@@ -1221,31 +1249,30 @@
     let rowsHtml = '';
     selectedSlotItems.forEach(item => {
       rowsHtml += `
-        <tr class="drawer-slot-row">
-          <td>
-            <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold" style="font-size: 11.5px;">
+        <div class="drawer-slot-card d-flex align-items-center justify-content-between p-2 px-2.5 rounded-3 border border-secondary border-opacity-25" style="background: rgba(255, 255, 255, 0.05);">
+          <div class="d-flex align-items-center gap-2 flex-grow-1 min-w-0">
+            <span class="badge bg-warning text-dark rounded-pill px-2 py-1 fw-bold flex-shrink-0" style="font-size: 11px;">
               ${item.courtName}
             </span>
-          </td>
-          <td>
-            <span class="d-inline-flex align-items-center gap-2 text-white fw-semibold small">
-              <i class="bi bi-clock-history text-warning"></i>
-              ${item.startLabel} – ${item.endLabel} <span class="text-white-50 small ms-1">(1 hr)</span>
+            <div class="text-truncate">
+              <span class="text-white fw-semibold small d-inline-flex align-items-center gap-1 text-truncate" style="font-size: 12px;">
+                <i class="bi bi-clock-history text-warning"></i> ${item.startLabel} – ${item.endLabel}
+              </span>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2 flex-shrink-0 ms-2">
+            <span class="fw-bold font-monospace text-warning small" style="font-size: 12px;">
+              ₱${item.rate.toFixed(2)}
             </span>
-          </td>
-          <td class="text-end fw-bold font-monospace text-warning small">
-            ₱${item.rate.toFixed(2)}
-          </td>
-          <td class="text-center">
             <button type="button" class="drawer-remove-btn" onclick="removeSingleSlot(${item.courtId}, '${item.startTime}')" title="Remove this slot">
               <i class="bi bi-trash3-fill"></i>
             </button>
-          </td>
-        </tr>
+          </div>
+        </div>
       `;
     });
 
-    tbody.innerHTML = rowsHtml;
+    container.innerHTML = rowsHtml;
   }
 
   function removeSingleSlot(courtId, startTime) {
@@ -1293,9 +1320,21 @@
       timeSummaryText = `${totalCount} Hours / Slots Selected`;
     }
 
-    document.getElementById('railCourtBadge').innerText = badgeText;
-    document.getElementById('railTimeSlotsText').innerText = timeSummaryText;
-    document.getElementById('railTotalPrice').innerText = `₱${totalPrice.toFixed(2)}`;
+    // Desktop elements
+    const dBadge = document.getElementById('railCourtBadge');
+    const dSlots = document.getElementById('railTimeSlotsText');
+    const dPrice = document.getElementById('railTotalPrice');
+    if (dBadge) dBadge.innerText = badgeText;
+    if (dSlots) dSlots.innerText = timeSummaryText;
+    if (dPrice) dPrice.innerText = `₱${totalPrice.toFixed(2)}`;
+
+    // Mobile elements
+    const mBadge = document.getElementById('mobileRailCourtBadge');
+    const mSlots = document.getElementById('mobileRailSlotsText');
+    const mPrice = document.getElementById('mobileRailTotalPrice');
+    if (mBadge) mBadge.innerText = `${uniqueCourts.length} Court${uniqueCourts.length > 1 ? 's' : ''}`;
+    if (mSlots) mSlots.innerText = `${totalCount} Slot${totalCount > 1 ? 's' : ''}`;
+    if (mPrice) mPrice.innerText = `₱${totalPrice.toFixed(2)}`;
 
     rail.classList.add('is-visible');
 
