@@ -875,6 +875,20 @@ h1, h2, h3, h4, .font-display {
     font-size: 12.5px;
   }
 
+  /* Matrix Legend Scrollability on Mobile (Single Line) */
+  .matrix-legend-row {
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap !important;
+  }
+
+  .matrix-legend-row::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Date toolbar on mobile */
   .matrix-date-toolbar {
     padding: 8px 10px;

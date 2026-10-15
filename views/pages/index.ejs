@@ -146,16 +146,16 @@
 
     <div class="matrix-card">
       <!-- Matrix Toolbar: Date Navigation & Quick Actions -->
-      <div class="matrix-date-toolbar d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2 gap-md-3">
+      <div class="matrix-date-toolbar d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
         <!-- Date Navigator Buttons (Far Left) -->
-        <div class="d-flex align-items-center gap-1.5 gap-sm-2 justify-content-between w-100 w-md-auto">
+        <div class="d-flex align-items-center gap-2">
           <button type="button" class="matrix-date-btn" id="btnPrevDate" title="Previous Day">
             <i class="bi bi-chevron-left"></i>
           </button>
 
-          <div class="position-relative flex-grow-1 flex-md-grow-0">
-            <button type="button" class="matrix-date-btn matrix-date-center-btn w-100" id="btnDisplayDate">
-              <i class="bi bi-calendar3 me-1.5 text-warning"></i>
+          <div class="position-relative">
+            <button type="button" class="matrix-date-btn matrix-date-center-btn" id="btnDisplayDate">
+              <i class="bi bi-calendar3 me-2 text-warning"></i>
               <span id="dateDisplayText">Loading date...</span>
             </button>
             <input type="date" id="nativeDatePicker" min="<%= today %>" value="<%= today %>" style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
@@ -165,13 +165,13 @@
             <i class="bi bi-chevron-right"></i>
           </button>
 
-          <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-2.5 py-1.5 fw-bold flex-shrink-0 ms-1" id="btnTodayShortcut">
+          <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-bold ms-1" id="btnTodayShortcut">
             Today
           </button>
         </div>
 
-        <!-- Legend Swatches (Single-Line Row with clean wrapping on mobile) -->
-        <div class="matrix-legend-row d-flex align-items-center gap-2 gap-sm-3 flex-wrap">
+        <!-- Legend Swatches (Single-Line Row) -->
+        <div class="matrix-legend-row d-flex align-items-center gap-2 gap-sm-3 flex-shrink-0">
           <div class="matrix-legend-item">
             <div class="legend-swatch legend-open"></div>
             <span>Available</span>
