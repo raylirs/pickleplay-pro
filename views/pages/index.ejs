@@ -104,42 +104,88 @@
         </button>
       </div>
 
-      <!-- Single-Line Action Bar (Full width 1-line on Mobile, Compact Right-aligned on Desktop) -->
+      <!-- Minimalist Action Bar (Icon-first pills that expand text on hover/focus; clean 1-line on Mobile & Desktop) -->
+      <style>
+        .minimal-action-pill {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          height: 34px;
+          min-width: 34px;
+          padding: 0 9px;
+          border-radius: 999px;
+          font-size: 12.5px;
+          font-weight: 700;
+          white-space: nowrap;
+          overflow: hidden;
+          transition: all 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+          flex-shrink: 0;
+          text-decoration: none;
+        }
+        .minimal-action-pill i {
+          font-size: 14.5px;
+          line-height: 1;
+          flex-shrink: 0;
+        }
+        .minimal-action-pill .minimal-pill-label {
+          display: inline-block;
+          max-width: 0;
+          opacity: 0;
+          margin-left: 0;
+          overflow: hidden;
+          vertical-align: middle;
+          transition: max-width 0.26s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, margin-left 0.2s ease;
+        }
+        .minimal-action-pill:hover .minimal-pill-label,
+        .minimal-action-pill:focus-visible .minimal-pill-label,
+        .minimal-action-pill:active .minimal-pill-label {
+          max-width: 140px;
+          opacity: 1;
+          margin-left: 6px;
+        }
+        .minimal-action-pill:hover {
+          padding: 0 13px;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(11, 37, 69, 0.14);
+        }
+      </style>
       <div class="d-flex align-items-center justify-content-between justify-content-md-end gap-1.5 py-2 py-md-0 ms-md-2 flex-grow-1 flex-md-grow-0 flex-shrink-0 flex-nowrap">
         <div id="headerAccountControls" class="d-inline-flex align-items-center gap-1.5 min-w-0">
           <% if (typeof user !== 'undefined' && user) { %>
-            <button type="button" class="btn btn-dark btn-sm rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-xs text-truncate" style="max-width: 185px;" onclick="switchVenueTab('my-bookings')" title="View My Bookings">
-              <i class="bi bi-person-check-fill text-warning flex-shrink-0"></i>
-              <span class="text-truncate"><%= user.full_name || user.username %></span>
+            <button type="button" class="btn btn-dark minimal-action-pill shadow-xs" onclick="switchVenueTab('my-bookings')" title="<%= user.full_name || user.username %> (My Bookings)">
+              <i class="bi bi-person-check-fill text-warning"></i>
+              <span class="minimal-pill-label text-truncate"><%= user.full_name || user.username %></span>
             </button>
             <% if (user.role === 'admin' || user.role === 'staff') { %>
-              <a href="/admin" class="btn btn-outline-dark btn-sm rounded-pill px-2 py-1 fw-semibold flex-shrink-0" title="Admin Panel">
+              <a href="/admin" class="btn btn-outline-dark minimal-action-pill" title="Admin Panel">
                 <i class="bi bi-speedometer2"></i>
+                <span class="minimal-pill-label">Admin</span>
               </a>
             <% } %>
-            <a href="/account/logout" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 fw-semibold flex-shrink-0" title="Sign Out">
+            <a href="/account/logout" class="btn btn-outline-danger minimal-action-pill" title="Sign Out">
               <i class="bi bi-box-arrow-right"></i>
+              <span class="minimal-pill-label">Sign Out</span>
             </a>
           <% } else { %>
-            <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 flex-shrink-0" onclick="openPlayerAuthModal('login', false)">
+            <button type="button" class="btn btn-outline-dark minimal-action-pill" onclick="openPlayerAuthModal('login', false)" title="Sign In">
               <i class="bi bi-box-arrow-in-right"></i>
-              <span>Sign In</span>
+              <span class="minimal-pill-label">Sign In</span>
             </button>
-            <button type="button" class="btn btn-book-now-gold btn-sm rounded-pill px-2.5 py-1 fw-bold d-inline-flex align-items-center gap-1 flex-shrink-0" onclick="openPlayerAuthModal('register', false)">
+            <button type="button" class="btn btn-book-now-gold minimal-action-pill" onclick="openPlayerAuthModal('register', false)" title="Sign Up">
               <i class="bi bi-person-plus-fill"></i>
-              <span>Sign Up</span>
+              <span class="minimal-pill-label">Sign Up</span>
             </button>
           <% } %>
         </div>
 
         <div class="d-inline-flex align-items-center gap-1.5 flex-shrink-0">
-          <button type="button" onclick="switchVenueTab('photos')" class="btn btn-light border btn-sm rounded-pill px-2.5 py-1 fw-semibold d-inline-flex d-md-none align-items-center gap-1 text-dark" title="Facility Photos">
+          <button type="button" onclick="switchVenueTab('photos')" class="btn btn-light border minimal-action-pill d-inline-flex d-md-none text-dark" title="Facility Photos">
             <i class="bi bi-images text-primary"></i>
-            <span>Photos</span>
+            <span class="minimal-pill-label">Photos</span>
           </button>
-          <button type="button" onclick="triggerPwaInstall()" class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1 fw-bold d-inline-flex align-items-center gap-1 flex-shrink-0" title="Install The Playground Mobile App">
+          <button type="button" onclick="triggerPwaInstall()" class="btn btn-outline-primary minimal-action-pill" title="Install App">
             <i class="bi bi-phone-fill"></i>
-            <span>Install App</span>
+            <span class="minimal-pill-label">Install App</span>
           </button>
         </div>
       </div>
@@ -2515,20 +2561,21 @@
     if (mobAccIcon) mobAccIcon.className = 'bi bi-person-check-fill';
     if (mobAccLabel) mobAccLabel.innerText = 'Account';
 
-    // 1. Update top right header controls
+    // 1. Update top right header controls (Minimalist hover-expand pills)
     const headerControls = document.getElementById('headerAccountControls');
     if (headerControls) {
       const adminBtn = (userObj.role === 'admin' || userObj.role === 'staff')
-        ? `<a href="/admin" class="btn btn-outline-dark btn-sm rounded-pill px-2 py-1 fw-semibold flex-shrink-0" title="Admin Panel"><i class="bi bi-speedometer2"></i></a>`
+        ? `<a href="/admin" class="btn btn-outline-dark minimal-action-pill" title="Admin Panel"><i class="bi bi-speedometer2"></i><span class="minimal-pill-label">Admin</span></a>`
         : '';
       headerControls.innerHTML = `
-        <button type="button" class="btn btn-dark btn-sm rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-xs text-truncate" style="max-width: 185px;" onclick="switchVenueTab('my-bookings')" title="View My Bookings">
-          <i class="bi bi-person-check-fill text-warning flex-shrink-0"></i>
-          <span class="text-truncate">${displayName}</span>
+        <button type="button" class="btn btn-dark minimal-action-pill shadow-xs" onclick="switchVenueTab('my-bookings')" title="${displayName} (My Bookings)">
+          <i class="bi bi-person-check-fill text-warning"></i>
+          <span class="minimal-pill-label text-truncate">${displayName}</span>
         </button>
         ${adminBtn}
-        <a href="/account/logout" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 fw-semibold flex-shrink-0" title="Sign Out">
+        <a href="/account/logout" class="btn btn-outline-danger minimal-action-pill" title="Sign Out">
           <i class="bi bi-box-arrow-right"></i>
+          <span class="minimal-pill-label">Sign Out</span>
         </a>
       `;
     }
@@ -3395,17 +3442,17 @@
     accountChatMessages = [];
     updateChatUnreadBadges(0);
 
-    // 1. Reset top right header controls to Sign In / Sign Up
+    // 1. Reset top right header controls to minimalist Sign In / Sign Up pills
     const headerControls = document.getElementById('headerAccountControls');
     if (headerControls) {
       headerControls.innerHTML = `
-        <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 flex-shrink-0" onclick="openPlayerAuthModal('login', false)">
+        <button type="button" class="btn btn-outline-dark minimal-action-pill" onclick="openPlayerAuthModal('login', false)" title="Sign In">
           <i class="bi bi-box-arrow-in-right"></i>
-          <span>Sign In</span>
+          <span class="minimal-pill-label">Sign In</span>
         </button>
-        <button type="button" class="btn btn-book-now-gold btn-sm rounded-pill px-2.5 py-1 fw-bold d-inline-flex align-items-center gap-1 flex-shrink-0" onclick="openPlayerAuthModal('register', false)">
+        <button type="button" class="btn btn-book-now-gold minimal-action-pill" onclick="openPlayerAuthModal('register', false)" title="Sign Up">
           <i class="bi bi-person-plus-fill"></i>
-          <span>Sign Up</span>
+          <span class="minimal-pill-label">Sign Up</span>
         </button>
       `;
     }
