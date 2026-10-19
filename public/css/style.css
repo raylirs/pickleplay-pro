@@ -967,14 +967,16 @@ h1, h2, h3, h4, .font-display {
     font-size: 9px;
   }
 
-  /* Floating rail safe-area for iPhone home bar */
+  /* Floating rail docks cleanly above the mobile bottom navigation bar */
   .floating-booking-rail {
-    padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 12px));
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.35);
   }
 
   .venue-tab-pane,
   #tab-content-book {
-    padding-bottom: calc(140px + env(safe-area-inset-bottom, 20px)) !important;
+    padding-bottom: calc(155px + env(safe-area-inset-bottom, 20px)) !important;
   }
 
   /* Selected Slots Drawer on Mobile */
@@ -1001,6 +1003,81 @@ h1, h2, h3, h4, .font-display {
   }
 }
 
+/* =========================================================
+   Native-Style Mobile Bottom App Bar (< 768px)
+========================================================= */
+.mobile-bottom-appbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(64px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: rgba(11, 37, 69, 0.98);
+  backdrop-filter: blur(18px);
+  border-top: 1.5px solid rgba(212, 175, 55, 0.45);
+  box-shadow: 0 -6px 24px rgba(7, 23, 44, 0.35);
+  z-index: 1045;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  user-select: none;
+}
+
+.mobile-appbar-btn {
+  flex: 1 1 0;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.65);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 2px;
+  font-size: 10.5px;
+  font-weight: 600;
+  position: relative;
+  transition: color 0.18s ease, transform 0.15s ease;
+}
+
+.mobile-appbar-btn i {
+  font-size: 19px;
+  line-height: 1.1;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.mobile-appbar-btn.active {
+  color: #FDE047;
+  font-weight: 800;
+}
+
+.mobile-appbar-btn.active i {
+  color: #FDE047;
+  transform: translateY(-1px) scale(1.08);
+}
+
+.mobile-appbar-btn.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 28px;
+  height: 3px;
+  background: var(--gold-400);
+  border-radius: 0 0 4px 4px;
+}
+
+.mobile-appbar-badge {
+  position: absolute;
+  top: 4px;
+  right: calc(50% - 20px);
+  font-size: 9.5px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  font-weight: 800;
+  line-height: 1;
+}
+
 /* Real-Time Pulse Animation for Socket updates */
 @keyframes slotPulse {
   0% { transform: scale(1); }
@@ -1011,3 +1088,4 @@ h1, h2, h3, h4, .font-display {
 .slot-just-updated {
   animation: slotPulse 0.8s ease-in-out;
 }
+

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B2545"/>
+      <stop offset="100%" stop-color="#07172C"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="50%" stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#B48A1E"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <rect x="22" y="22" width="468" height="468" rx="94" fill="none" stroke="url(#goldGrad)" stroke-width="10"/>
+  <!-- Pickleball Emblem -->
+  <circle cx="256" cy="195" r="82" fill="#A3E635" stroke="url(#goldGrad)" stroke-width="8"/>
+  <circle cx="230" cy="168" r="10" fill="#0B2545"/>
+  <circle cx="282" cy="168" r="10" fill="#0B2545"/>
+  <circle cx="256" cy="198" r="11" fill="#0B2545"/>
+  <circle cx="218" cy="212" r="9" fill="#0B2545"/>
+  <circle cx="294" cy="212" r="9" fill="#0B2545"/>
+  <circle cx="256" cy="145" r="8" fill="#0B2545"/>
+  <circle cx="242" cy="234" r="8" fill="#0B2545"/>
+  <circle cx="270" cy="234" r="8" fill="#0B2545"/>
+  <!-- Typography -->
+  <text x="256" y="352" text-anchor="middle" fill="url(#goldGrad)" font-family="Arial, sans-serif" font-weight="900" font-size="68" letter-spacing="3">3KS</text>
+  <text x="256" y="405" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-weight="800" font-size="34" letter-spacing="4">PLAYGROUND</text>
+  <text x="256" y="442" text-anchor="middle" fill="#94A3B8" font-family="Arial, sans-serif" font-weight="700" font-size="20" letter-spacing="5">PICKLEBALL</text>
+</svg>

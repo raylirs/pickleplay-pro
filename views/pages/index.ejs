@@ -106,6 +106,10 @@
 
       <!-- Action Buttons In-Line with Tabs (Right) -->
       <div class="d-flex align-items-center gap-2 py-2 py-md-0 ms-md-3 justify-content-end flex-shrink-0 flex-wrap">
+        <button type="button" onclick="triggerPwaInstall()" class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1 fw-bold d-inline-flex align-items-center gap-1" title="Install 3KS Mobile App">
+          <i class="bi bi-phone-fill"></i>
+          <span>Install App</span>
+        </button>
         <div id="headerAccountControls" class="d-inline-flex align-items-center gap-2">
           <% if (typeof user !== 'undefined' && user) { %>
             <button type="button" class="btn btn-dark btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-xs" onclick="switchVenueTab('my-bookings')" title="View My Bookings">
@@ -956,9 +960,43 @@
 </div>
 
 <!-- =========================================================
-     FLOATING IN-APP ACCOUNT CHAT BUTTON (Logged-in Players Only)
+     NATIVE-STYLE MOBILE BOTTOM NAVIGATION BAR (< 768px)
 ========================================================= -->
-<div id="accountChatFabWrap" class="position-fixed <%= (typeof user !== 'undefined' && user) ? '' : 'd-none' %>" style="bottom: 24px; right: 24px; z-index: 1030; transition: bottom 0.25s ease;">
+<nav id="mobileBottomAppBar" class="mobile-bottom-appbar d-flex d-md-none" aria-label="Mobile App Navigation">
+  <button type="button" class="mobile-appbar-btn active" id="mobile-nav-book" onclick="switchVenueTab('book')">
+    <i class="bi bi-calendar2-check-fill"></i>
+    <span>Courts</span>
+  </button>
+
+  <button type="button" class="mobile-appbar-btn" id="mobile-nav-my-bookings" onclick="switchVenueTab('my-bookings')">
+    <i class="bi bi-ticket-perforated-fill"></i>
+    <span>Bookings</span>
+    <span id="mobileNavBookingsBadge" class="mobile-appbar-badge bg-warning text-dark <%= (typeof myBookings !== 'undefined' && myBookings.length > 0) ? '' : 'd-none' %>">
+      <%= typeof myBookings !== 'undefined' ? myBookings.length : 0 %>
+    </span>
+  </button>
+
+  <button type="button" class="mobile-appbar-btn" id="mobile-nav-chat" onclick="openAccountChatModal()">
+    <i class="bi bi-chat-dots-fill"></i>
+    <span>Chat</span>
+    <span id="mobileNavChatBadge" class="mobile-appbar-badge bg-danger text-white d-none">0</span>
+  </button>
+
+  <button type="button" class="mobile-appbar-btn" id="mobile-nav-location" onclick="switchVenueTab('location')">
+    <i class="bi bi-geo-alt-fill"></i>
+    <span>Map</span>
+  </button>
+
+  <button type="button" class="mobile-appbar-btn" id="mobile-nav-account" onclick="handleMobileAccountNavClick()">
+    <i class="bi <%= (typeof user !== 'undefined' && user) ? 'bi-person-check-fill' : 'bi-person-circle' %>" id="mobileNavAccountIcon"></i>
+    <span id="mobileNavAccountLabel"><%= (typeof user !== 'undefined' && user) ? 'Account' : 'Sign In' %></span>
+  </button>
+</nav>
+
+<!-- =========================================================
+     FLOATING IN-APP ACCOUNT CHAT BUTTON (Desktop Logged-in Players)
+========================================================= -->
+<div id="accountChatFabWrap" class="position-fixed d-none <%= (typeof user !== 'undefined' && user) ? 'd-md-block' : '' %>" style="bottom: 24px; right: 24px; z-index: 1030; transition: bottom 0.25s ease;">
   <button type="button" id="accountChatFabBtn" onclick="openAccountChatModal()" class="btn btn-dark rounded-pill shadow-lg px-3.5 py-2.5 d-flex align-items-center gap-2 border border-warning" style="background: linear-gradient(135deg, #0B2545 0%, #134074 100%);">
     <span class="position-relative d-inline-flex align-items-center justify-content-center bg-warning text-dark rounded-circle" style="width: 32px; height: 32px;">
       <i class="bi bi-chat-dots-fill fs-6"></i>
@@ -975,8 +1013,8 @@
      IN-APP ACCOUNT CHAT & BOOKING PASSES MODAL
 ========================================================= -->
 <div class="modal fade" id="accountChatModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
-    <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden" style="height: 82vh; max-height: 700px;">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg modal-fullscreen-sm-down">
+    <div class="modal-content border-0 rounded-4 rounded-sm-0 shadow-lg overflow-hidden" style="height: 85vh; max-height: 740px;">
       <!-- Modal Header -->
       <div class="modal-header border-0 py-3 px-4 text-white" style="background: linear-gradient(135deg, #0B2545 0%, #134074 100%);">
         <div class="d-flex align-items-center gap-2.5">
@@ -994,8 +1032,8 @@
           </div>
         </div>
         <div class="d-flex align-items-center gap-2">
-          <button type="button" class="btn btn-outline-light btn-sm rounded-pill px-2.5 py-1 fw-semibold d-none d-sm-inline-flex align-items-center gap-1" style="font-size: 11px;" data-bs-toggle="modal" data-bs-target="#messengerModal">
-            <i class="bi bi-messenger text-info"></i> Messenger Alerts
+          <button type="button" class="btn btn-outline-light btn-sm rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1" style="font-size: 11px;" data-bs-toggle="modal" data-bs-target="#messengerModal">
+            <i class="bi bi-messenger text-info"></i> <span class="d-none d-sm-inline">Messenger Alerts</span>
           </button>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -1103,12 +1141,15 @@
   function switchVenueTab(tabName) {
     document.querySelectorAll('.venue-tab-pane').forEach(el => el.classList.add('d-none'));
     document.querySelectorAll('.courtogo-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.mobile-appbar-btn').forEach(btn => btn.classList.remove('active'));
 
     const contentPane = document.getElementById('tab-content-' + tabName);
     const btn = document.getElementById('tab-btn-' + tabName);
+    const mobileBtn = document.getElementById('mobile-nav-' + tabName);
 
     if (contentPane) contentPane.classList.remove('d-none');
     if (btn) btn.classList.add('active');
+    if (mobileBtn) mobileBtn.classList.add('active');
 
     // Manage bottom floating booking rail visibility
     const rail = document.getElementById('bookingActionBar');
@@ -1131,6 +1172,17 @@
       refreshMyBookings();
     }
     history.replaceState(null, null, '#' + tabName);
+  }
+
+  function handleMobileAccountNavClick() {
+    if (currentPlayerUser) {
+      switchVenueTab('my-bookings');
+      document.querySelectorAll('.mobile-appbar-btn').forEach(btn => btn.classList.remove('active'));
+      const accBtn = document.getElementById('mobile-nav-account');
+      if (accBtn) accBtn.classList.add('active');
+    } else {
+      openPlayerAuthModal('login', false);
+    }
   }
 
   // Inline Lookup Handler
@@ -1936,9 +1988,15 @@
     if (!userObj) return;
     const displayName = userObj.full_name || userObj.username || 'Player';
 
-    // Show floating Account Chat button when logged in
+    // Show floating Account Chat button on desktop when logged in
     const fabWrap = document.getElementById('accountChatFabWrap');
-    if (fabWrap) fabWrap.classList.remove('d-none');
+    if (fabWrap) fabWrap.classList.add('d-md-block');
+
+    // Update Mobile Bottom Nav Account button
+    const mobAccIcon = document.getElementById('mobileNavAccountIcon');
+    const mobAccLabel = document.getElementById('mobileNavAccountLabel');
+    if (mobAccIcon) mobAccIcon.className = 'bi bi-person-check-fill';
+    if (mobAccLabel) mobAccLabel.innerText = 'Account';
 
     // 1. Update top right header controls
     const headerControls = document.getElementById('headerAccountControls');
@@ -2045,15 +2103,17 @@
   function renderMyBookingsList() {
     const container = document.getElementById('myBookingsListContainer');
     const badgeEl = document.getElementById('myBookingsTabBadge');
+    const mobileBookingsBadgeEl = document.getElementById('mobileNavBookingsBadge');
 
-    if (badgeEl) {
+    [badgeEl, mobileBookingsBadgeEl].forEach(el => {
+      if (!el) return;
       if (myBookingsData && myBookingsData.length > 0) {
-        badgeEl.innerText = myBookingsData.length;
-        badgeEl.classList.remove('d-none');
+        el.innerText = myBookingsData.length;
+        el.classList.remove('d-none');
       } else {
-        badgeEl.classList.add('d-none');
+        el.classList.add('d-none');
       }
-    }
+    });
 
     if (!container) return;
 
@@ -2185,7 +2245,8 @@
     accountChatUnreadCount = Math.max(0, parseInt(count || 0, 10));
     const fabBadge = document.getElementById('floatingChatBadge');
     const dashBadge = document.getElementById('dashboardChatBadge');
-    [fabBadge, dashBadge].forEach(el => {
+    const mobChatBadge = document.getElementById('mobileNavChatBadge');
+    [fabBadge, dashBadge, mobChatBadge].forEach(el => {
       if (!el) return;
       if (accountChatUnreadCount > 0) {
         el.innerText = accountChatUnreadCount > 99 ? '99+' : accountChatUnreadCount;

@@ -1,0 +1,52 @@
+{
+  "name": "The Playground Pickleball — 3KS Courts",
+  "short_name": "3KS Pickleball",
+  "description": "Book covered tournament pickleball courts, receive live Messenger & in-app chat passes at The Playground Pickleball in Cagayan de Oro City.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0B2545",
+  "theme_color": "#0B2545",
+  "categories": ["sports", "lifestyle"],
+  "icons": [
+    {
+      "src": "/images/app-icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/the-playground-logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/the-playground-logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Book a Court",
+      "short_name": "Book Court",
+      "url": "/#book",
+      "icons": [{ "src": "/images/app-icon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Bookings",
+      "short_name": "Bookings",
+      "url": "/#my-bookings",
+      "icons": [{ "src": "/images/app-icon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Account Chat & Passes",
+      "short_name": "Chat",
+      "url": "/#chat",
+      "icons": [{ "src": "/images/app-icon.svg", "sizes": "192x192" }]
+    }
+  ]
+}

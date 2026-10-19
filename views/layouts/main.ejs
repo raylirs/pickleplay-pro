@@ -2,9 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title><%= typeof title !== 'undefined' ? title : 'The Playground Pickleball - Championship Courts Reservation' %></title>
-  <link rel="icon" type="image/jpeg" href="/images/the-playground-logo.jpg">
+  <meta name="theme-color" content="#0B2545">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="3KS Pickleball">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/images/app-icon.svg">
+  <link rel="alternate icon" type="image/jpeg" href="/images/the-playground-logo.jpg">
+  <link rel="apple-touch-icon" href="/images/the-playground-logo.jpg">
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
@@ -57,6 +65,43 @@
 
   <%- include('../partials/footer') %>
 
+  <!-- Install Mobile App (PWA) Guide Modal -->
+  <div class="modal fade" id="installPwaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+        <div class="modal-header border-0 py-3 px-4 text-white" style="background: linear-gradient(135deg, #0B2545 0%, #134074 100%);">
+          <div class="d-flex align-items-center gap-2.5">
+            <img src="/images/app-icon.svg" alt="3KS App" class="rounded-3 shadow-sm" style="width: 38px; height: 38px;">
+            <div>
+              <h6 class="modal-title fw-bold mb-0 font-display text-white">Install 3KS Pickleball App</h6>
+              <span class="small text-warning" style="font-size: 11px;">Full-screen mobile experience on your Home Screen</span>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4 bg-white">
+          <p class="small text-secondary mb-3">
+            Add <strong>The Playground Pickleball</strong> to your phone's home screen for 1-tap court booking, digital passes, and instant account chat!
+          </p>
+          <div class="p-3 rounded-3 bg-light border mb-3">
+            <div class="fw-bold text-dark small mb-2"><i class="bi bi-apple me-1"></i>On iPhone / iPad (Safari):</div>
+            <ol class="small text-secondary mb-0 ps-3">
+              <li class="mb-1">Tap the <strong>Share</strong> button <i class="bi bi-box-arrow-up text-primary"></i> at the bottom of Safari.</li>
+              <li>Scroll down and tap <strong>"Add to Home Screen"</strong> <i class="bi bi-plus-square text-primary"></i>.</li>
+            </ol>
+          </div>
+          <div class="p-3 rounded-3 bg-light border">
+            <div class="fw-bold text-dark small mb-2"><i class="bi bi-android2 text-success me-1"></i>On Android (Chrome):</div>
+            <ol class="small text-secondary mb-0 ps-3">
+              <li class="mb-1">Tap the <strong>3-dot menu</strong> <i class="bi bi-three-dots-vertical"></i> in the top right of Chrome.</li>
+              <li>Tap <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Socket.io -->
   <script src="/socket.io/socket.io.js"></script>
   <!-- Bootstrap 5 JS Bundle -->
@@ -65,5 +110,44 @@
   <script src="/js/main.js"></script>
   <script src="/js/socket.js"></script>
   <script src="/js/image-viewer.js"></script>
+  <!-- PWA Service Worker & Install Prompt Handler -->
+  <script>
+    let deferredPwaPrompt = null;
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').catch(function () {});
+      });
+    }
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredPwaPrompt = e;
+      document.querySelectorAll('.pwa-install-trigger').forEach(function (btn) {
+        btn.classList.remove('d-none');
+      });
+    });
+
+    window.addEventListener('appinstalled', function () {
+      deferredPwaPrompt = null;
+      document.querySelectorAll('.pwa-install-trigger').forEach(function (btn) {
+        btn.classList.add('d-none');
+      });
+    });
+
+    function triggerPwaInstall() {
+      if (deferredPwaPrompt) {
+        deferredPwaPrompt.prompt();
+        deferredPwaPrompt.userChoice.then(function () {
+          deferredPwaPrompt = null;
+        });
+      } else {
+        const modalEl = document.getElementById('installPwaModal');
+        if (modalEl && typeof bootstrap !== 'undefined') {
+          bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        }
+      }
+    }
+  </script>
 </body>
 </html>
