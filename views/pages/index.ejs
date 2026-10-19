@@ -65,129 +65,161 @@
      TAB NAVIGATION BAR (Desktop Underline Tabs + Mobile 1-Line Status Bar)
 ========================================================= -->
 <div class="bg-white border-bottom venue-tabs-container">
+  <style>
+    .venue-action-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 0;
+      width: 100%;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .venue-action-row::-webkit-scrollbar {
+      display: none;
+    }
+    .venue-action-group {
+      display: flex;
+      align-items: center;
+      gap: clamp(5px, 1.4vw, 10px);
+      flex-wrap: nowrap;
+      width: 100%;
+      justify-content: flex-end;
+    }
+    .dynamic-action-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(4px, 1vw, 7px);
+      height: clamp(32px, 7.5vw, 36px);
+      padding: 0 clamp(9px, 2.2vw, 16px);
+      border-radius: 999px;
+      font-size: clamp(11px, 2.6vw, 13px);
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      text-decoration: none;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      flex: 0 1 auto;
+      min-width: 0;
+      box-shadow: 0 2px 6px rgba(11, 37, 69, 0.06);
+    }
+    .dynamic-action-pill i {
+      font-size: clamp(12.5px, 3vw, 14.5px);
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .dynamic-action-pill .dynamic-pill-label {
+      display: inline-block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.15;
+    }
+    .dynamic-action-pill .dynamic-pill-user {
+      max-width: clamp(80px, 22vw, 180px);
+    }
+    .dynamic-action-pill:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 14px rgba(11, 37, 69, 0.14);
+    }
+    @media (max-width: 767.98px) {
+      .venue-action-group {
+        justify-content: space-between;
+      }
+      .dynamic-action-pill {
+        flex: 1 1 0;
+        padding: 0 clamp(6px, 1.8vw, 12px);
+      }
+    }
+  </style>
   <div class="container max-w-6xl">
-    <div class="d-flex flex-row align-items-center justify-content-between gap-2">
-      <!-- Tabs Left (Hidden on Mobile < 768px because Bottom App Bar handles mobile navigation) -->
-      <div class="courtogo-tabs-bar flex-grow-1 d-none d-md-flex" role="tablist">
-        <button class="courtogo-tab-btn active" id="tab-btn-book" onclick="switchVenueTab('book')">
-          <i class="bi bi-calendar2-check-fill text-warning"></i>
-          <span>Book Court</span>
-        </button>
+    <!-- ROW 1: Desktop Navigation Tabs -->
+    <div class="courtogo-tabs-bar d-none d-md-flex border-bottom" role="tablist">
+      <button class="courtogo-tab-btn active" id="tab-btn-book" onclick="switchVenueTab('book')">
+        <i class="bi bi-calendar2-check-fill text-warning"></i>
+        <span>Book Court</span>
+      </button>
 
-        <button class="courtogo-tab-btn" id="tab-btn-my-bookings" onclick="switchVenueTab('my-bookings')">
-          <i class="bi bi-ticket-perforated-fill text-primary"></i>
-          <span>My Bookings</span>
-          <span class="courtogo-tab-badge <%= (typeof myBookings !== 'undefined' && myBookings.length > 0) ? '' : 'd-none' %>" id="myBookingsTabBadge">
-            <%= typeof myBookings !== 'undefined' ? myBookings.length : 0 %>
-          </span>
-        </button>
+      <button class="courtogo-tab-btn" id="tab-btn-my-bookings" onclick="switchVenueTab('my-bookings')">
+        <i class="bi bi-ticket-perforated-fill text-primary"></i>
+        <span>My Bookings</span>
+        <span class="courtogo-tab-badge <%= (typeof myBookings !== 'undefined' && myBookings.length > 0) ? '' : 'd-none' %>" id="myBookingsTabBadge">
+          <%= typeof myBookings !== 'undefined' ? myBookings.length : 0 %>
+        </span>
+      </button>
 
-        <button class="courtogo-tab-btn" id="tab-btn-about" onclick="switchVenueTab('about')">
-          <i class="bi bi-info-circle-fill"></i>
-          <span>About Facility</span>
-        </button>
+      <button class="courtogo-tab-btn" id="tab-btn-about" onclick="switchVenueTab('about')">
+        <i class="bi bi-info-circle-fill"></i>
+        <span>About Facility</span>
+      </button>
 
-        <button class="courtogo-tab-btn" id="tab-btn-photos" onclick="switchVenueTab('photos')">
-          <i class="bi bi-images"></i>
-          <span>Photos</span>
-          <span class="courtogo-tab-badge">2</span>
-        </button>
+      <button class="courtogo-tab-btn" id="tab-btn-photos" onclick="switchVenueTab('photos')">
+        <i class="bi bi-images"></i>
+        <span>Photos</span>
+        <span class="courtogo-tab-badge">2</span>
+      </button>
 
-        <button class="courtogo-tab-btn" id="tab-btn-location" onclick="switchVenueTab('location')">
-          <i class="bi bi-geo-alt-fill text-danger"></i>
-          <span>Location & Map</span>
-        </button>
+      <button class="courtogo-tab-btn" id="tab-btn-location" onclick="switchVenueTab('location')">
+        <i class="bi bi-geo-alt-fill text-danger"></i>
+        <span>Location & Map</span>
+      </button>
 
-        <button class="courtogo-tab-btn" id="tab-btn-lookup" onclick="switchVenueTab('lookup')">
-          <i class="bi bi-search"></i>
-          <span>Find Booking</span>
-        </button>
+      <button class="courtogo-tab-btn" id="tab-btn-lookup" onclick="switchVenueTab('lookup')">
+        <i class="bi bi-search"></i>
+        <span>Find Booking</span>
+      </button>
+    </div>
+
+    <!-- ROW 2: Dedicated 1-Line Dynamic Action Row (Web & Mobile — All Icons + Text Visible) -->
+    <div class="venue-action-row">
+      <div class="d-none d-md-inline-flex align-items-center gap-2 text-secondary small fw-semibold flex-shrink-0">
+        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 fw-bold" style="font-size: 11px;">
+          <i class="bi bi-circle-fill me-1" style="font-size: 7px; vertical-align: middle;"></i>Open Today · 8AM – 12MN
+        </span>
       </div>
 
-      <!-- Minimalist Action Bar (Icon-first pills that expand text on hover/focus; clean 1-line on Mobile & Desktop) -->
-      <style>
-        .minimal-action-pill {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          height: 34px;
-          min-width: 34px;
-          padding: 0 9px;
-          border-radius: 999px;
-          font-size: 12.5px;
-          font-weight: 700;
-          white-space: nowrap;
-          overflow: hidden;
-          transition: all 0.24s cubic-bezier(0.4, 0, 0.2, 1);
-          flex-shrink: 0;
-          text-decoration: none;
-        }
-        .minimal-action-pill i {
-          font-size: 14.5px;
-          line-height: 1;
-          flex-shrink: 0;
-        }
-        .minimal-action-pill .minimal-pill-label {
-          display: inline-block;
-          max-width: 0;
-          opacity: 0;
-          margin-left: 0;
-          overflow: hidden;
-          vertical-align: middle;
-          transition: max-width 0.26s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, margin-left 0.2s ease;
-        }
-        .minimal-action-pill:hover .minimal-pill-label,
-        .minimal-action-pill:focus-visible .minimal-pill-label,
-        .minimal-action-pill:active .minimal-pill-label {
-          max-width: 140px;
-          opacity: 1;
-          margin-left: 6px;
-        }
-        .minimal-action-pill:hover {
-          padding: 0 13px;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(11, 37, 69, 0.14);
-        }
-      </style>
-      <div class="d-flex align-items-center justify-content-between justify-content-md-end gap-1.5 py-2 py-md-0 ms-md-2 flex-grow-1 flex-md-grow-0 flex-shrink-0 flex-nowrap">
-        <div id="headerAccountControls" class="d-inline-flex align-items-center gap-1.5 min-w-0">
+      <div class="venue-action-group">
+        <div id="headerAccountControls" class="d-inline-flex align-items-center gap-1.5 flex-grow-1 flex-md-grow-0 min-w-0">
           <% if (typeof user !== 'undefined' && user) { %>
-            <button type="button" class="btn btn-dark minimal-action-pill shadow-xs" onclick="switchVenueTab('my-bookings')" title="<%= user.full_name || user.username %> (My Bookings)">
+            <button type="button" class="btn btn-dark dynamic-action-pill" onclick="switchVenueTab('my-bookings')" title="<%= user.full_name || user.username %> (My Bookings)">
               <i class="bi bi-person-check-fill text-warning"></i>
-              <span class="minimal-pill-label text-truncate"><%= user.full_name || user.username %></span>
+              <span class="dynamic-pill-label dynamic-pill-user"><%= user.full_name || user.username %></span>
             </button>
             <% if (user.role === 'admin' || user.role === 'staff') { %>
-              <a href="/admin" class="btn btn-outline-dark minimal-action-pill" title="Admin Panel">
+              <a href="/admin" class="btn btn-outline-dark dynamic-action-pill" title="Admin Panel">
                 <i class="bi bi-speedometer2"></i>
-                <span class="minimal-pill-label">Admin</span>
+                <span class="dynamic-pill-label">Admin</span>
               </a>
             <% } %>
-            <a href="/account/logout" class="btn btn-outline-danger minimal-action-pill" title="Sign Out">
+            <a href="/account/logout" class="btn btn-outline-danger dynamic-action-pill" title="Sign Out">
               <i class="bi bi-box-arrow-right"></i>
-              <span class="minimal-pill-label">Sign Out</span>
+              <span class="dynamic-pill-label">Sign Out</span>
             </a>
           <% } else { %>
-            <button type="button" class="btn btn-outline-dark minimal-action-pill" onclick="openPlayerAuthModal('login', false)" title="Sign In">
+            <button type="button" class="btn btn-outline-dark dynamic-action-pill" onclick="openPlayerAuthModal('login', false)" title="Sign In">
               <i class="bi bi-box-arrow-in-right"></i>
-              <span class="minimal-pill-label">Sign In</span>
+              <span class="dynamic-pill-label">Sign In</span>
             </button>
-            <button type="button" class="btn btn-book-now-gold minimal-action-pill" onclick="openPlayerAuthModal('register', false)" title="Sign Up">
+            <button type="button" class="btn btn-book-now-gold dynamic-action-pill" onclick="openPlayerAuthModal('register', false)" title="Sign Up">
               <i class="bi bi-person-plus-fill"></i>
-              <span class="minimal-pill-label">Sign Up</span>
+              <span class="dynamic-pill-label">Sign Up</span>
             </button>
           <% } %>
         </div>
 
-        <div class="d-inline-flex align-items-center gap-1.5 flex-shrink-0">
-          <button type="button" onclick="switchVenueTab('photos')" class="btn btn-light border minimal-action-pill d-inline-flex d-md-none text-dark" title="Facility Photos">
-            <i class="bi bi-images text-primary"></i>
-            <span class="minimal-pill-label">Photos</span>
-          </button>
-          <button type="button" onclick="triggerPwaInstall()" class="btn btn-outline-primary minimal-action-pill" title="Install App">
-            <i class="bi bi-phone-fill"></i>
-            <span class="minimal-pill-label">Install App</span>
-          </button>
-        </div>
+        <button type="button" onclick="switchVenueTab('photos')" class="btn btn-light border dynamic-action-pill d-inline-flex d-md-none text-dark" title="Facility Photos">
+          <i class="bi bi-images text-primary"></i>
+          <span class="dynamic-pill-label">Photos</span>
+        </button>
+
+        <button type="button" onclick="triggerPwaInstall()" class="btn btn-outline-primary dynamic-action-pill" title="Install App">
+          <i class="bi bi-phone-fill"></i>
+          <span class="dynamic-pill-label">Install App</span>
+        </button>
       </div>
     </div>
   </div>
@@ -2649,21 +2681,21 @@
     if (mobAccIcon) mobAccIcon.className = 'bi bi-person-check-fill';
     if (mobAccLabel) mobAccLabel.innerText = 'Account';
 
-    // 1. Update top right header controls (Minimalist hover-expand pills)
+    // 1. Update top right header controls (1-line dynamic action pills with visible labels)
     const headerControls = document.getElementById('headerAccountControls');
     if (headerControls) {
       const adminBtn = (userObj.role === 'admin' || userObj.role === 'staff')
-        ? `<a href="/admin" class="btn btn-outline-dark minimal-action-pill" title="Admin Panel"><i class="bi bi-speedometer2"></i><span class="minimal-pill-label">Admin</span></a>`
+        ? `<a href="/admin" class="btn btn-outline-dark dynamic-action-pill" title="Admin Panel"><i class="bi bi-speedometer2"></i><span class="dynamic-pill-label">Admin</span></a>`
         : '';
       headerControls.innerHTML = `
-        <button type="button" class="btn btn-dark minimal-action-pill shadow-xs" onclick="switchVenueTab('my-bookings')" title="${displayName} (My Bookings)">
+        <button type="button" class="btn btn-dark dynamic-action-pill" onclick="switchVenueTab('my-bookings')" title="${displayName} (My Bookings)">
           <i class="bi bi-person-check-fill text-warning"></i>
-          <span class="minimal-pill-label text-truncate">${displayName}</span>
+          <span class="dynamic-pill-label dynamic-pill-user">${displayName}</span>
         </button>
         ${adminBtn}
-        <a href="/account/logout" class="btn btn-outline-danger minimal-action-pill" title="Sign Out">
+        <a href="/account/logout" class="btn btn-outline-danger dynamic-action-pill" title="Sign Out">
           <i class="bi bi-box-arrow-right"></i>
-          <span class="minimal-pill-label">Sign Out</span>
+          <span class="dynamic-pill-label">Sign Out</span>
         </a>
       `;
     }
@@ -3533,17 +3565,17 @@
       clearSelectedSlots();
     }
 
-    // 1. Reset top right header controls to minimalist Sign In / Sign Up pills
+    // 1. Reset top right header controls to 1-line dynamic Sign In / Sign Up pills
     const headerControls = document.getElementById('headerAccountControls');
     if (headerControls) {
       headerControls.innerHTML = `
-        <button type="button" class="btn btn-outline-dark minimal-action-pill" onclick="openPlayerAuthModal('login', false)" title="Sign In">
+        <button type="button" class="btn btn-outline-dark dynamic-action-pill" onclick="openPlayerAuthModal('login', false)" title="Sign In">
           <i class="bi bi-box-arrow-in-right"></i>
-          <span class="minimal-pill-label">Sign In</span>
+          <span class="dynamic-pill-label">Sign In</span>
         </button>
-        <button type="button" class="btn btn-book-now-gold minimal-action-pill" onclick="openPlayerAuthModal('register', false)" title="Sign Up">
+        <button type="button" class="btn btn-book-now-gold dynamic-action-pill" onclick="openPlayerAuthModal('register', false)" title="Sign Up">
           <i class="bi bi-person-plus-fill"></i>
-          <span class="minimal-pill-label">Sign Up</span>
+          <span class="dynamic-pill-label">Sign Up</span>
         </button>
       `;
     }
