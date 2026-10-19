@@ -179,9 +179,16 @@ const paymentController = {
         amount: reservation.total_amount
       });
 
-      // Real-time broadcast to Admin
+      // Real-time broadcast to Admin & all connected Player Matrices
       try {
         const io = getIO();
+        for (const resv of allSiblings) {
+          io.emit('court_availability_updated', {
+            courtId: resv.court_id,
+            date: resv.reservation_date,
+            status: 'AWAITING_CONFIRMATION'
+          });
+        }
         io.emit('payment_submitted_for_approval', {
           reference: reservation.reference_number,
           courtName: reservation.court ? reservation.court.display_name : 'Court',

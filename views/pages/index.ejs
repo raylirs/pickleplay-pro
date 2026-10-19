@@ -1337,16 +1337,21 @@
     document.getElementById('nativeDatePicker').value = dateStr;
   }
 
-  // Fetch Matrix API Data
-  async function fetchMatrixAvailability(date) {
+  // Fetch Matrix API Data (supports silent background & socket real-time sync)
+  async function fetchMatrixAvailability(date, silent = false) {
     const spinner = document.getElementById('matrixLoadingSpinner');
     const table = document.getElementById('matrixTable');
 
-    spinner.style.display = 'block';
-    table.style.display = 'none';
+    if (!silent) {
+      if (spinner) spinner.style.display = 'block';
+      if (table) table.style.display = 'none';
+    }
 
     try {
-      const res = await fetch('/courts-availability?date=' + date);
+      const res = await fetch('/courts-availability?date=' + encodeURIComponent(date) + '&_t=' + Date.now(), {
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json' }
+      });
       const data = await res.json();
 
       if (data.success && data.courts) {
@@ -1356,8 +1361,10 @@
     } catch (err) {
       console.error('Matrix error:', err);
     } finally {
-      spinner.style.display = 'none';
-      table.style.display = 'table';
+      if (!silent) {
+        if (spinner) spinner.style.display = 'none';
+        if (table) table.style.display = 'table';
+      }
     }
   }
 
@@ -1367,6 +1374,21 @@
     tbody.innerHTML = '';
 
     if (!courts || courts.length === 0) return;
+
+    // Prune any selected slots that were just booked/held by another player in real time
+    if (selectedSlotItems.length > 0) {
+      const beforeCount = selectedSlotItems.length;
+      selectedSlotItems = selectedSlotItems.filter(sel => {
+        const cObj = courts.find(c => Number(c.id) === Number(sel.courtId));
+        if (!cObj || !cObj.slots) return true;
+        const sObj = cObj.slots.find(s => s.startTime === sel.startTime);
+        return sObj ? Boolean(sObj.isAvailable) : true;
+      });
+      if (selectedSlotItems.length !== beforeCount) {
+        updateFloatingRail();
+        showLiveToast('⚡ A time slot you had selected was just reserved by another player.');
+      }
+    }
 
     // Use the first court's slots as time row baseline
     const referenceSlots = courts[0].slots || [];
@@ -1401,8 +1423,8 @@
           }
         }
 
-        // Check if currently selected
-        const isSelected = selectedSlotItems.some(item => item.courtId === court.id && item.startTime === slot.startTime);
+        // Check if currently selected (only if still available)
+        const isSelected = courtSlot.isAvailable && selectedSlotItems.some(item => item.courtId === court.id && item.startTime === slot.startTime);
         if (isSelected) {
           stateClass = 'state-selected';
         }
@@ -2901,22 +2923,51 @@
     }
   }
 
-  // Real-time Socket.io listener for live matrix, account Messenger sync & In-App Account Chat
+  // Real-time Socket.io listener + Auto-Sync for live matrix, account Messenger sync & In-App Account Chat
   function initMatrixSocket() {
     if (typeof io !== 'undefined') {
       const socket = io();
-      socket.on('reservation:created', function (data) {
-        if (data.reservation_date === currentDate) {
-          fetchMatrixAvailability(currentDate);
-          showLiveToast(`New reservation on Court ${data.court_id} at ${data.start_time}`);
+
+      // Primary backend event emitted when any player books, submits GCash proof, or Admin confirms/cancels
+      socket.on('court_availability_updated', function (data) {
+        if (!data || !data.date || data.date === currentDate) {
+          fetchMatrixAvailability(currentDate, true);
+        }
+        if (currentPlayerUser) {
+          refreshMyBookings();
         }
       });
-      socket.on('reservation:cancelled', function (data) {
-        fetchMatrixAvailability(currentDate);
+
+      socket.on('payment_submitted_for_approval', function (data) {
+        if (!data || !data.date || data.date === currentDate) {
+          fetchMatrixAvailability(currentDate, true);
+        }
+        if (currentPlayerUser) {
+          refreshMyBookings();
+        }
       });
-      socket.on('reservation:expired', function (data) {
-        fetchMatrixAvailability(currentDate);
+
+      socket.on('payment_confirmed', function (data) {
+        if (!data || !data.date || data.date === currentDate) {
+          fetchMatrixAvailability(currentDate, true);
+        }
+        if (currentPlayerUser) {
+          refreshMyBookings();
+        }
       });
+
+      socket.on('reservation:created', function (data) {
+        if (!data || !data.reservation_date || data.reservation_date === currentDate) {
+          fetchMatrixAvailability(currentDate, true);
+        }
+      });
+      socket.on('reservation:cancelled', function () {
+        fetchMatrixAvailability(currentDate, true);
+      });
+      socket.on('reservation:expired', function () {
+        fetchMatrixAvailability(currentDate, true);
+      });
+
       socket.on('player_messenger_bound', function (data) {
         if (currentPlayerUser && (data.userId === currentPlayerUser.id || (data.bindingCode && data.bindingCode === currentPlayerUser.binding_code))) {
           currentPlayerUser.fb_psid = data.psid;
@@ -2924,6 +2975,7 @@
           showLiveToast('Messenger Alerts connected to your account!');
         }
       });
+
       socket.on('chat:new_message', function (msg) {
         if (!currentPlayerUser || Number(msg.user_id) !== Number(currentPlayerUser.id)) return;
 
@@ -2948,9 +3000,26 @@
 
         if (msg.sender_role === 'system') {
           refreshMyBookings();
+          fetchMatrixAvailability(currentDate, true);
         }
       });
     }
+
+    // Automatic silent heartbeat sync every 8s + on tab focus/visibility (catches 15-min hold expirations & mobile wakeups)
+    setInterval(function () {
+      if (document.visibilityState === 'visible') {
+        fetchMatrixAvailability(currentDate, true);
+      }
+    }, 8000);
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') {
+        fetchMatrixAvailability(currentDate, true);
+        if (currentPlayerUser) {
+          refreshMyBookings();
+        }
+      }
+    });
   }
 
   // Leaflet Map Initialization
