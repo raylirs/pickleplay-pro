@@ -11,6 +11,11 @@ const { logAudit } = require('../utils/helpers');
 const reservationController = {
   async showReservationPage(req, res, next) {
     try {
+      if (!req.session || !req.session.user) {
+        req.flash('error', 'Please sign in or create a Player Account to book a court.');
+        return res.redirect('/account/login?returnTo=' + encodeURIComponent(req.originalUrl || '/reservations'));
+      }
+
       const courts = await Court.findAll({
         where: { is_active: true },
         include: [{ model: CourtCategory, as: 'category' }],
@@ -61,6 +66,16 @@ const reservationController = {
 
   async createReservation(req, res, next) {
     try {
+      // Strictly disallow guest bookings — user must be signed in
+      if (!req.session || !req.session.user) {
+        const authErr = 'Guest booking is disabled. Please sign in or create a Player Account to book a court.';
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+          return res.status(401).json({ success: false, requiresAuth: true, error: authErr });
+        }
+        req.flash('error', authErr);
+        return res.redirect('/account/login?returnTo=/');
+      }
+
       const {
         court_id,
         user_name,

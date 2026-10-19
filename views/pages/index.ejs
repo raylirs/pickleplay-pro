@@ -2013,8 +2013,17 @@
     }
   }
 
-  // Interactive Multi-Court & Multi-Time Slot Click Handler
+  let pendingSlotAfterAuth = null;
+
+  // Interactive Multi-Court & Multi-Time Slot Click Handler (Strict Sign-In Required — No Guest Booking)
   function handleSlotClick(court, slot) {
+    if (!currentPlayerUser) {
+      pendingSlotAfterAuth = { court, slot };
+      showLiveToast('🔒 Please sign in or create a Player Account to book a court.');
+      openPlayerAuthModal('login', true);
+      return;
+    }
+
     const existingIndex = selectedSlotItems.findIndex(
       item => item.courtId === court.id && item.startTime === slot.startTime
     );
@@ -2606,6 +2615,15 @@
 
     if (welcomeMessage) {
       showLiveToast(welcomeMessage);
+    }
+
+    // If user clicked a court slot while signed out, automatically select that slot now that they are signed in
+    if (pendingSlotAfterAuth && pendingSlotAfterAuth.court && pendingSlotAfterAuth.slot) {
+      const slotToSelect = pendingSlotAfterAuth;
+      pendingSlotAfterAuth = null;
+      pendingCheckoutAfterAuth = false;
+      handleSlotClick(slotToSelect.court, slotToSelect.slot);
+      return;
     }
 
     // If user clicked "Continue to Booking", immediately open Checkout Modal with pre-filled details!
@@ -3511,6 +3529,9 @@
     myBookingsData = [];
     accountChatMessages = [];
     updateChatUnreadBadges(0);
+    if (showTimeoutAlert) {
+      clearSelectedSlots();
+    }
 
     // 1. Reset top right header controls to minimalist Sign In / Sign Up pills
     const headerControls = document.getElementById('headerAccountControls');
