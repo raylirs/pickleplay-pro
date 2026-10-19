@@ -254,19 +254,23 @@ const authController = {
         role: user.role
       };
       req.session.user = sessionUser;
+      req.session.lastActiveAt = Date.now();
 
       await logAudit('PLAYER_LOGIN', { username: user.username, phone: user.phone }, user.id);
 
-      if (isAjax) {
-        return res.json({
-          success: true,
-          user: sessionUser,
-          message: `Welcome back, ${sessionUser.full_name}!`
-        });
-      }
+      return req.session.save(() => {
+        if (isAjax) {
+          return res.json({
+            success: true,
+            user: sessionUser,
+            message: `Welcome back, ${sessionUser.full_name}!`
+          });
+        }
 
-      req.flash('success', `Welcome back, ${sessionUser.full_name}!`);
-      res.redirect('/');
+        const returnTo = req.query.returnTo || req.body.returnTo || '/';
+        req.flash('success', `Welcome back, ${sessionUser.full_name}!`);
+        res.redirect(returnTo);
+      });
     } catch (err) {
       next(err);
     }
@@ -348,19 +352,22 @@ const authController = {
         role: newUser.role
       };
       req.session.user = sessionUser;
+      req.session.lastActiveAt = Date.now();
 
       await logAudit('PLAYER_REGISTERED', { full_name: cleanName, phone: cleanPhone, email: cleanEmail }, newUser.id);
 
-      if (isAjax) {
-        return res.json({
-          success: true,
-          user: sessionUser,
-          message: `Account created! Welcome to The Playground, ${cleanName}!`
-        });
-      }
+      return req.session.save(() => {
+        if (isAjax) {
+          return res.json({
+            success: true,
+            user: sessionUser,
+            message: `Account created! Welcome to The Playground, ${cleanName}!`
+          });
+        }
 
-      req.flash('success', `Account created! Welcome to The Playground, ${cleanName}!`);
-      res.redirect('/');
+        req.flash('success', `Account created! Welcome to The Playground, ${cleanName}!`);
+        res.redirect('/');
+      });
     } catch (err) {
       next(err);
     }
@@ -368,10 +375,16 @@ const authController = {
 
   async playerLogout(req, res, next) {
     try {
+      const isAjax = req.xhr || req.headers.accept?.includes('application/json');
+      const isTimeout = req.query.timeout === '1';
       if (req.session && req.session.user) {
-        await logAudit('PLAYER_LOGOUT', { username: req.session.user.username }, req.session.user.id);
+        await logAudit(isTimeout ? 'PLAYER_SESSION_TIMEOUT' : 'PLAYER_LOGOUT', { username: req.session.user.username }, req.session.user.id);
       }
       req.session.destroy(() => {
+        res.clearCookie('connect.sid');
+        if (isAjax) {
+          return res.json({ success: true, timedOut: isTimeout });
+        }
         res.redirect('/');
       });
     } catch (err) {

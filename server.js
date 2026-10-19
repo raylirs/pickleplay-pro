@@ -36,22 +36,36 @@ app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Session & Flash
+// Session & Flash (Rolling 15-Minute Inactivity Session Timeout)
+const SESSION_IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'pickleplay_session_secret_key',
     resave: false,
     saveUninitialized: false,
+    rolling: true,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24 // 24 hours
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: SESSION_IDLE_TIMEOUT_MS
     }
   })
 );
 
 app.use(flash());
 
-// Global template variables & helper functions
+// Enforce server-side idle session timeout & expose global template variables
 app.use((req, res, next) => {
+  if (req.session && req.session.user) {
+    const now = Date.now();
+    const isBackgroundPoll = req.path === '/courts-availability' || req.query._bg === '1';
+    if (req.session.lastActiveAt && (now - req.session.lastActiveAt > SESSION_IDLE_TIMEOUT_MS)) {
+      delete req.session.user;
+      delete req.session.lastActiveAt;
+    } else if (!isBackgroundPoll) {
+      req.session.lastActiveAt = now;
+    }
+  }
   res.locals.user = req.session ? req.session.user : null;
   res.locals.error = req.flash('error');
   res.locals.success = req.flash('success');

@@ -72,6 +72,9 @@ async function postBookingSystemMessage(reservation, eventType, extraSummary = {
     } else if (eventType === 'BOOKING_CONFIRMED') {
       status = 'CONFIRMED';
       text = `🎉 BOOKING CONFIRMED! (#${ref})\nCourt: ${courtName}\nDate: ${dateStr} (${timeStr})\nAmount Paid: ₱${totalAmt}\n\nYour court reservation is officially confirmed! Tap below to open your Digital Court Pass.`;
+    } else if (eventType === 'HOLD_EXPIRED_CANCELLED') {
+      status = 'CANCELLED';
+      text = `⏰ Unpaid Hold Cancelled (#${ref})\nCourt: ${courtName} on ${dateStr} (${timeStr})\nReason: 15-minute GCash payment window timed out without payment proof. The court slot has been released—feel free to book again anytime!`;
     } else if (eventType === 'BOOKING_CANCELLED') {
       status = 'CANCELLED';
       text = `⚠️ Booking Cancelled (#${ref})\nCourt: ${courtName} on ${dateStr}\nReason: ${reservation.cancellation_reason || 'Cancelled by Administrator'}`;

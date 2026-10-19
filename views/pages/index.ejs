@@ -821,38 +821,64 @@
           </div>
         </div>
 
-        <!-- Player Information Form -->
-        <form id="matrixReservationForm" action="/reservations" method="POST">
+        <!-- Player Information Form (Auto-bound to Signed-In Account) -->
+        <form id="matrixReservationForm" action="/reservations" method="POST" onsubmit="handleMatrixReservationSubmit(event)">
           <input type="hidden" name="court_id" id="formCourtId" value="">
           <input type="hidden" name="reservation_date" id="formDate" value="<%= today %>">
           <input type="hidden" name="start_time" id="formStartTime" value="">
           <input type="hidden" name="total_hours" id="formTotalHours" value="1">
           <input type="hidden" name="selected_slots" id="formSelectedSlots" value="[]">
 
-          <div class="mb-3">
-            <label class="form-label small fw-bold text-dark">Player Full Name <span class="text-danger">*</span></label>
-            <input type="text" name="user_name" id="checkoutUserName" class="form-control rounded-3" placeholder="e.g. Juan Dela Cruz" value="<%= (typeof user !== 'undefined' && user) ? (user.full_name || user.username || '') : '' %>" required>
+          <!-- Signed-In Player Account Badge (No need to re-enter details when logged in) -->
+          <div id="checkoutSignedInAccountBox" class="rounded-4 p-3 mb-3 border d-flex align-items-center justify-content-between gap-2" style="background: #F0FDF4; border-color: #BBF7D0 !important;">
+            <div class="d-flex align-items-center gap-2.5 min-w-0">
+              <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px;">
+                <i class="bi bi-person-check-fill"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="text-uppercase fw-bold text-success" style="font-size: 10px; letter-spacing: 0.05em;">Booking Under Your Signed-In Account</div>
+                <div class="fw-bold text-dark small text-truncate" id="checkoutAccountDisplayName">
+                  <%= (typeof user !== 'undefined' && user) ? (user.full_name || user.username || '') : '' %>
+                </div>
+                <div class="text-secondary font-monospace" style="font-size: 11.5px;" id="checkoutAccountDisplayContact">
+                  <%= (typeof user !== 'undefined' && user && user.phone) ? user.phone : '' %><%= (typeof user !== 'undefined' && user && user.email) ? (' · ' + user.email) : '' %>
+                </div>
+              </div>
+            </div>
+            <span class="badge bg-success-subtle text-success border border-success rounded-pill px-2.5 py-1 fw-bold flex-shrink-0" style="font-size: 10.5px;">
+              <i class="bi bi-shield-check me-1"></i>Verified
+            </span>
           </div>
 
-          <div class="row g-2 mb-3">
-            <div class="col-sm-6">
-              <label class="form-label small fw-bold text-dark">GCash Mobile <span class="text-danger">*</span></label>
-              <input type="tel" name="user_contact" id="checkoutUserContact" class="form-control rounded-3 font-monospace" value="<%= (typeof user !== 'undefined' && user && user.phone) ? user.phone : '' %>" required>
+          <!-- Hidden / Auto-Populated Profile Fields -->
+          <div id="checkoutManualFieldsWrap" class="<%= (typeof user !== 'undefined' && user && user.phone) ? 'd-none' : '' %>">
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-dark">Player Full Name <span class="text-danger">*</span></label>
+              <input type="text" name="user_name" id="checkoutUserName" class="form-control rounded-3" placeholder="e.g. Juan Dela Cruz" value="<%= (typeof user !== 'undefined' && user) ? (user.full_name || user.username || '') : '' %>" required>
             </div>
-            <div class="col-sm-6">
-              <label class="form-label small fw-bold text-dark">Email <span class="text-muted fw-normal">(Optional)</span></label>
-              <input type="email" name="user_email" id="checkoutUserEmail" class="form-control rounded-3" placeholder="player@email.com" value="<%= (typeof user !== 'undefined' && user && user.email) ? user.email : '' %>">
+
+            <div class="row g-2 mb-3">
+              <div class="col-sm-6">
+                <label class="form-label small fw-bold text-dark">GCash Mobile <span class="text-danger">*</span></label>
+                <input type="tel" name="user_contact" id="checkoutUserContact" class="form-control rounded-3 font-monospace" value="<%= (typeof user !== 'undefined' && user && user.phone) ? user.phone : '' %>" required>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label small fw-bold text-dark">Email <span class="text-muted fw-normal">(Optional)</span></label>
+                <input type="email" name="user_email" id="checkoutUserEmail" class="form-control rounded-3" placeholder="player@email.com" value="<%= (typeof user !== 'undefined' && user && user.email) ? user.email : '' %>">
+              </div>
             </div>
           </div>
+
+          <div id="checkoutSubmitErrorBox" class="alert alert-danger py-2 px-3 small rounded-3 mb-3 d-none"></div>
 
           <div class="mb-4">
             <label class="form-label small fw-bold text-dark">Special Requests / Notes <span class="text-muted fw-normal">(Optional)</span></label>
-            <input type="text" name="special_requests" class="form-control rounded-3" placeholder="Paddle rentals, ball tubes, coaching, etc.">
+            <input type="text" name="special_requests" id="checkoutSpecialRequests" class="form-control rounded-3" placeholder="Paddle rentals, ball tubes, coaching, etc.">
           </div>
 
           <div class="sticky-bottom bg-white pt-3 pb-1 border-top mt-3 d-flex gap-2" style="z-index: 10;">
             <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-book-now-gold flex-fill">
+            <button type="submit" id="checkoutSubmitBtn" class="btn btn-book-now-gold flex-fill">
               <i class="bi bi-qr-code-scan me-1"></i> Proceed to GCash Payment
             </button>
           </div>
@@ -1140,11 +1166,12 @@
     // 3. Listen to Socket.io for Real-Time Updates
     initMatrixSocket();
 
-    // 4. Render initial My Bookings list & fetch Account Chat if logged in
+    // 4. Render initial My Bookings list, fetch Account Chat & start Session Timeout Watcher
     renderMyBookingsList();
     if (currentPlayerUser) {
       fetchAccountChat(false);
     }
+    initSessionTimeoutWatcher();
 
     // 5. Hide floating booking rail when checkout, auth, chat, or receipt modal opens, restore when closed
     ['checkoutModal', 'playerAuthModal', 'accountChatModal', 'accountReceiptModal'].forEach(modalId => {
@@ -1876,14 +1903,37 @@
     const totalEl = document.getElementById('modalSummaryTotal');
     if (totalEl) totalEl.innerText = `₱${totalPrice.toFixed(2)}`;
 
-    // Ensure player profile fields are populated
+    // Ensure player profile fields and Signed-In Account Badge are populated
     const nameInput = document.getElementById('checkoutUserName');
     const phoneInput = document.getElementById('checkoutUserContact');
     const emailInput = document.getElementById('checkoutUserEmail');
+    const signedInBox = document.getElementById('checkoutSignedInAccountBox');
+    const manualFieldsWrap = document.getElementById('checkoutManualFieldsWrap');
+    const displayAccName = document.getElementById('checkoutAccountDisplayName');
+    const displayAccContact = document.getElementById('checkoutAccountDisplayContact');
+    const submitErrBox = document.getElementById('checkoutSubmitErrorBox');
+    if (submitErrBox) submitErrBox.classList.add('d-none');
+
     if (currentPlayerUser) {
-      if (nameInput && !nameInput.value) nameInput.value = currentPlayerUser.full_name || currentPlayerUser.username || '';
-      if (phoneInput && !phoneInput.value) phoneInput.value = currentPlayerUser.phone || '';
-      if (emailInput && !emailInput.value) emailInput.value = currentPlayerUser.email || '';
+      const fullName = currentPlayerUser.full_name || currentPlayerUser.username || '';
+      const phone = currentPlayerUser.phone || '';
+      const email = currentPlayerUser.email || '';
+
+      if (nameInput) nameInput.value = fullName;
+      if (phoneInput) phoneInput.value = phone;
+      if (emailInput) emailInput.value = email;
+
+      if (displayAccName) displayAccName.innerText = fullName;
+      if (displayAccContact) displayAccContact.innerText = phone + (email ? ' · ' + email : '');
+
+      if (signedInBox) signedInBox.classList.remove('d-none');
+      if (manualFieldsWrap) {
+        if (fullName && phone) {
+          manualFieldsWrap.classList.add('d-none');
+        } else {
+          manualFieldsWrap.classList.remove('d-none');
+        }
+      }
     }
 
     // Populate Hidden Form Fields
@@ -1896,6 +1946,81 @@
     const modalEl = document.getElementById('checkoutModal');
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
+  }
+
+  // Seamless AJAX Reservation Submit (Prevents page-reload login redirects & preserves selected slots)
+  async function handleMatrixReservationSubmit(e) {
+    e.preventDefault();
+    const submitBtn = document.getElementById('checkoutSubmitBtn');
+    const errBox = document.getElementById('checkoutSubmitErrorBox');
+    if (errBox) errBox.classList.add('d-none');
+
+    const payload = {
+      court_id: document.getElementById('formCourtId').value,
+      reservation_date: document.getElementById('formDate').value,
+      start_time: document.getElementById('formStartTime').value,
+      total_hours: document.getElementById('formTotalHours').value,
+      selected_slots: document.getElementById('formSelectedSlots').value,
+      user_name: (document.getElementById('checkoutUserName')?.value || currentPlayerUser?.full_name || currentPlayerUser?.username || '').trim(),
+      user_contact: (document.getElementById('checkoutUserContact')?.value || currentPlayerUser?.phone || '').trim(),
+      user_email: (document.getElementById('checkoutUserEmail')?.value || currentPlayerUser?.email || '').trim(),
+      special_requests: (document.getElementById('checkoutSpecialRequests')?.value || '').trim()
+    };
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Reserving Court Slot...';
+    }
+
+    try {
+      const res = await fetch('/reservations', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.status === 401 || data.requiresAuth) {
+        // Server session timed out — transition seamlessly to Sign In modal without losing selected slots!
+        handleClientSessionLogout(false);
+        const checkoutEl = document.getElementById('checkoutModal');
+        if (checkoutEl) {
+          const inst = bootstrap.Modal.getInstance(checkoutEl);
+          if (inst) inst.hide();
+        }
+        openPlayerAuthModal('login', true);
+        showLiveToast('🔒 Your session expired. Please sign in to continue your reservation.');
+        return;
+      }
+
+      if (!res.ok || !data.success) {
+        const msg = data.error || 'Could not complete reservation. Another player may have just taken this slot.';
+        if (errBox) {
+          errBox.innerText = msg;
+          errBox.classList.remove('d-none');
+        }
+        fetchMatrixAvailability(currentDate, true);
+        return;
+      }
+
+      const targetUrl = data.redirect_url || data.paymentUrl || (`/payment/gcash?ref=${encodeURIComponent(data.reference_number || data.referenceNumber)}`);
+      window.location.href = targetUrl;
+    } catch (err) {
+      if (errBox) {
+        errBox.innerText = 'Network error while reserving slot. Please try again.';
+        errBox.classList.remove('d-none');
+      }
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-qr-code-scan me-1"></i> Proceed to GCash Payment';
+      }
+    }
   }
 
   // =========================================================
@@ -2168,6 +2293,10 @@
       });
       if (res.ok) {
         const data = await res.json();
+        if (data && data.loggedIn === false) {
+          handleClientSessionLogout(true);
+          return;
+        }
         if (data.success) {
           if (data.user) {
             currentPlayerUser = data.user;
@@ -2923,6 +3052,114 @@
     }
   }
 
+  function triggerBrowserNotification(title, body) {
+    try {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'granted') {
+        new Notification(title, { body, icon: '/images/3ks-logo.png' });
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(function (perm) {
+          if (perm === 'granted') {
+            new Notification(title, { body, icon: '/images/3ks-logo.png' });
+          }
+        }).catch(() => {});
+      }
+    } catch (e) {}
+  }
+
+  // =========================================================
+  // 15-MINUTE INACTIVITY SESSION TIMEOUT & AUTO-CLOSEOUT
+  // =========================================================
+  const CLIENT_SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+  const CLIENT_SESSION_WARN_MS = 14 * 60 * 1000;    // Warn at 14 minutes (60s left)
+  let lastUserActivityTs = Date.now();
+  let sessionWarningShown = false;
+
+  function resetUserActivityTimer() {
+    lastUserActivityTs = Date.now();
+    sessionWarningShown = false;
+  }
+
+  function handleClientSessionLogout(showTimeoutAlert = true) {
+    if (!currentPlayerUser) return;
+    currentPlayerUser = null;
+    myBookingsData = [];
+    accountChatMessages = [];
+    updateChatUnreadBadges(0);
+
+    // 1. Reset top right header controls to Sign In / Sign Up
+    const headerControls = document.getElementById('headerAccountControls');
+    if (headerControls) {
+      headerControls.innerHTML = `
+        <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 flex-shrink-0" onclick="openPlayerAuthModal('login', false)">
+          <i class="bi bi-box-arrow-in-right"></i>
+          <span>Sign In</span>
+        </button>
+        <button type="button" class="btn btn-book-now-gold btn-sm rounded-pill px-2.5 py-1 fw-bold d-inline-flex align-items-center gap-1 flex-shrink-0" onclick="openPlayerAuthModal('register', false)">
+          <i class="bi bi-person-plus-fill"></i>
+          <span>Sign Up</span>
+        </button>
+      `;
+    }
+
+    // 2. Reset Mobile Bottom Nav Account button
+    const mobAccIcon = document.getElementById('mobileNavAccountIcon');
+    const mobAccLabel = document.getElementById('mobileNavAccountLabel');
+    if (mobAccIcon) mobAccIcon.className = 'bi bi-person-circle';
+    if (mobAccLabel) mobAccLabel.innerText = 'Sign In';
+
+    // 3. Hide floating Account Chat button & switch My Bookings tab back to Guest card
+    const fabWrap = document.getElementById('accountChatFabWrap');
+    if (fabWrap) fabWrap.classList.remove('d-md-block');
+    const guestCard = document.getElementById('myBookingsGuestCard');
+    const userDash = document.getElementById('myBookingsUserDashboard');
+    if (guestCard) guestCard.classList.remove('d-none');
+    if (userDash) userDash.classList.add('d-none');
+
+    // 4. Close any open account/checkout modals
+    ['checkoutModal', 'accountChatModal', 'accountReceiptModal', 'accountMessengerModal'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        const inst = bootstrap.Modal.getInstance(el);
+        if (inst) inst.hide();
+      }
+    });
+
+    renderMyBookingsList();
+    fetchMatrixAvailability(currentDate, true);
+
+    if (showTimeoutAlert) {
+      const msg = '🔒 Session Timed Out: Your account session was automatically closed after 15 minutes of inactivity.';
+      showLiveToast(msg);
+      triggerBrowserNotification('Session Timed Out — The Playground Pickleball', msg);
+    }
+  }
+
+  function initSessionTimeoutWatcher() {
+    ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'].forEach(evt => {
+      window.addEventListener(evt, resetUserActivityTimer, { passive: true });
+    });
+
+    setInterval(async function () {
+      if (!currentPlayerUser) return;
+      const idleMs = Date.now() - lastUserActivityTs;
+
+      if (idleMs >= CLIENT_SESSION_TIMEOUT_MS) {
+        try {
+          await fetch('/account/logout?timeout=1', {
+            headers: { 'Accept': 'application/json' }
+          });
+        } catch (e) {}
+        handleClientSessionLogout(true);
+      } else if (idleMs >= CLIENT_SESSION_WARN_MS && !sessionWarningShown) {
+        sessionWarningShown = true;
+        const warnMsg = '⏳ Session Timeout Warning: Your session will close in 60 seconds due to inactivity. Tap or move anywhere to stay signed in.';
+        showLiveToast(warnMsg);
+        triggerBrowserNotification('Session Expiring Soon', warnMsg);
+      }
+    }, 5000);
+  }
+
   // Real-time Socket.io listener + Auto-Sync for live matrix, account Messenger sync & In-App Account Chat
   function initMatrixSocket() {
     if (typeof io !== 'undefined') {
@@ -2953,6 +3190,25 @@
         }
         if (currentPlayerUser) {
           refreshMyBookings();
+        }
+      });
+
+      // Emitted when an unpaid 15-minute hold times out and is automatically cancelled
+      socket.on('reservation_hold_expired', function (data) {
+        fetchMatrixAvailability(currentDate, true);
+        if (!currentPlayerUser || !data) return;
+
+        const isMyExpiredHold =
+          (data.userId && Number(data.userId) === Number(currentPlayerUser.id)) ||
+          (data.userPhone && currentPlayerUser.phone && data.userPhone === currentPlayerUser.phone) ||
+          (data.reference && (myBookingsData || []).some(b => b.reference_number === data.reference));
+
+        if (isMyExpiredHold) {
+          const alertMsg = data.message || `⏰ Your unpaid court hold (#${data.reference}) timed out and was automatically cancelled.`;
+          showLiveToast(alertMsg);
+          triggerBrowserNotification('Unpaid Court Hold Cancelled', alertMsg);
+          refreshMyBookings();
+          fetchAccountChat(false);
         }
       });
 
@@ -2993,9 +3249,11 @@
           updateChatUnreadBadges(0);
         } else if (msg.sender_role !== 'player') {
           updateChatUnreadBadges(accountChatUnreadCount + 1);
-          showLiveToast(msg.sender_role === 'admin'
-            ? `New message from ${msg.sender_name || 'The Playground Admin'} in your Account Chat!`
-            : `Booking update posted to your Account Chat (${msg.booking_ref || ''})!`);
+          const toastText = msg.sender_role === 'admin'
+            ? `💬 New message from ${msg.sender_name || 'The Playground Admin'} in your Account Chat!`
+            : `🔔 Booking update posted to your Account Chat (${msg.booking_ref || ''})!`;
+          showLiveToast(toastText);
+          triggerBrowserNotification('The Playground Pickleball', toastText);
         }
 
         if (msg.sender_role === 'system') {

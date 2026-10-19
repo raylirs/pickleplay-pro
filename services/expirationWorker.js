@@ -20,12 +20,22 @@ function startExpirationWorker() {
         include: [{ model: Court, as: 'court' }]
       });
 
+      if (!expiredReservations || expiredReservations.length === 0) return;
+
+      const notifiedMasterRefs = new Map();
+
       for (const res of expiredReservations) {
-        res.status = 'EXPIRED';
+        res.status = 'CANCELLED';
+        res.cancellation_reason = 'Automatically cancelled: 15-minute unpaid GCash hold timed out';
         await res.save();
 
-        console.log('[Expiration Worker] Reservation ' + res.reference_number + ' expired. Released court ' + res.court_id + '.');
-        await logAudit('RESERVATION_EXPIRED', {
+        const masterRef = (res.reference_number || '').split('-')[0];
+        if (!notifiedMasterRefs.has(masterRef)) {
+          notifiedMasterRefs.set(masterRef, res);
+        }
+
+        console.log('[Expiration Worker] Unpaid hold ' + res.reference_number + ' timed out & cancelled. Released court ' + res.court_id + '.');
+        await logAudit('RESERVATION_HOLD_CANCELLED_TIMEOUT', {
           referenceNumber: res.reference_number,
           courtId: res.court_id,
           date: res.reservation_date,
@@ -45,12 +55,37 @@ function startExpirationWorker() {
           // ignore socket warning
         }
       }
+
+      // Send 1 unified notification per expired booking order (Socket + In-App Chat + Messenger)
+      for (const [masterRef, primaryRes] of notifiedMasterRefs.entries()) {
+        try {
+          const io = getIO();
+          io.emit('reservation_hold_expired', {
+            reference: masterRef,
+            userId: primaryRes.user_id || null,
+            userPhone: primaryRes.user_contact || null,
+            date: primaryRes.reservation_date,
+            courtName: primaryRes.court ? primaryRes.court.display_name : `Court ${primaryRes.court_id}`,
+            message: `⏰ Your unpaid court hold (#${masterRef}) has timed out after 15 minutes and was automatically cancelled.`
+          });
+        } catch (e) {}
+
+        try {
+          const { postBookingSystemMessage } = require('./chatService');
+          await postBookingSystemMessage(primaryRes, 'HOLD_EXPIRED_CANCELLED');
+        } catch (e) {}
+
+        try {
+          const { notifyPlayerHoldExpired } = require('./facebookService');
+          await notifyPlayerHoldExpired(primaryRes);
+        } catch (e) {}
+      }
     } catch (err) {
       console.error('[Expiration Worker Error]:', err.message);
     }
-  }, 30000);
+  }, 10000);
 
-  console.log('[Worker] Reservation expiration worker active (30s interval).');
+  console.log('[Worker] Unpaid hold auto-cancel & notification worker active (10s interval).');
 }
 
 function stopExpirationWorker() {

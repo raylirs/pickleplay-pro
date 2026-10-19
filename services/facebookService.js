@@ -268,6 +268,29 @@ async function notifyPlayerBookingConfirmed(reservation) {
 }
 
 /**
+ * Notify Player when their unpaid 15-minute hold expires and is automatically cancelled
+ */
+async function notifyPlayerHoldExpired(reservation) {
+  let targetPsid = reservation.fb_psid;
+  if (!targetPsid && reservation.user_id) {
+    try {
+      const playerUser = await User.findByPk(reservation.user_id);
+      if (playerUser && playerUser.fb_psid) {
+        targetPsid = playerUser.fb_psid;
+      }
+    } catch (e) {}
+  }
+  if (!targetPsid) return;
+
+  const masterRef = (reservation.reference_number || '').split('-')[0];
+  const msg = `⏰ [THE PLAYGROUND] UNPAID HOLD CANCELLED (#${masterRef})\n\n` +
+    `Hello ${reservation.user_name || 'Player'}, your 15-minute reservation hold on ${reservation.reservation_date} (${reservation.start_time}) has timed out without GCash payment proof and was automatically cancelled.\n\n` +
+    `The court slot has been released back to the schedule. Visit https://pickleplay-pro.onrender.com anytime to book a new slot! 🏓`;
+
+  await sendMessengerNotify(targetPsid, msg);
+}
+
+/**
  * Process Admin 1-Click Action (Confirm or Cancel via Messenger buttons/messages)
  */
 async function processAdminAction(senderId, rawText) {
@@ -544,6 +567,7 @@ module.exports = {
   notifyAdminNewBooking,
   notifyAdminPaymentProof,
   notifyPlayerBookingConfirmed,
+  notifyPlayerHoldExpired,
   processAdminAction,
   handleWebhookVerification,
   handleWebhookEvents,
