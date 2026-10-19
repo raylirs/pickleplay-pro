@@ -1114,3 +1114,150 @@ h1, h2, h3, h4, .font-display {
   animation: slotPulse 0.8s ease-in-out;
 }
 
+/* =========================================================
+   Interactive Current-Month Calendar Step (Book Court Tab)
+========================================================= */
+.month-calendar-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(11, 37, 69, 0.1);
+  box-shadow: 0 12px 32px rgba(11, 37, 69, 0.08);
+  overflow: hidden;
+}
+
+.month-calendar-header {
+  background: linear-gradient(135deg, #0B2545 0%, #134074 100%);
+  color: #ffffff;
+  padding: 18px 24px;
+  border-bottom: 2px solid var(--gold-400);
+}
+
+.month-calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #F8FAFC;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: center;
+  padding: 10px 8px;
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--navy-800);
+}
+
+.month-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  padding: 16px;
+  background: #ffffff;
+}
+
+.calendar-day-cell {
+  min-height: 78px;
+  border-radius: 14px;
+  border: 1.5px solid #E2E8F0;
+  background: #ffffff;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  position: relative;
+  user-select: none;
+  text-align: left;
+}
+
+.calendar-day-cell:hover:not(.is-disabled):not(.is-empty) {
+  border-color: var(--court-blue);
+  background: #F0F9FF;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.14);
+}
+
+.calendar-day-cell.is-today {
+  border-color: var(--gold-500);
+  background: #FFFBEB;
+}
+
+.calendar-day-cell.is-selected {
+  background: linear-gradient(135deg, #0B2545 0%, #134074 100%) !important;
+  border-color: var(--gold-400) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 20px rgba(11, 37, 69, 0.25);
+}
+
+.calendar-day-cell.is-disabled {
+  background: #F8FAFC;
+  border-color: #F1F5F9;
+  color: #CBD5E1;
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.calendar-day-cell.is-empty {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+  pointer-events: none;
+}
+
+.calendar-day-number {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--navy-800);
+  line-height: 1.1;
+}
+
+.calendar-day-cell.is-selected .calendar-day-number {
+  color: #FDE047;
+}
+
+.calendar-day-cell.is-disabled .calendar-day-number {
+  color: #94A3B8;
+}
+
+.calendar-day-cta {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--court-blue);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.calendar-day-cell.is-selected .calendar-day-cta {
+  color: #ffffff;
+}
+
+.calendar-day-cell.is-disabled .calendar-day-cta {
+  color: #CBD5E1;
+  font-weight: 500;
+}
+
+@media (max-width: 767.98px) {
+  .month-calendar-header {
+    padding: 14px 16px;
+  }
+  .month-calendar-grid {
+    gap: 5px;
+    padding: 10px;
+  }
+  .calendar-day-cell {
+    min-height: 58px;
+    padding: 6px 6px;
+    border-radius: 10px;
+  }
+  .calendar-day-number {
+    font-size: 14px;
+  }
+  .calendar-day-cta {
+    font-size: 9px;
+  }
+}
+
+

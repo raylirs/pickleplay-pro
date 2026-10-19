@@ -180,18 +180,70 @@
       </div>
     </div>
 
-    <div class="matrix-card">
+    <!-- =========================================================
+         STEP 1: CURRENT MONTH CALENDAR VIEW (Shown First)
+    ========================================================= -->
+    <div id="bookingMonthCalendarCard" class="month-calendar-card mb-3">
+      <div class="month-calendar-header d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-2">
+        <div>
+          <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold mb-1" style="font-size: 10.5px; letter-spacing: 0.04em;">
+            <i class="bi bi-calendar-Month me-1"></i>STEP 1 OF 2 · SELECT A PLAY DATE
+          </span>
+          <h4 class="fw-extrabold font-display text-white mb-0" id="calendarMonthYearTitle">Loading Month...</h4>
+          <span class="text-white-50 small" style="font-size: 12px;">Tap any available date below to view court time slots</span>
+        </div>
+
+        <div class="d-flex align-items-center gap-1.5 flex-wrap">
+          <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-2.5 py-1 fw-bold" id="btnPrevMonth" onclick="changeCalendarMonth(-1)" title="Previous Month">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <button type="button" class="btn btn-sm btn-warning text-dark rounded-pill px-3 py-1 fw-bold" onclick="jumpCalendarToToday()">
+            Today
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-2.5 py-1 fw-bold" id="btnNextMonth" onclick="changeCalendarMonth(1)" title="Next Month">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+          <button type="button" id="btnReturnToTimeSlots" class="btn btn-sm btn-light text-dark rounded-pill px-3 py-1 fw-bold ms-1 d-none" onclick="toggleBookingCalendarView(false)">
+            <i class="bi bi-clock-fill text-primary me-1"></i>View Time Slots &rarr;
+          </button>
+        </div>
+      </div>
+
+      <!-- Day of Week Headers -->
+      <div class="month-calendar-weekdays">
+        <div>Sun</div>
+        <div>Mon</div>
+        <div>Tue</div>
+        <div>Wed</div>
+        <div>Thu</div>
+        <div>Fri</div>
+        <div>Sat</div>
+      </div>
+
+      <!-- Days Grid (Populated via renderMonthCalendar()) -->
+      <div id="monthCalendarDaysGrid" class="month-calendar-grid"></div>
+    </div>
+
+    <!-- =========================================================
+         STEP 2: COURT & TIME SCHEDULE MATRIX (Toggled when a Day is Selected)
+    ========================================================= -->
+    <div id="bookingTimeMatrixCard" class="matrix-card d-none">
       <!-- Matrix Toolbar: Date Navigation & Quick Actions -->
       <div class="matrix-date-toolbar d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
         <!-- Date Navigator Buttons (Far Left) -->
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <button type="button" class="btn btn-dark btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-xs" onclick="toggleBookingCalendarView(true)" title="Open Month Calendar to Choose Another Date">
+            <i class="bi bi-calendar3 text-warning"></i>
+            <span>Calendar</span>
+          </button>
+
           <button type="button" class="matrix-date-btn" id="btnPrevDate" title="Previous Day">
             <i class="bi bi-chevron-left"></i>
           </button>
 
           <div class="position-relative">
-            <button type="button" class="matrix-date-btn matrix-date-center-btn" id="btnDisplayDate">
-              <i class="bi bi-calendar3 me-2 text-warning"></i>
+            <button type="button" class="matrix-date-btn matrix-date-center-btn" id="btnDisplayDate" title="Click to toggle Month Calendar">
+              <i class="bi bi-calendar2-check-fill me-2 text-warning"></i>
               <span id="dateDisplayText">Loading date...</span>
             </button>
             <input type="date" id="nativeDatePicker" min="<%= today %>" value="<%= today %>" style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
@@ -201,7 +253,7 @@
             <i class="bi bi-chevron-right"></i>
           </button>
 
-          <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-bold ms-1" id="btnTodayShortcut">
+          <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-bold" id="btnTodayShortcut">
             Today
           </button>
         </div>
@@ -1300,6 +1352,157 @@
     }
   }
 
+  // =========================================================
+  // STEP 1 & STEP 2: CURRENT MONTH CALENDAR -> TIME SLOT MATRIX TOGGLE
+  // =========================================================
+  const todayBaseDate = new Date('<%= today %>T00:00:00');
+  let calendarViewYear = todayBaseDate.getFullYear();
+  let calendarViewMonth = todayBaseDate.getMonth(); // 0-indexed
+  let hasSelectedDayOnce = false;
+
+  function formatYmdLocal(year, monthZeroIndexed, dayNum) {
+    const m = String(monthZeroIndexed + 1).padStart(2, '0');
+    const d = String(dayNum).padStart(2, '0');
+    return `${year}-${m}-${d}`;
+  }
+
+  function renderMonthCalendar() {
+    const gridEl = document.getElementById('monthCalendarDaysGrid');
+    const titleEl = document.getElementById('calendarMonthYearTitle');
+    const prevMonthBtn = document.getElementById('btnPrevMonth');
+    if (!gridEl) return;
+
+    const firstOfMonth = new Date(calendarViewYear, calendarViewMonth, 1);
+    const daysInMonth = new Date(calendarViewYear, calendarViewMonth + 1, 0).getDate();
+    const startWeekday = firstOfMonth.getDay(); // 0 (Sun) - 6 (Sat)
+
+    if (titleEl) {
+      titleEl.innerText = firstOfMonth.toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric'
+      });
+    }
+
+    // Disable Prev Month button if viewing current month
+    if (prevMonthBtn) {
+      const isCurrentOrPastMonth =
+        calendarViewYear < todayBaseDate.getFullYear() ||
+        (calendarViewYear === todayBaseDate.getFullYear() && calendarViewMonth <= todayBaseDate.getMonth());
+      prevMonthBtn.disabled = isCurrentOrPastMonth;
+    }
+
+    const todayStr = '<%= today %>';
+    let cellsHtml = '';
+
+    // Leading empty cells before the 1st of the month
+    for (let i = 0; i < startWeekday; i++) {
+      cellsHtml += `<div class="calendar-day-cell is-empty"></div>`;
+    }
+
+    // Actual days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = formatYmdLocal(calendarViewYear, calendarViewMonth, day);
+      const isPast = dateStr < todayStr;
+      const isToday = dateStr === todayStr;
+      const isSelected = hasSelectedDayOnce && dateStr === currentDate;
+
+      let cellClasses = 'calendar-day-cell';
+      if (isPast) cellClasses += ' is-disabled';
+      if (isToday) cellClasses += ' is-today';
+      if (isSelected) cellClasses += ' is-selected';
+
+      let badgeHtml = '';
+      if (isToday) {
+        badgeHtml = `<span class="badge ${isSelected ? 'bg-warning text-dark' : 'bg-warning-subtle text-dark border border-warning'} rounded-pill px-1.5 py-0.5 fw-bold" style="font-size: 9px;">TODAY</span>`;
+      } else if (isSelected) {
+        badgeHtml = `<span class="badge bg-warning text-dark rounded-pill px-1.5 py-0.5 fw-bold" style="font-size: 9px;">SELECTED</span>`;
+      }
+
+      const ctaLabel = isPast
+        ? '<span>Past</span>'
+        : `<span>Select Time</span><i class="bi bi-arrow-right-short"></i>`;
+
+      const clickAttr = isPast ? '' : `onclick="selectCalendarDay('${dateStr}')"`;
+
+      cellsHtml += `
+        <div class="${cellClasses}" ${clickAttr} role="button" tabindex="${isPast ? '-1' : '0'}" aria-label="Select ${dateStr}">
+          <div class="d-flex align-items-center justify-content-between w-100">
+            <span class="calendar-day-number">${day}</span>
+            ${badgeHtml}
+          </div>
+          <div class="calendar-day-cta mt-1">
+            ${ctaLabel}
+          </div>
+        </div>
+      `;
+    }
+
+    gridEl.innerHTML = cellsHtml;
+  }
+
+  function changeCalendarMonth(delta) {
+    calendarViewMonth += delta;
+    if (calendarViewMonth > 11) {
+      calendarViewMonth = 0;
+      calendarViewYear += 1;
+    } else if (calendarViewMonth < 0) {
+      calendarViewMonth = 11;
+      calendarViewYear -= 1;
+    }
+    renderMonthCalendar();
+  }
+
+  function jumpCalendarToToday() {
+    calendarViewYear = todayBaseDate.getFullYear();
+    calendarViewMonth = todayBaseDate.getMonth();
+    selectCalendarDay('<%= today %>');
+  }
+
+  function selectCalendarDay(dateStr) {
+    if (!dateStr || dateStr < '<%= today %>') return;
+    const dateChanged = currentDate !== dateStr;
+    currentDate = dateStr;
+    hasSelectedDayOnce = true;
+
+    const dObj = new Date(dateStr + 'T00:00:00');
+    calendarViewYear = dObj.getFullYear();
+    calendarViewMonth = dObj.getMonth();
+
+    updateDateDisplay(currentDate);
+    renderMonthCalendar();
+
+    const returnBtn = document.getElementById('btnReturnToTimeSlots');
+    if (returnBtn) returnBtn.classList.remove('d-none');
+
+    if (dateChanged) {
+      clearSelectedSlots();
+      fetchMatrixAvailability(currentDate);
+    }
+
+    // Toggle from Step 1 (Month Calendar) to Step 2 (Time Slot Matrix)
+    toggleBookingCalendarView(false);
+  }
+
+  function toggleBookingCalendarView(showCalendar) {
+    const calCard = document.getElementById('bookingMonthCalendarCard');
+    const matrixCard = document.getElementById('bookingTimeMatrixCard');
+    const rail = document.getElementById('bookingActionBar');
+    if (!calCard || !matrixCard) return;
+
+    if (showCalendar) {
+      renderMonthCalendar();
+      calCard.classList.remove('d-none');
+      matrixCard.classList.add('d-none');
+      if (rail) rail.classList.remove('is-visible');
+    } else {
+      calCard.classList.add('d-none');
+      matrixCard.classList.remove('d-none');
+      if (rail && selectedSlotItems && selectedSlotItems.length > 0) {
+        rail.classList.add('is-visible');
+      }
+    }
+  }
+
   // Date Controls
   function initDateControls() {
     const nativePicker = document.getElementById('nativeDatePicker');
@@ -1309,46 +1512,37 @@
     const todayBtn = document.getElementById('btnTodayShortcut');
 
     updateDateDisplay(currentDate);
+    renderMonthCalendar();
 
     displayBtn.addEventListener('click', () => {
-      nativePicker.showPicker ? nativePicker.showPicker() : nativePicker.click();
+      toggleBookingCalendarView(true);
     });
 
     nativePicker.addEventListener('change', (e) => {
       if (e.target.value) {
-        currentDate = e.target.value;
-        updateDateDisplay(currentDate);
-        clearSelectedSlots();
-        fetchMatrixAvailability(currentDate);
+        selectCalendarDay(e.target.value);
       }
     });
 
     prevBtn.addEventListener('click', () => {
-      const d = new Date(currentDate);
+      const d = new Date(currentDate + 'T00:00:00');
       d.setDate(d.getDate() - 1);
-      const minDate = new Date('<%= today %>');
+      const minDate = new Date('<%= today %>T00:00:00');
       if (d >= minDate) {
-        currentDate = d.toISOString().split('T')[0];
-        updateDateDisplay(currentDate);
-        clearSelectedSlots();
-        fetchMatrixAvailability(currentDate);
+        const ymd = formatYmdLocal(d.getFullYear(), d.getMonth(), d.getDate());
+        selectCalendarDay(ymd);
       }
     });
 
     nextBtn.addEventListener('click', () => {
-      const d = new Date(currentDate);
+      const d = new Date(currentDate + 'T00:00:00');
       d.setDate(d.getDate() + 1);
-      currentDate = d.toISOString().split('T')[0];
-      updateDateDisplay(currentDate);
-      clearSelectedSlots();
-      fetchMatrixAvailability(currentDate);
+      const ymd = formatYmdLocal(d.getFullYear(), d.getMonth(), d.getDate());
+      selectCalendarDay(ymd);
     });
 
     todayBtn.addEventListener('click', () => {
-      currentDate = '<%= today %>';
-      updateDateDisplay(currentDate);
-      clearSelectedSlots();
-      fetchMatrixAvailability(currentDate);
+      selectCalendarDay('<%= today %>');
     });
   }
 
