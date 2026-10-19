@@ -62,13 +62,13 @@
 </section>
 
 <!-- =========================================================
-     TAB NAVIGATION BAR (Courtogo Underline Tabs)
+     TAB NAVIGATION BAR (Desktop Underline Tabs + Mobile 1-Line Status Bar)
 ========================================================= -->
 <div class="bg-white border-bottom venue-tabs-container">
   <div class="container max-w-6xl">
-    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
-      <!-- Tabs Left -->
-      <div class="courtogo-tabs-bar flex-grow-1" role="tablist">
+    <div class="d-flex flex-row align-items-center justify-content-between gap-2">
+      <!-- Tabs Left (Hidden on Mobile < 768px because Bottom App Bar handles mobile navigation) -->
+      <div class="courtogo-tabs-bar flex-grow-1 d-none d-md-flex" role="tablist">
         <button class="courtogo-tab-btn active" id="tab-btn-book" onclick="switchVenueTab('book')">
           <i class="bi bi-calendar2-check-fill text-warning"></i>
           <span>Book Court</span>
@@ -104,36 +104,43 @@
         </button>
       </div>
 
-      <!-- Action Buttons In-Line with Tabs (Right) -->
-      <div class="d-flex align-items-center gap-2 py-2 py-md-0 ms-md-3 justify-content-end flex-shrink-0 flex-wrap">
-        <button type="button" onclick="triggerPwaInstall()" class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1 fw-bold d-inline-flex align-items-center gap-1" title="Install The Playground Mobile App">
-          <i class="bi bi-phone-fill"></i>
-          <span>Install App</span>
-        </button>
-        <div id="headerAccountControls" class="d-inline-flex align-items-center gap-2">
+      <!-- Single-Line Action Bar (Full width 1-line on Mobile, Right-aligned on Desktop) -->
+      <div class="d-flex align-items-center justify-content-between justify-content-md-end gap-1.5 py-2 py-md-0 ms-md-3 w-100 w-md-auto flex-nowrap">
+        <div id="headerAccountControls" class="d-inline-flex align-items-center gap-1.5 min-w-0">
           <% if (typeof user !== 'undefined' && user) { %>
-            <button type="button" class="btn btn-dark btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-xs" onclick="switchVenueTab('my-bookings')" title="View My Bookings">
-              <i class="bi bi-person-check-fill text-warning"></i>
-              <span><%= user.full_name || user.username %></span>
+            <button type="button" class="btn btn-dark btn-sm rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-xs text-truncate" style="max-width: 185px;" onclick="switchVenueTab('my-bookings')" title="View My Bookings">
+              <i class="bi bi-person-check-fill text-warning flex-shrink-0"></i>
+              <span class="text-truncate"><%= user.full_name || user.username %></span>
             </button>
             <% if (user.role === 'admin' || user.role === 'staff') { %>
-              <a href="/admin" class="btn btn-outline-dark btn-sm rounded-pill px-2.5 py-1 fw-semibold" title="Admin Panel">
+              <a href="/admin" class="btn btn-outline-dark btn-sm rounded-pill px-2 py-1 fw-semibold flex-shrink-0" title="Admin Panel">
                 <i class="bi bi-speedometer2"></i>
               </a>
             <% } %>
-            <a href="/account/logout" class="btn btn-outline-danger btn-sm rounded-pill px-2.5 py-1 fw-semibold" title="Sign Out">
+            <a href="/account/logout" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 fw-semibold flex-shrink-0" title="Sign Out">
               <i class="bi bi-box-arrow-right"></i>
             </a>
           <% } else { %>
-            <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1" onclick="openPlayerAuthModal('login', false)">
+            <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 flex-shrink-0" onclick="openPlayerAuthModal('login', false)">
               <i class="bi bi-box-arrow-in-right"></i>
               <span>Sign In</span>
             </button>
-            <button type="button" class="btn btn-book-now-gold btn-sm rounded-pill px-3 py-1 fw-bold d-inline-flex align-items-center gap-1" onclick="openPlayerAuthModal('register', false)">
+            <button type="button" class="btn btn-book-now-gold btn-sm rounded-pill px-2.5 py-1 fw-bold d-inline-flex align-items-center gap-1 flex-shrink-0" onclick="openPlayerAuthModal('register', false)">
               <i class="bi bi-person-plus-fill"></i>
               <span>Sign Up</span>
             </button>
           <% } %>
+        </div>
+
+        <div class="d-inline-flex align-items-center gap-1.5 flex-shrink-0">
+          <button type="button" onclick="switchVenueTab('photos')" class="btn btn-light border btn-sm rounded-pill px-2.5 py-1 fw-semibold d-inline-flex d-md-none align-items-center gap-1 text-dark" title="Facility Photos">
+            <i class="bi bi-images text-primary"></i>
+            <span>Photos</span>
+          </button>
+          <button type="button" onclick="triggerPwaInstall()" class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1 fw-bold d-inline-flex align-items-center gap-1 flex-shrink-0" title="Install The Playground Mobile App">
+            <i class="bi bi-phone-fill"></i>
+            <span>Install App</span>
+          </button>
         </div>
       </div>
     </div>
@@ -2002,15 +2009,15 @@
     const headerControls = document.getElementById('headerAccountControls');
     if (headerControls) {
       const adminBtn = (userObj.role === 'admin' || userObj.role === 'staff')
-        ? `<a href="/admin" class="btn btn-outline-dark btn-sm rounded-pill px-2.5 py-1 fw-semibold" title="Admin Panel"><i class="bi bi-speedometer2"></i></a>`
+        ? `<a href="/admin" class="btn btn-outline-dark btn-sm rounded-pill px-2 py-1 fw-semibold flex-shrink-0" title="Admin Panel"><i class="bi bi-speedometer2"></i></a>`
         : '';
       headerControls.innerHTML = `
-        <button type="button" class="btn btn-dark btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-xs" onclick="switchVenueTab('my-bookings')" title="View My Bookings">
-          <i class="bi bi-person-check-fill text-warning"></i>
-          <span>${displayName}</span>
+        <button type="button" class="btn btn-dark btn-sm rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-xs text-truncate" style="max-width: 185px;" onclick="switchVenueTab('my-bookings')" title="View My Bookings">
+          <i class="bi bi-person-check-fill text-warning flex-shrink-0"></i>
+          <span class="text-truncate">${displayName}</span>
         </button>
         ${adminBtn}
-        <a href="/account/logout" class="btn btn-outline-danger btn-sm rounded-pill px-2.5 py-1 fw-semibold" title="Sign Out">
+        <a href="/account/logout" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 fw-semibold flex-shrink-0" title="Sign Out">
           <i class="bi bi-box-arrow-right"></i>
         </a>
       `;
