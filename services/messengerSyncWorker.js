@@ -1,4 +1,4 @@
-const { Reservation, Court, SystemSetting } = require('../models');
+const { Reservation, Court, SystemSetting, User } = require('../models');
 const { Op } = require('sequelize');
 const { getIO } = require('../config/socket');
 const { sendMessengerNotify, getSetting } = require('./facebookService');
@@ -49,6 +49,59 @@ async function checkAndSyncMessengerInbox() {
         const compactText = text.replace(/\s+/g, '').replace(/–|—/g, '-');
         const digitsOnly = text.replace(/\D/g, '');
 
+        // 2a. Check Player User Account first
+        const userConditions = [
+          { binding_code: compactText },
+          { email: rawMessage.toLowerCase() }
+        ];
+        if (digitsOnly.length >= 4) {
+          userConditions.push({ binding_code: `PLAY-${digitsOnly}` });
+          userConditions.push({ binding_code: { [Op.like]: `%${digitsOnly}%` } });
+        }
+        if (digitsOnly.length >= 10) {
+          userConditions.push({ phone: { [Op.like]: `%${digitsOnly.slice(-10)}%` } });
+        }
+
+        const matchedUser = await User.findOne({
+          where: { [Op.or]: userConditions },
+          order: [['id', 'DESC']]
+        });
+
+        if (matchedUser && matchedUser.fb_psid !== senderId) {
+          console.log(`[Messenger Sync] Binding Player Account ${matchedUser.username} (Code: ${matchedUser.binding_code}) to ${senderName} (PSID: ${senderId})...`);
+          matchedUser.fb_psid = senderId;
+          await matchedUser.save();
+
+          await Reservation.update(
+            { fb_psid: senderId },
+            {
+              where: {
+                [Op.or]: [
+                  { user_id: matchedUser.id },
+                  ...(matchedUser.phone ? [{ user_contact: matchedUser.phone }] : [])
+                ]
+              }
+            }
+          );
+
+          try {
+            const io = getIO();
+            io.emit('player_messenger_bound', {
+              userId: matchedUser.id,
+              bindingCode: matchedUser.binding_code,
+              psid: senderId
+            });
+          } catch (e) {}
+
+          const replyText = `✅ [THE PLAYGROUND] Account Connected!\n\n` +
+            `Hello ${matchedUser.full_name || senderName}! Your Facebook Messenger is now linked to your Player Account (${matchedUser.phone || matchedUser.username}).\n\n` +
+            `You will automatically receive instant digital passes and booking confirmation alerts here for all your court reservations! 🏓`;
+
+          await sendMessengerNotify(senderId, replyText);
+          continue;
+        }
+
+        // 2b. Check Reservation reference / binding_code
         const searchConditions = [
           { reference_number: compactText },
           { binding_code: compactText },
@@ -57,6 +110,7 @@ async function checkAndSyncMessengerInbox() {
         ];
 
         if (digitsOnly.length >= 4) {
+          searchConditions.push({ binding_code: `PLAY-${digitsOnly}` });
           searchConditions.push({ binding_code: `3KS-${digitsOnly}` });
           searchConditions.push({ binding_code: { [Op.like]: `%${digitsOnly}%` } });
           searchConditions.push({ reference_number: { [Op.like]: `%${digitsOnly}%` } });
@@ -77,17 +131,22 @@ async function checkAndSyncMessengerInbox() {
           reservation.fb_psid = senderId;
           await reservation.save();
 
+          if (reservation.user_id) {
+            await User.update({ fb_psid: senderId }, { where: { id: reservation.user_id } });
+          }
+
           // Real-time broadcast to browser
           try {
             const io = getIO();
             io.emit('player_messenger_bound', {
+              userId: reservation.user_id || null,
               reference: reservation.reference_number,
               psid: senderId
             });
           } catch (e) {}
 
           // Reply in Messenger
-          const replyText = `✅ [3KS PLAYGROUND] Connected!\n\n` +
+          const replyText = `✅ [THE PLAYGROUND] Connected!\n\n` +
             `Hello ${senderName}! Your Facebook Messenger is now linked to Reservation #${reservation.reference_number}.\n\n` +
             `📅 Date: ${reservation.reservation_date} (${reservation.start_time})\n` +
             `🏟️ Court: ${reservation.court ? reservation.court.display_name : 'Court ' + reservation.court_id}\n\n` +

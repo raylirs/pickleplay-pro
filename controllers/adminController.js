@@ -507,6 +507,11 @@ const adminController = {
         reason: cancellation_reason || 'Cancelled by Administrator'
       }, req.session.user.id);
 
+      try {
+        const { postBookingSystemMessage } = require('../services/chatService');
+        postBookingSystemMessage(reservation, 'BOOKING_CANCELLED').catch(e => console.warn('[Chat Notify Error]:', e.message));
+      } catch (e) {}
+
       req.flash('success', `Reservation order ${masterRef} cancelled.`);
       res.redirect(req.headers.referer || '/admin/reservations');
     } catch (err) {
@@ -577,6 +582,12 @@ const adminController = {
       try {
         const { notifyPlayerBookingConfirmed } = require('../services/facebookService');
         notifyPlayerBookingConfirmed(reservation).catch(e => console.warn('[FB Player Notify Error]:', e.message));
+      } catch (e) {}
+
+      // Post automated Booking Confirmed Card to Player In-App Account Chat
+      try {
+        const { postBookingSystemMessage } = require('../services/chatService');
+        postBookingSystemMessage(reservation, 'BOOKING_CONFIRMED').catch(e => console.warn('[Chat Notify Error]:', e.message));
       } catch (e) {}
 
       req.flash('success', `Reservation order ${masterRef} confirmed manually.`);

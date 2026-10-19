@@ -4,10 +4,11 @@ const courtController = require('../controllers/courtController');
 const reservationController = require('../controllers/reservationController');
 const paymentController = require('../controllers/paymentController');
 const authController = require('../controllers/authController');
+const chatController = require('../controllers/chatController');
 const { requirePlayerAuth } = require('../middleware/auth');
 const { reservationLimiter } = require('../middleware/rateLimiter');
 const upload = require('../middleware/upload');
-const { CourtCategory, Court } = require('../models');
+const { CourtCategory, Court, User } = require('../models');
 
 const { formatCurrency, formatTime12, formatDate } = require('../utils/dateTimeUtils');
 
@@ -24,7 +25,19 @@ router.get('/', async (req, res, next) => {
       order: [['court_number', 'ASC'], ['id', 'ASC']]
     });
     const today = formatDate(new Date());
-    const currentUser = req.session ? req.session.user : null;
+    let currentUser = req.session ? req.session.user : null;
+    if (currentUser && currentUser.id) {
+      const dbUser = await User.findByPk(currentUser.id);
+      if (dbUser) {
+        if (!dbUser.binding_code) {
+          dbUser.binding_code = 'PLAY-' + Math.floor(1000 + Math.random() * 9000);
+          await dbUser.save();
+        }
+        currentUser.fb_psid = dbUser.fb_psid || null;
+        currentUser.binding_code = dbUser.binding_code;
+        req.session.user = currentUser;
+      }
+    }
     const myBookings = currentUser
       ? await reservationController.getPlayerReservationsGrouped(currentUser)
       : [];
@@ -59,6 +72,11 @@ router.get('/my-bookings', requirePlayerAuth, (req, res) => {
   res.redirect('/#my-bookings');
 });
 router.get('/api/my-bookings', reservationController.getMyBookingsJson);
+
+// In-App Account Chat & Booking Cards JSON API
+router.get('/api/account/chat', chatController.getAccountChatJson);
+router.post('/api/account/chat', chatController.sendPlayerChatMessage);
+router.post('/api/account/chat/read', chatController.markPlayerChatRead);
 
 // JSON endpoint for real-time court availability matrix
 router.get('/courts-availability', courtController.getAllCourtsAvailabilityJson);

@@ -29,9 +29,6 @@
         </li>
       </ul>
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#messengerModal">
-          <i class="bi bi-messenger me-1"></i>Messenger Alerts
-        </button>
         <% if (typeof user !== 'undefined' && user) { %>
           <a href="/#my-bookings" class="btn btn-outline-light btn-sm rounded-pill px-3">
             <i class="bi bi-person-check-fill text-warning me-1"></i><%= user.full_name || user.username %> · My Bookings

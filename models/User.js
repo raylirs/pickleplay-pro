@@ -25,6 +25,14 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(50),
     allowNull: true
   },
+  fb_psid: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
+  binding_code: {
+    type: DataTypes.STRING(20),
+    allowNull: true
+  },
   password_hash: {
     type: DataTypes.STRING(255),
     allowNull: false

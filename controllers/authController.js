@@ -15,17 +15,31 @@ function normalizePhone(phone) {
   return cleaned;
 }
 
+function generateAccountBindingCode() {
+  return 'PLAY-' + Math.floor(1000 + Math.random() * 9000);
+}
+
+async function ensureUserBindingCode(user) {
+  if (!user.binding_code) {
+    user.binding_code = generateAccountBindingCode();
+    await user.save();
+  }
+  return user.binding_code;
+}
+
 async function linkExistingReservationsToUser(user) {
   try {
-    const conditions = [];
+    await ensureUserBindingCode(user);
+
+    const conditions = [{ user_id: user.id }];
     if (user.phone) {
       conditions.push({ user_contact: user.phone });
     }
     if (user.email) {
       conditions.push({ user_email: user.email.toLowerCase() });
     }
-    if (conditions.length === 0) return;
 
+    // Link unlinked reservations to this user
     await Reservation.update(
       { user_id: user.id },
       {
@@ -35,6 +49,34 @@ async function linkExistingReservationsToUser(user) {
         }
       }
     );
+
+    // If user doesn't have fb_psid yet, check if any of their reservations already bound Messenger
+    if (!user.fb_psid) {
+      const boundResv = await Reservation.findOne({
+        where: {
+          user_id: user.id,
+          fb_psid: { [Op.ne]: null }
+        },
+        order: [['updated_at', 'DESC']]
+      });
+      if (boundResv && boundResv.fb_psid) {
+        user.fb_psid = boundResv.fb_psid;
+        await user.save();
+      }
+    }
+
+    // If user has fb_psid, ensure all their reservations have it
+    if (user.fb_psid) {
+      await Reservation.update(
+        { fb_psid: user.fb_psid },
+        {
+          where: {
+            user_id: user.id,
+            fb_psid: null
+          }
+        }
+      );
+    }
   } catch (err) {
     console.warn('[Auth] Could not link existing reservations:', err.message);
   }
@@ -85,12 +127,16 @@ const authController = {
         return res.redirect('/admin/login');
       }
 
+      await linkExistingReservationsToUser(user);
+
       req.session.user = {
         id: user.id,
         username: user.username,
         full_name: user.full_name || user.username,
         email: user.email || '',
         phone: user.phone || '',
+        fb_psid: user.fb_psid || null,
+        binding_code: user.binding_code,
         role: user.role
       };
 
@@ -203,6 +249,8 @@ const authController = {
         full_name: user.full_name || user.username,
         email: user.email || '',
         phone: user.phone || '',
+        fb_psid: user.fb_psid || null,
+        binding_code: user.binding_code,
         role: user.role
       };
       req.session.user = sessionUser;
@@ -282,6 +330,7 @@ const authController = {
         full_name: cleanName,
         phone: cleanPhone,
         email: cleanEmail,
+        binding_code: generateAccountBindingCode(),
         password_hash: passwordHash,
         role: 'player'
       });
@@ -294,6 +343,8 @@ const authController = {
         full_name: newUser.full_name,
         email: newUser.email || '',
         phone: newUser.phone || '',
+        fb_psid: newUser.fb_psid || null,
+        binding_code: newUser.binding_code,
         role: newUser.role
       };
       req.session.user = sessionUser;

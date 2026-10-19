@@ -106,11 +106,6 @@
 
       <!-- Action Buttons In-Line with Tabs (Right) -->
       <div class="d-flex align-items-center gap-2 py-2 py-md-0 ms-md-3 justify-content-end flex-shrink-0 flex-wrap">
-        <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-none" data-bs-toggle="modal" data-bs-target="#messengerModal">
-          <i class="bi bi-messenger text-primary"></i>
-          <span class="d-none d-sm-inline">Messenger Alerts</span>
-        </button>
-
         <div id="headerAccountControls" class="d-inline-flex align-items-center gap-2">
           <% if (typeof user !== 'undefined' && user) { %>
             <button type="button" class="btn btn-dark btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-xs" onclick="switchVenueTab('my-bookings')" title="View My Bookings">
@@ -446,9 +441,9 @@
           </form>
 
           <div class="text-center mt-4 pt-3 border-top">
-            <span class="small text-muted d-block mb-2">Can't find your reference number?</span>
-            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#messengerModal">
-              <i class="bi bi-messenger me-1"></i>Get Pass on Messenger
+            <span class="small text-muted d-block mb-2">Want to see all your bookings &amp; enable Messenger alerts?</span>
+            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="switchVenueTab('my-bookings')">
+              <i class="bi bi-person-check-fill me-1"></i>Go to My Account &amp; Bookings
             </button>
           </div>
         </div>
@@ -470,7 +465,7 @@
             </div>
             <h3 class="fw-bold text-dark font-display mb-2">Player Account Required</h3>
             <p class="text-secondary small mb-4">
-              Sign in or create a free player account to book courts, track active holds, resume GCash payments, and view your complete booking history.
+              Sign in or create a free player account to book courts, enable personal Messenger alerts, track active holds, and view your complete booking history.
             </p>
             <div class="d-flex flex-column flex-sm-row justify-content-center gap-2">
               <button type="button" class="btn btn-book-now-gold rounded-pill px-4 py-2.5 fw-bold" onclick="openPlayerAuthModal('login', false)">
@@ -487,9 +482,9 @@
 
     <!-- Authenticated Player Dashboard -->
     <div id="myBookingsUserDashboard" class="<%= (typeof user !== 'undefined' && user) ? '' : 'd-none' %>">
-      <!-- Player Profile Header Card -->
+      <!-- Player Profile & Account Messenger Alerts Header Card -->
       <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white mb-4">
-        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+        <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-3">
           <div class="d-flex align-items-center gap-3">
             <div class="badge bg-primary text-warning rounded-circle d-flex align-items-center justify-content-center fw-bold fs-4 flex-shrink-0 shadow-sm" style="width: 54px; height: 54px;">
               <i class="bi bi-person-check-fill"></i>
@@ -500,6 +495,9 @@
                   <%= (typeof user !== 'undefined' && user) ? (user.full_name || user.username) : 'Player' %>
                 </h4>
                 <span class="badge bg-success-subtle text-success rounded-pill px-2.5 py-1 small fw-bold">Verified Player</span>
+                <span id="dashboardMessengerBadge" class="badge <%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'bg-primary-subtle text-primary' : 'bg-light text-secondary border' %> rounded-pill px-2.5 py-1 small fw-semibold">
+                  <i class="bi bi-messenger me-1"></i><%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'Messenger Connected' : 'Messenger Not Linked' %>
+                </span>
               </div>
               <div class="text-secondary small mt-1 d-flex flex-wrap gap-3">
                 <span id="dashboardPlayerPhone">
@@ -515,7 +513,16 @@
               </div>
             </div>
           </div>
-          <div class="d-flex align-items-center gap-2">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button type="button" id="dashboardChatBtn" class="btn btn-dark btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-xs" onclick="openAccountChatModal()">
+              <i class="bi bi-chat-dots-fill text-warning"></i>
+              <span>In-App Chat &amp; Pass Inbox</span>
+              <span id="dashboardChatBadge" class="badge bg-danger text-white rounded-pill px-1.5 py-0.5 d-none" style="font-size: 10px;">0</span>
+            </button>
+            <button type="button" id="dashboardMessengerBtn" class="btn <%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'btn-outline-primary' : 'btn-primary' %> btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-xs" data-bs-toggle="modal" data-bs-target="#messengerModal">
+              <i class="bi bi-messenger"></i>
+              <span id="dashboardMessengerBtnText"><%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'Messenger Alerts (Active)' : 'Connect Messenger Alerts' %></span>
+            </button>
             <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1.5 fw-semibold" onclick="refreshMyBookings()">
               <i class="bi bi-arrow-clockwise me-1"></i>Refresh
             </button>
@@ -949,6 +956,83 @@
 </div>
 
 <!-- =========================================================
+     FLOATING IN-APP ACCOUNT CHAT BUTTON (Logged-in Players Only)
+========================================================= -->
+<div id="accountChatFabWrap" class="position-fixed <%= (typeof user !== 'undefined' && user) ? '' : 'd-none' %>" style="bottom: 24px; right: 24px; z-index: 1030; transition: bottom 0.25s ease;">
+  <button type="button" id="accountChatFabBtn" onclick="openAccountChatModal()" class="btn btn-dark rounded-pill shadow-lg px-3.5 py-2.5 d-flex align-items-center gap-2 border border-warning" style="background: linear-gradient(135deg, #0B2545 0%, #134074 100%);">
+    <span class="position-relative d-inline-flex align-items-center justify-content-center bg-warning text-dark rounded-circle" style="width: 32px; height: 32px;">
+      <i class="bi bi-chat-dots-fill fs-6"></i>
+      <span id="floatingChatBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light d-none" style="font-size: 10px;">0</span>
+    </span>
+    <div class="text-start d-none d-sm-block pe-1">
+      <div class="fw-bold text-white lh-1" style="font-size: 12.5px;">Account Chat</div>
+      <div class="text-warning lh-1 mt-0.5" style="font-size: 10px;">Bookings &amp; Admin Support</div>
+    </div>
+  </button>
+</div>
+
+<!-- =========================================================
+     IN-APP ACCOUNT CHAT & BOOKING PASSES MODAL
+========================================================= -->
+<div class="modal fade" id="accountChatModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+    <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden" style="height: 82vh; max-height: 700px;">
+      <!-- Modal Header -->
+      <div class="modal-header border-0 py-3 px-4 text-white" style="background: linear-gradient(135deg, #0B2545 0%, #134074 100%);">
+        <div class="d-flex align-items-center gap-2.5">
+          <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm flex-shrink-0" style="width: 40px; height: 40px;">
+            <i class="bi bi-chat-heart-fill fs-5"></i>
+          </div>
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <h6 class="modal-title fw-bold mb-0 font-display text-white">My Account Chat &amp; Booking Passes</h6>
+              <span class="badge bg-success text-white rounded-pill px-2 py-0.5" style="font-size: 10px;">Live</span>
+            </div>
+            <div class="small text-white-50" style="font-size: 11.5px;">
+              Automated court passes, payment updates &amp; direct chat with 3KS Playground Admin
+            </div>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-outline-light btn-sm rounded-pill px-2.5 py-1 fw-semibold d-none d-sm-inline-flex align-items-center gap-1" style="font-size: 11px;" data-bs-toggle="modal" data-bs-target="#messengerModal">
+            <i class="bi bi-messenger text-info"></i> Messenger Alerts
+          </button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+      </div>
+
+      <!-- Chat Timeline Body -->
+      <div class="modal-body p-3 p-sm-4 d-flex flex-column gap-3" id="accountChatMessagesList" style="background: #f1f5f9; overflow-y: auto; flex: 1 1 auto;">
+        <div class="text-center py-5 text-secondary small">
+          <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+          Loading your booking cards &amp; messages...
+        </div>
+      </div>
+
+      <!-- Optional Attached Booking Reference Bar -->
+      <div id="chatAttachedRefBar" class="px-3 py-1.5 bg-warning-subtle border-top border-warning d-none d-flex align-items-center justify-content-between">
+        <div class="small fw-semibold text-dark">
+          <i class="bi bi-tag-fill text-primary me-1"></i>Regarding Booking: <span id="chatAttachedRefText" class="font-monospace fw-bold"></span>
+        </div>
+        <button type="button" class="btn btn-sm btn-link text-danger p-0 text-decoration-none small" onclick="clearChatAttachedRef()">
+          <i class="bi bi-x-circle-fill"></i> Remove
+        </button>
+      </div>
+
+      <!-- Chat Message Input Footer -->
+      <div class="modal-footer border-top bg-white p-2.5 px-3">
+        <form id="accountChatForm" class="w-100 d-flex align-items-center gap-2 m-0" onsubmit="handleSendPlayerChatMessage(event)">
+          <input type="text" id="accountChatInput" class="form-control rounded-pill bg-light border-0 px-3.5 py-2" placeholder="Write a message or question about your booking..." autocomplete="off" required>
+          <button type="submit" id="accountChatSendBtn" class="btn btn-book-now-gold rounded-pill px-3.5 py-2 fw-bold d-inline-flex align-items-center gap-1 flex-shrink-0">
+            <i class="bi bi-send-fill"></i> <span class="d-none d-sm-inline">Send</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
      LEAFLET MAP LIBS & CLIENT INTERACTION JAVASCRIPT
 ========================================================= -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -964,6 +1048,9 @@
   let currentPlayerUser = <%- JSON.stringify(typeof user !== 'undefined' && user ? user : null) %>;
   let myBookingsData = <%- JSON.stringify(typeof myBookings !== 'undefined' && myBookings ? myBookings : []) %>;
   let pendingCheckoutAfterAuth = false;
+  let accountChatMessages = [];
+  let accountChatUnreadCount = 0;
+  let chatAttachedBookingRef = null;
 
   document.addEventListener('DOMContentLoaded', function () {
     // 1. Initialize Date picker and buttons
@@ -975,11 +1062,14 @@
     // 3. Listen to Socket.io for Real-Time Updates
     initMatrixSocket();
 
-    // 4. Render initial My Bookings list if logged in
+    // 4. Render initial My Bookings list & fetch Account Chat if logged in
     renderMyBookingsList();
+    if (currentPlayerUser) {
+      fetchAccountChat(false);
+    }
 
-    // 5. Hide floating booking rail when checkout or auth modal opens, restore when closed
-    ['checkoutModal', 'playerAuthModal'].forEach(modalId => {
+    // 5. Hide floating booking rail when checkout, auth, or chat modal opens, restore when closed
+    ['checkoutModal', 'playerAuthModal', 'accountChatModal'].forEach(modalId => {
       const modalEl = document.getElementById(modalId);
       if (modalEl) {
         modalEl.addEventListener('show.bs.modal', function () {
@@ -1000,6 +1090,8 @@
       const targetTab = window.location.hash.replace('#', '');
       if (['book', 'my-bookings', 'about', 'photos', 'location', 'lookup'].includes(targetTab)) {
         switchVenueTab(targetTab);
+      } else if (targetTab === 'chat' && currentPlayerUser) {
+        openAccountChatModal();
       }
     }
 
@@ -1818,6 +1910,7 @@
     currentPlayerUser = userObj;
     applyAuthenticatedUserToUI(userObj);
     refreshMyBookings();
+    fetchAccountChat(false);
 
     // Hide Auth Modal
     const authModalEl = document.getElementById('playerAuthModal');
@@ -1842,6 +1935,10 @@
   function applyAuthenticatedUserToUI(userObj) {
     if (!userObj) return;
     const displayName = userObj.full_name || userObj.username || 'Player';
+
+    // Show floating Account Chat button when logged in
+    const fabWrap = document.getElementById('accountChatFabWrap');
+    if (fabWrap) fabWrap.classList.remove('d-none');
 
     // 1. Update top right header controls
     const headerControls = document.getElementById('headerAccountControls');
@@ -1888,6 +1985,37 @@
         dEmail.classList.add('d-none');
       }
     }
+
+    // 4. Update Individual Account Messenger Alerts status & modal
+    const isMessengerConnected = !!userObj.fb_psid;
+    const dMessengerBadge = document.getElementById('dashboardMessengerBadge');
+    const dMessengerBtn = document.getElementById('dashboardMessengerBtn');
+    const dMessengerBtnText = document.getElementById('dashboardMessengerBtnText');
+    if (dMessengerBadge) {
+      dMessengerBadge.className = `badge ${isMessengerConnected ? 'bg-primary-subtle text-primary' : 'bg-light text-secondary border'} rounded-pill px-2.5 py-1 small fw-semibold`;
+      dMessengerBadge.innerHTML = `<i class="bi bi-messenger me-1"></i>${isMessengerConnected ? 'Messenger Connected' : 'Messenger Not Linked'}`;
+    }
+    if (dMessengerBtn) {
+      dMessengerBtn.className = `btn ${isMessengerConnected ? 'btn-outline-primary' : 'btn-primary'} btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-xs`;
+    }
+    if (dMessengerBtnText) {
+      dMessengerBtnText.innerText = isMessengerConnected ? 'Messenger Alerts (Active)' : 'Connect Messenger Alerts';
+    }
+
+    const modalCodeEl = document.getElementById('messengerModalBindingCode');
+    const modalPhoneEl = document.getElementById('messengerModalPhone');
+    const modalStatusWrap = document.getElementById('messengerModalStatusWrap');
+    if (modalCodeEl && userObj.binding_code) {
+      modalCodeEl.innerText = userObj.binding_code;
+    }
+    if (modalPhoneEl) {
+      modalPhoneEl.innerText = userObj.phone || '';
+    }
+    if (modalStatusWrap) {
+      modalStatusWrap.innerHTML = isMessengerConnected
+        ? `<span class="badge bg-success-subtle text-success border border-success px-3 py-1.5 rounded-pill fw-bold" id="messengerModalStatusBadge"><i class="bi bi-check-circle-fill me-1"></i> Messenger Connected to Your Account</span>`
+        : `<span class="badge bg-warning-subtle text-dark border border-warning px-3 py-1.5 rounded-pill fw-bold" id="messengerModalStatusBadge"><i class="bi bi-dot me-1"></i> Not Linked Yet — Follow Step Below</span>`;
+    }
   }
 
   async function refreshMyBookings() {
@@ -1898,9 +2026,15 @@
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.success && Array.isArray(data.bookings)) {
-          myBookingsData = data.bookings;
-          renderMyBookingsList();
+        if (data.success) {
+          if (data.user) {
+            currentPlayerUser = data.user;
+            applyAuthenticatedUserToUI(currentPlayerUser);
+          }
+          if (Array.isArray(data.bookings)) {
+            myBookingsData = data.bookings;
+            renderMyBookingsList();
+          }
         }
       }
     } catch (e) {
@@ -1930,10 +2064,13 @@
             <i class="bi bi-calendar2-x"></i>
           </div>
           <h5 class="fw-bold text-dark font-display mb-1">No Court Reservations Yet</h5>
-          <p class="text-secondary small mb-3">Once you book a court, your active holds, upcoming sessions, and digital passes will appear right here.</p>
-          <div>
+          <p class="text-secondary small mb-3">Once you book a court, your active holds, upcoming sessions, and digital passes will appear right here and inside your Account Chat.</p>
+          <div class="d-flex justify-content-center gap-2 flex-wrap">
             <button type="button" class="btn btn-book-now-gold rounded-pill px-4 py-2 fw-bold" onclick="switchVenueTab('book')">
               <i class="bi bi-calendar2-check-fill me-1"></i> Browse Available Courts
+            </button>
+            <button type="button" class="btn btn-outline-dark rounded-pill px-4 py-2 fw-semibold" onclick="openAccountChatModal()">
+              <i class="bi bi-chat-dots-fill text-warning me-1"></i> Open Account Chat
             </button>
           </div>
         </div>
@@ -1983,15 +2120,19 @@
         `;
       }).join('');
 
-      let actionButtons = '';
+      let actionButtons = `
+        <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3 py-1.5 fw-semibold" onclick="openAccountChatModal('${b.reference_number}')">
+          <i class="bi bi-chat-dots-fill text-warning me-1"></i>Chat / Ask Admin
+        </button>
+      `;
       if (isAwaitingPay && !isExpired) {
-        actionButtons = `
+        actionButtons += `
           <a href="/payment/gcash?ref=${encodeURIComponent(b.reference_number)}" class="btn btn-book-now-gold btn-sm rounded-pill px-3 py-1.5 fw-bold">
             <i class="bi bi-qr-code-scan me-1"></i>Resume GCash Payment &rarr;
           </a>
         `;
       } else {
-        actionButtons = `
+        actionButtons += `
           <a href="/reservations/${encodeURIComponent(b.reference_number)}" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1.5 fw-bold">
             <i class="bi bi-ticket-perforated me-1"></i>View Pass / Receipt &rarr;
           </a>
@@ -2017,7 +2158,7 @@
               <span class="text-muted small">Total Order Amount (${b.total_hours} hr${b.total_hours > 1 ? 's' : ''}):</span>
               <span class="fw-extrabold text-primary fs-5 ms-1 font-display">₱${parseFloat(b.total_amount || 0).toFixed(2)}</span>
             </div>
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
               ${actionButtons}
             </div>
           </div>
@@ -2026,6 +2167,250 @@
     });
     html += '</div>';
     container.innerHTML = html;
+  }
+
+  // =========================================================
+  // IN-APP ACCOUNT CHAT & BOOKING CARDS FUNCTIONS
+  // =========================================================
+  function escapeChatHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function updateChatUnreadBadges(count) {
+    accountChatUnreadCount = Math.max(0, parseInt(count || 0, 10));
+    const fabBadge = document.getElementById('floatingChatBadge');
+    const dashBadge = document.getElementById('dashboardChatBadge');
+    [fabBadge, dashBadge].forEach(el => {
+      if (!el) return;
+      if (accountChatUnreadCount > 0) {
+        el.innerText = accountChatUnreadCount > 99 ? '99+' : accountChatUnreadCount;
+        el.classList.remove('d-none');
+      } else {
+        el.classList.add('d-none');
+      }
+    });
+  }
+
+  async function fetchAccountChat(markRead = false) {
+    if (!currentPlayerUser) return;
+    try {
+      const res = await fetch('/api/account/chat' + (markRead ? '?markRead=1' : ''), {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.loggedIn) {
+        accountChatMessages = Array.isArray(data.messages) ? data.messages : [];
+        updateChatUnreadBadges(markRead ? 0 : (data.unreadCount || 0));
+        renderAccountChatMessages(true);
+      }
+    } catch (e) {
+      console.warn('Could not load account chat:', e);
+    }
+  }
+
+  function openAccountChatModal(attachBookingRef = null) {
+    if (!currentPlayerUser) {
+      openPlayerAuthModal('login', false);
+      return;
+    }
+
+    if (attachBookingRef) {
+      setChatAttachedRef(attachBookingRef);
+    }
+
+    const modalEl = document.getElementById('accountChatModal');
+    if (modalEl) {
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    }
+
+    fetchAccountChat(true);
+    setTimeout(() => {
+      const inputEl = document.getElementById('accountChatInput');
+      if (inputEl) inputEl.focus();
+    }, 280);
+  }
+
+  function setChatAttachedRef(ref) {
+    chatAttachedBookingRef = ref || null;
+    const bar = document.getElementById('chatAttachedRefBar');
+    const txt = document.getElementById('chatAttachedRefText');
+    if (bar && txt) {
+      if (chatAttachedBookingRef) {
+        txt.innerText = '#' + chatAttachedBookingRef;
+        bar.classList.remove('d-none');
+      } else {
+        bar.classList.add('d-none');
+      }
+    }
+  }
+
+  function clearChatAttachedRef() {
+    setChatAttachedRef(null);
+  }
+
+  function renderAccountChatMessages(scrollToBottom = true) {
+    const listEl = document.getElementById('accountChatMessagesList');
+    if (!listEl) return;
+
+    if (!accountChatMessages || accountChatMessages.length === 0) {
+      listEl.innerHTML = `
+        <div class="card border-0 shadow-sm rounded-4 p-4 text-center bg-white my-auto mx-auto" style="max-width: 440px;">
+          <div class="badge bg-warning-subtle text-dark rounded-circle p-3 mb-2 fs-4 d-inline-flex align-items-center justify-content-center mx-auto" style="width: 56px; height: 56px;">
+            <i class="bi bi-chat-heart-fill text-primary"></i>
+          </div>
+          <h6 class="fw-bold text-dark font-display mb-1">Welcome to Your Personal Account Chat!</h6>
+          <p class="text-secondary small mb-0">
+            Every time you reserve a court, submit GCash payment, or get approved by Admin, your official booking card &amp; digital pass will appear right here. You can also message Admin anytime below!
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    accountChatMessages.forEach(msg => {
+      const timeStr = msg.created_at
+        ? new Date(msg.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+        : '';
+
+      if (msg.sender_role === 'system') {
+        // Automated Booking & Digital Pass Card
+        const st = msg.booking_status || '';
+        let badgeHtml = `<span class="badge bg-secondary text-white rounded-pill px-2.5 py-1" style="font-size: 10.5px;">Booking Update</span>`;
+        let borderClass = 'border-primary';
+        if (st === 'CONFIRMED') {
+          badgeHtml = `<span class="badge bg-success text-white rounded-pill px-2.5 py-1 fw-bold" style="font-size: 10.5px;"><i class="bi bi-check-circle-fill me-1"></i>CONFIRMED PASS</span>`;
+          borderClass = 'border-success';
+        } else if (st === 'AWAITING_CONFIRMATION') {
+          badgeHtml = `<span class="badge bg-info text-dark rounded-pill px-2.5 py-1 fw-bold" style="font-size: 10.5px;"><i class="bi bi-clock-history me-1"></i>VERIFYING PAYMENT</span>`;
+          borderClass = 'border-info';
+        } else if (st === 'AWAITING_PAYMENT') {
+          badgeHtml = `<span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold" style="font-size: 10.5px;"><i class="bi bi-hourglass-split me-1"></i>AWAITING GCASH</span>`;
+          borderClass = 'border-warning';
+        } else if (st === 'CANCELLED') {
+          badgeHtml = `<span class="badge bg-danger text-white rounded-pill px-2.5 py-1 fw-bold" style="font-size: 10.5px;"><i class="bi bi-x-circle-fill me-1"></i>CANCELLED</span>`;
+          borderClass = 'border-danger';
+        }
+
+        const refClean = msg.booking_ref || '';
+        let actionBtnHtml = '';
+        if (refClean) {
+          if (st === 'AWAITING_PAYMENT') {
+            actionBtnHtml = `
+              <a href="/payment/gcash?ref=${encodeURIComponent(refClean)}" class="btn btn-book-now-gold btn-sm rounded-pill px-3 py-1 fw-bold" style="font-size: 11.5px;">
+                <i class="bi bi-qr-code-scan me-1"></i>Complete GCash Payment &rarr;
+              </a>
+            `;
+          } else {
+            actionBtnHtml = `
+              <a href="/reservations/${encodeURIComponent(refClean)}" class="btn btn-primary btn-sm rounded-pill px-3 py-1 fw-bold" style="font-size: 11.5px;">
+                <i class="bi bi-ticket-perforated-fill me-1"></i>Open Digital Court Pass &rarr;
+              </a>
+            `;
+          }
+          actionBtnHtml += `
+            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 11px;" onclick="setChatAttachedRef('${escapeChatHtml(refClean)}'); document.getElementById('accountChatInput').focus();">
+              <i class="bi bi-reply-fill me-1"></i>Ask Admin
+            </button>
+          `;
+        }
+
+        html += `
+          <div class="card border-0 border-start border-4 ${borderClass} shadow-sm rounded-4 bg-white p-3 mx-auto w-100" style="max-width: 620px;">
+            <div class="d-flex align-items-center justify-content-between gap-2 pb-2 mb-2 border-bottom">
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-dark text-warning rounded-pill px-2 py-1" style="font-size: 10.5px;"><i class="bi bi-robot me-1"></i>3KS Booking Bot</span>
+                ${refClean ? `<span class="badge bg-light text-dark border font-monospace">${escapeChatHtml(refClean)}</span>` : ''}
+              </div>
+              ${badgeHtml}
+            </div>
+            <div class="small text-dark mb-2" style="white-space: pre-line; line-height: 1.55;">${escapeChatHtml(msg.message)}</div>
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2 border-top">
+              <span class="text-muted" style="font-size: 10.5px;">${timeStr}</span>
+              <div class="d-flex align-items-center gap-1.5 flex-wrap">${actionBtnHtml}</div>
+            </div>
+          </div>
+        `;
+      } else if (msg.sender_role === 'player') {
+        // Player message (right aligned)
+        html += `
+          <div class="d-flex flex-column align-items-end">
+            <div class="p-2.5 px-3.5 rounded-4 text-white shadow-xs" style="background: linear-gradient(135deg, #0B2545 0%, #134074 100%); max-width: 82%; border-bottom-right-radius: 4px !important;">
+              ${msg.booking_ref ? `<div class="badge bg-warning text-dark font-monospace mb-1" style="font-size: 10px;"><i class="bi bi-tag-fill me-1"></i>#${escapeChatHtml(msg.booking_ref)}</div>` : ''}
+              <div class="small" style="white-space: pre-line; line-height: 1.45;">${escapeChatHtml(msg.message)}</div>
+            </div>
+            <span class="text-muted mt-1 px-1" style="font-size: 10px;">You · ${timeStr}</span>
+          </div>
+        `;
+      } else {
+        // Admin message (left aligned)
+        html += `
+          <div class="d-flex flex-column align-items-start">
+            <div class="p-2.5 px-3.5 rounded-4 bg-white text-dark border shadow-xs" style="max-width: 82%; border-bottom-left-radius: 4px !important;">
+              <div class="d-flex align-items-center gap-1.5 mb-1">
+                <span class="badge bg-primary text-warning rounded-pill px-2 py-0.5" style="font-size: 10px;"><i class="bi bi-shield-check me-1"></i>${escapeChatHtml(msg.sender_name || '3KS Admin')}</span>
+                ${msg.booking_ref ? `<span class="badge bg-light text-dark border font-monospace" style="font-size: 10px;">#${escapeChatHtml(msg.booking_ref)}</span>` : ''}
+              </div>
+              <div class="small" style="white-space: pre-line; line-height: 1.45;">${escapeChatHtml(msg.message)}</div>
+            </div>
+            <span class="text-muted mt-1 px-1" style="font-size: 10px;">${timeStr}</span>
+          </div>
+        `;
+      }
+    });
+
+    listEl.innerHTML = html;
+    if (scrollToBottom) {
+      listEl.scrollTop = listEl.scrollHeight;
+    }
+  }
+
+  async function handleSendPlayerChatMessage(e) {
+    e.preventDefault();
+    const inputEl = document.getElementById('accountChatInput');
+    const sendBtn = document.getElementById('accountChatSendBtn');
+    if (!inputEl) return;
+
+    const text = inputEl.value.trim();
+    if (!text) return;
+
+    inputEl.value = '';
+    if (sendBtn) sendBtn.disabled = true;
+
+    try {
+      const res = await fetch('/api/account/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          message: text,
+          booking_ref: chatAttachedBookingRef || null
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.message) {
+        clearChatAttachedRef();
+        const exists = accountChatMessages.some(m => m.id === data.message.id);
+        if (!exists) {
+          accountChatMessages.push(data.message);
+          renderAccountChatMessages(true);
+        }
+      }
+    } catch (err) {
+      showLiveToast('Could not send message. Please try again.');
+    } finally {
+      if (sendBtn) sendBtn.disabled = false;
+      inputEl.focus();
+    }
   }
 
   // Share venue link
@@ -2045,7 +2430,7 @@
     }
   }
 
-  // Real-time Socket.io listener for live matrix sync
+  // Real-time Socket.io listener for live matrix, account Messenger sync & In-App Account Chat
   function initMatrixSocket() {
     if (typeof io !== 'undefined') {
       const socket = io();
@@ -2060,6 +2445,39 @@
       });
       socket.on('reservation:expired', function (data) {
         fetchMatrixAvailability(currentDate);
+      });
+      socket.on('player_messenger_bound', function (data) {
+        if (currentPlayerUser && (data.userId === currentPlayerUser.id || (data.bindingCode && data.bindingCode === currentPlayerUser.binding_code))) {
+          currentPlayerUser.fb_psid = data.psid;
+          applyAuthenticatedUserToUI(currentPlayerUser);
+          showLiveToast('Messenger Alerts connected to your account!');
+        }
+      });
+      socket.on('chat:new_message', function (msg) {
+        if (!currentPlayerUser || Number(msg.user_id) !== Number(currentPlayerUser.id)) return;
+
+        const exists = accountChatMessages.some(m => m.id === msg.id);
+        if (!exists) {
+          accountChatMessages.push(msg);
+        }
+
+        const chatModalEl = document.getElementById('accountChatModal');
+        const isChatOpen = chatModalEl && chatModalEl.classList.contains('show');
+        renderAccountChatMessages(true);
+
+        if (isChatOpen) {
+          fetch('/api/account/chat/read', { method: 'POST' }).catch(() => {});
+          updateChatUnreadBadges(0);
+        } else if (msg.sender_role !== 'player') {
+          updateChatUnreadBadges(accountChatUnreadCount + 1);
+          showLiveToast(msg.sender_role === 'admin'
+            ? `New message from ${msg.sender_name || '3KS Admin'} in your Account Chat!`
+            : `Booking update posted to your Account Chat (${msg.booking_ref || ''})!`);
+        }
+
+        if (msg.sender_role === 'system') {
+          refreshMyBookings();
+        }
       });
     }
   }

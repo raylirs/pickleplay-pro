@@ -1,0 +1,284 @@
+<div class="container-fluid py-4 px-3 px-lg-4">
+  <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2 mb-3">
+    <div>
+      <h3 class="fw-bold text-dark font-display mb-0">
+        <i class="bi bi-chat-dots-fill text-primary me-2"></i>Player Account Chat &amp; Booking Inbox
+      </h3>
+      <p class="text-secondary small mb-0">
+        View each player's automated booking cards, verify reservations, and reply in real time inside their individual account chat.
+      </p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="/admin/reservations" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold">
+        <i class="bi bi-calendar-check me-1"></i>All Reservations
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Left Sidebar: Player Accounts List -->
+    <div class="col-lg-4 col-xl-3">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white" style="height: 75vh; min-height: 540px; display: flex; flex-direction: column;">
+        <div class="p-3 border-bottom bg-light d-flex align-items-center justify-content-between">
+          <span class="fw-bold text-dark small text-uppercase"><i class="bi bi-people-fill text-primary me-1"></i>Player Accounts (<%= threads.length %>)</span>
+          <span class="badge bg-success-subtle text-success rounded-pill px-2 py-0.5 small">Live Socket</span>
+        </div>
+
+        <div class="list-group list-group-flush overflow-auto flex-grow-1" id="adminChatThreadsList">
+          <% if (!threads || threads.length === 0) { %>
+            <div class="p-4 text-center text-muted small">
+              No player accounts registered yet.
+            </div>
+          <% } else { %>
+            <% threads.forEach(t => { %>
+              <button
+                type="button"
+                id="thread-btn-<%= t.user.id %>"
+                class="list-group-item list-group-item-action p-3 border-bottom text-start <%= activeUserId === t.user.id ? 'bg-primary-subtle' : '' %>"
+                onclick="selectAdminChatUser(<%= t.user.id %>)"
+              >
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                  <div class="fw-bold text-dark text-truncate pe-2" style="max-width: 190px;">
+                    <%= t.user.full_name %>
+                  </div>
+                  <span id="thread-badge-<%= t.user.id %>" class="badge bg-danger rounded-pill <%= t.unreadCount > 0 ? '' : 'd-none' %>">
+                    <%= t.unreadCount %>
+                  </span>
+                </div>
+                <div class="d-flex align-items-center gap-2 small text-secondary mb-1" style="font-size: 11px;">
+                  <span><i class="bi bi-phone me-1"></i><%= t.user.phone || '—' %></span>
+                  <% if (t.user.fb_psid) { %>
+                    <span class="badge bg-primary-subtle text-primary rounded-pill px-1.5 py-0" style="font-size: 9.5px;"><i class="bi bi-messenger me-1"></i>Bound</span>
+                  <% } %>
+                </div>
+                <div id="thread-preview-<%= t.user.id %>" class="text-muted text-truncate" style="font-size: 11.5px;">
+                  <%= t.lastMessage ? t.lastMessage.message.replace(/\n+/g, ' ') : 'No messages yet' %>
+                </div>
+              </button>
+            <% }) %>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Main Panel: Active Player Chat & Bookings -->
+    <div class="col-lg-8 col-xl-9">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white" style="height: 75vh; min-height: 540px; display: flex; flex-direction: column;">
+        <!-- Active Player Header -->
+        <div class="p-3 px-4 border-bottom text-white d-flex flex-wrap align-items-center justify-content-between gap-2" style="background: linear-gradient(135deg, #0B2545 0%, #134074 100%);">
+          <div class="d-flex align-items-center gap-2.5">
+            <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 38px; height: 38px;">
+              <i class="bi bi-person-fill fs-5"></i>
+            </div>
+            <div>
+              <h6 class="fw-bold mb-0 text-white" id="adminChatHeaderName">Select a Player Account</h6>
+              <div class="small text-white-50" id="adminChatHeaderMeta" style="font-size: 11.5px;">—</div>
+            </div>
+          </div>
+          <div id="adminChatHeaderBadges" class="d-flex align-items-center gap-2"></div>
+        </div>
+
+        <!-- Messages Timeline -->
+        <div id="adminChatMessagesContainer" class="p-3 p-md-4 d-flex flex-column gap-3 flex-grow-1" style="background: #f1f5f9; overflow-y: auto;">
+          <div class="text-center text-muted my-auto small">
+            Select a player account on the left to view their booking cards and chat history.
+          </div>
+        </div>
+
+        <!-- Reply Input Footer -->
+        <div class="p-3 border-top bg-white">
+          <form id="adminChatReplyForm" class="d-flex align-items-center gap-2 m-0" onsubmit="handleSendAdminReply(event)">
+            <input type="text" id="adminChatReplyInput" class="form-control rounded-pill bg-light border-0 px-3.5 py-2" placeholder="Write a reply to this player's account chat..." autocomplete="off" required>
+            <button type="submit" id="adminChatReplyBtn" class="btn btn-primary rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-1.5 flex-shrink-0">
+              <i class="bi bi-send-fill"></i> Send Reply
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  let currentAdminChatUserId = <%= activeUserId ? activeUserId : 'null' %>;
+  let currentAdminChatMessages = [];
+
+  function escapeHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (currentAdminChatUserId) {
+      selectAdminChatUser(currentAdminChatUserId);
+    }
+
+    if (typeof io !== 'undefined') {
+      const socket = io();
+      socket.on('chat:new_message', function (msg) {
+        const previewEl = document.getElementById('thread-preview-' + msg.user_id);
+        if (previewEl) {
+          previewEl.innerText = (msg.message || '').replace(/\n+/g, ' ');
+        }
+
+        if (Number(msg.user_id) === Number(currentAdminChatUserId)) {
+          const exists = currentAdminChatMessages.some(m => m.id === msg.id);
+          if (!exists) {
+            currentAdminChatMessages.push(msg);
+            renderAdminChatMessages(true);
+          }
+        } else if (msg.sender_role === 'player') {
+          const badgeEl = document.getElementById('thread-badge-' + msg.user_id);
+          if (badgeEl) {
+            const cur = parseInt(badgeEl.innerText || '0', 10) || 0;
+            badgeEl.innerText = cur + 1;
+            badgeEl.classList.remove('d-none');
+          }
+        }
+      });
+    }
+  });
+
+  async function selectAdminChatUser(userId) {
+    currentAdminChatUserId = userId;
+    document.querySelectorAll('#adminChatThreadsList .list-group-item').forEach(btn => {
+      btn.classList.remove('bg-primary-subtle');
+    });
+    const activeBtn = document.getElementById('thread-btn-' + userId);
+    if (activeBtn) activeBtn.classList.add('bg-primary-subtle');
+
+    const badgeEl = document.getElementById('thread-badge-' + userId);
+    if (badgeEl) {
+      badgeEl.innerText = '0';
+      badgeEl.classList.add('d-none');
+    }
+
+    const container = document.getElementById('adminChatMessagesContainer');
+    if (container) {
+      container.innerHTML = '<div class="text-center text-secondary my-auto small"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Loading player chat...</div>';
+    }
+
+    try {
+      const res = await fetch('/admin/api/chat/' + userId, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.success) {
+        const p = data.player;
+        document.getElementById('adminChatHeaderName').innerText = p.full_name || 'Player';
+        document.getElementById('adminChatHeaderMeta').innerText = `Phone: ${p.phone || '—'} · Email: ${p.email || '—'} · Code: ${p.binding_code || '—'}`;
+        document.getElementById('adminChatHeaderBadges').innerHTML = p.fb_psid
+          ? `<span class="badge bg-info text-dark rounded-pill px-2.5 py-1"><i class="bi bi-messenger me-1"></i>Messenger Linked</span>`
+          : `<span class="badge bg-secondary rounded-pill px-2.5 py-1">Messenger Not Linked</span>`;
+
+        currentAdminChatMessages = Array.isArray(data.messages) ? data.messages : [];
+        renderAdminChatMessages(true);
+      }
+    } catch (e) {
+      console.error('Error loading player chat:', e);
+    }
+  }
+
+  function renderAdminChatMessages(scrollToBottom = true) {
+    const container = document.getElementById('adminChatMessagesContainer');
+    if (!container) return;
+
+    if (!currentAdminChatMessages || currentAdminChatMessages.length === 0) {
+      container.innerHTML = `<div class="text-center text-muted my-auto small">No bookings or messages in this player's chat yet.</div>`;
+      return;
+    }
+
+    let html = '';
+    currentAdminChatMessages.forEach(msg => {
+      const timeStr = msg.created_at
+        ? new Date(msg.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+        : '';
+
+      if (msg.sender_role === 'system') {
+        const refClean = msg.booking_ref || '';
+        html += `
+          <div class="card border-0 border-start border-4 border-primary shadow-sm rounded-4 bg-white p-3 mx-auto w-100" style="max-width: 640px;">
+            <div class="d-flex align-items-center justify-content-between pb-2 mb-2 border-bottom">
+              <span class="badge bg-dark text-warning rounded-pill px-2.5 py-1" style="font-size: 10.5px;"><i class="bi bi-robot me-1"></i>Automated Booking Card</span>
+              ${refClean ? `<a href="/reservations/${encodeURIComponent(refClean)}" target="_blank" class="badge bg-primary-subtle text-primary text-decoration-none font-monospace">${escapeHtml(refClean)} <i class="bi bi-box-arrow-up-right ms-1"></i></a>` : ''}
+            </div>
+            <div class="small text-dark" style="white-space: pre-line; line-height: 1.5;">${escapeHtml(msg.message)}</div>
+            <div class="text-end text-muted mt-1" style="font-size: 10px;">${timeStr}</div>
+          </div>
+        `;
+      } else if (msg.sender_role === 'player') {
+        // Player message (left aligned for Admin)
+        html += `
+          <div class="d-flex flex-column align-items-start">
+            <div class="p-2.5 px-3.5 rounded-4 bg-white text-dark border shadow-xs" style="max-width: 80%; border-bottom-left-radius: 4px !important;">
+              <div class="d-flex align-items-center gap-1.5 mb-1">
+                <span class="badge bg-warning text-dark rounded-pill px-2 py-0.5" style="font-size: 10px;"><i class="bi bi-person-fill me-1"></i>${escapeHtml(msg.sender_name || 'Player')}</span>
+                ${msg.booking_ref ? `<span class="badge bg-light text-dark border font-monospace" style="font-size: 10px;">#${escapeHtml(msg.booking_ref)}</span>` : ''}
+              </div>
+              <div class="small" style="white-space: pre-line; line-height: 1.45;">${escapeHtml(msg.message)}</div>
+            </div>
+            <span class="text-muted mt-1 px-1" style="font-size: 10px;">${timeStr}</span>
+          </div>
+        `;
+      } else {
+        // Admin message (right aligned for Admin)
+        html += `
+          <div class="d-flex flex-column align-items-end">
+            <div class="p-2.5 px-3.5 rounded-4 text-white shadow-xs" style="background: linear-gradient(135deg, #0B2545 0%, #134074 100%); max-width: 80%; border-bottom-right-radius: 4px !important;">
+              <div class="small" style="white-space: pre-line; line-height: 1.45;">${escapeHtml(msg.message)}</div>
+            </div>
+            <span class="text-muted mt-1 px-1" style="font-size: 10px;">${escapeHtml(msg.sender_name || 'Admin')} · ${timeStr}</span>
+          </div>
+        `;
+      }
+    });
+
+    container.innerHTML = html;
+    if (scrollToBottom) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }
+
+  async function handleSendAdminReply(e) {
+    e.preventDefault();
+    if (!currentAdminChatUserId) return;
+
+    const inputEl = document.getElementById('adminChatReplyInput');
+    const btn = document.getElementById('adminChatReplyBtn');
+    const text = inputEl.value.trim();
+    if (!text) return;
+
+    inputEl.value = '';
+    if (btn) btn.disabled = true;
+
+    try {
+      const res = await fetch('/admin/api/chat/' + currentAdminChatUserId, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ message: text })
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.message) {
+        const exists = currentAdminChatMessages.some(m => m.id === data.message.id);
+        if (!exists) {
+          currentAdminChatMessages.push(data.message);
+          renderAdminChatMessages(true);
+        }
+      }
+    } catch (err) {
+      alert('Failed to send message.');
+    } finally {
+      if (btn) btn.disabled = false;
+      inputEl.focus();
+    }
+  }
+</script>

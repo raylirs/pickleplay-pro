@@ -1,4 +1,4 @@
-const { SystemSetting, Reservation, Court } = require('../models');
+const { SystemSetting, Reservation, Court, User } = require('../models');
 const { getIO } = require('../config/socket');
 const { Op } = require('sequelize');
 
@@ -243,9 +243,18 @@ async function notifyAdminPaymentProof(reservation) {
  * Notify Player when their booking is CONFIRMED by Admin
  */
 async function notifyPlayerBookingConfirmed(reservation) {
-  if (!reservation.fb_psid) return;
+  let targetPsid = reservation.fb_psid;
+  if (!targetPsid && reservation.user_id) {
+    try {
+      const playerUser = await User.findByPk(reservation.user_id);
+      if (playerUser && playerUser.fb_psid) {
+        targetPsid = playerUser.fb_psid;
+      }
+    } catch (e) {}
+  }
+  if (!targetPsid) return;
 
-  const msg = `🎉 [3KS PLAYGROUND] YOUR BOOKING IS CONFIRMED!\n\n` +
+  const msg = `🎉 [THE PLAYGROUND] YOUR BOOKING IS CONFIRMED!\n\n` +
     `Hello ${reservation.user_name}! Your court reservation has been verified and confirmed by Admin.\n\n` +
     `📋 Booking Ref: ${reservation.reference_number}\n` +
     `🏟️ Court: Court ${reservation.court_id}\n` +
@@ -255,7 +264,7 @@ async function notifyPlayerBookingConfirmed(reservation) {
     `🎟️ View Your Digital Pass: https://pickleplay-pro.onrender.com/reservations/${reservation.reference_number}\n\n` +
     `See you on the court! 🏓`;
 
-  await sendMessengerNotify(reservation.fb_psid, msg);
+  await sendMessengerNotify(targetPsid, msg);
 }
 
 /**
@@ -301,6 +310,11 @@ async function processAdminAction(senderId, rawText) {
     // Send confirmed pass to player if bound
     await notifyPlayerBookingConfirmed(reservation);
 
+    try {
+      const { postBookingSystemMessage } = require('./chatService');
+      await postBookingSystemMessage(reservation, 'BOOKING_CONFIRMED');
+    } catch (e) {}
+
     // Broadcast real-time availability update to all browsers
     try {
       const io = getIO();
@@ -316,7 +330,7 @@ async function processAdminAction(senderId, rawText) {
       });
     } catch (e) {}
 
-    await sendMessengerNotify(senderId, `🎉 [1-CLICK APPROVED] Reservation #${reservation.reference_number} for ${reservation.user_name} is now CONFIRMED!\n\nPlayer has been sent their confirmed digital pass on Messenger.`);
+    await sendMessengerNotify(senderId, `🎉 [1-CLICK APPROVED] Reservation #${reservation.reference_number} for ${reservation.user_name} is now CONFIRMED!\n\nPlayer has been sent their confirmed digital pass on Messenger & In-App Chat.`);
     return true;
   }
 
@@ -324,6 +338,11 @@ async function processAdminAction(senderId, rawText) {
     reservation.status = 'CANCELLED';
     reservation.cancellation_reason = 'Cancelled by Admin via 1-Click Messenger';
     await reservation.save();
+
+    try {
+      const { postBookingSystemMessage } = require('./chatService');
+      await postBookingSystemMessage(reservation, 'BOOKING_CANCELLED');
+    } catch (e) {}
 
     try {
       const io = getIO();
@@ -396,11 +415,63 @@ async function handleWebhookEvents(req, res) {
         const handledAdmin = await processAdminAction(senderId, incomingText);
         if (handledAdmin) continue;
 
-        // 2. Otherwise, check for player booking binding
+        // 2. Check for Player Account or Booking Binding
         const cleanedText = incomingText.trim().toUpperCase();
         const compactText = cleanedText.replace(/\s+/g, '').replace(/–|—/g, '-');
         const digitsOnly = incomingText.replace(/\D/g, '');
 
+        // 2a. Check Player User Account first (by account binding_code, phone, or email)
+        const userConditions = [
+          { binding_code: compactText },
+          { email: incomingText.trim().toLowerCase() }
+        ];
+        if (digitsOnly.length >= 4) {
+          userConditions.push({ binding_code: `PLAY-${digitsOnly}` });
+          userConditions.push({ binding_code: { [Op.like]: `%${digitsOnly}%` } });
+        }
+        if (digitsOnly.length >= 10) {
+          userConditions.push({ phone: { [Op.like]: `%${digitsOnly.slice(-10)}%` } });
+        }
+
+        const matchedUser = await User.findOne({
+          where: { [Op.or]: userConditions },
+          order: [['id', 'DESC']]
+        });
+
+        if (matchedUser) {
+          matchedUser.fb_psid = senderId;
+          await matchedUser.save();
+
+          await Reservation.update(
+            { fb_psid: senderId },
+            {
+              where: {
+                [Op.or]: [
+                  { user_id: matchedUser.id },
+                  ...(matchedUser.phone ? [{ user_contact: matchedUser.phone }] : [])
+                ]
+              }
+            }
+          );
+
+          try {
+            const io = getIO();
+            io.emit('player_messenger_bound', {
+              userId: matchedUser.id,
+              bindingCode: matchedUser.binding_code,
+              psid: senderId
+            });
+          } catch (e) {}
+
+          const replyText = `✅ [THE PLAYGROUND] Account Connected!\n\n` +
+            `Hello ${matchedUser.full_name || matchedUser.username}! Your Facebook Messenger is now linked to your Player Account (${matchedUser.phone || matchedUser.username}).\n\n` +
+            `You will automatically receive instant digital passes and booking confirmation alerts here for all your court reservations! 🏓`;
+
+          await sendMessengerNotify(senderId, replyText);
+          continue;
+        }
+
+        // 2b. Fallback: Check individual Reservation reference/binding_code
         const searchConditions = [
           { reference_number: compactText },
           { binding_code: compactText },
@@ -409,6 +480,7 @@ async function handleWebhookEvents(req, res) {
         ];
 
         if (digitsOnly.length >= 4) {
+          searchConditions.push({ binding_code: `PLAY-${digitsOnly}` });
           searchConditions.push({ binding_code: `3KS-${digitsOnly}` });
           searchConditions.push({ binding_code: { [Op.like]: `%${digitsOnly}%` } });
           searchConditions.push({ reference_number: { [Op.like]: `%${digitsOnly}%` } });
@@ -429,16 +501,21 @@ async function handleWebhookEvents(req, res) {
           reservation.fb_psid = senderId;
           await reservation.save();
 
+          if (reservation.user_id) {
+            await User.update({ fb_psid: senderId }, { where: { id: reservation.user_id } });
+          }
+
           try {
             const io = getIO();
             io.emit('player_messenger_bound', {
+              userId: reservation.user_id || null,
               reference: reservation.reference_number,
               psid: senderId
             });
           } catch (e) {}
 
-          const replyText = `✅ [3KS PLAYGROUND] Connected!\n\n` +
-            `Hello ${reservation.user_name}! Your Facebook Messenger is now linked to Reservation #${reservation.reference_number}.\n\n` +
+          const replyText = `✅ [THE PLAYGROUND] Connected!\n\n` +
+            `Hello ${reservation.user_name}! Your Facebook Messenger is now linked to your account & Reservation #${reservation.reference_number}.\n\n` +
             `📅 Date: ${reservation.reservation_date} (${reservation.start_time})\n` +
             `🏟️ Court: ${reservation.court ? reservation.court.display_name : 'Court ' + reservation.court_id}\n\n` +
             `You will receive instant pass & confirmation alerts here! 🏓`;
@@ -446,8 +523,8 @@ async function handleWebhookEvents(req, res) {
           await sendMessengerNotify(senderId, replyText);
         } else {
           if (incomingText.toLowerCase().includes('hi') || incomingText.toLowerCase().includes('hello') || incomingText.toLowerCase().includes('help')) {
-            const helpText = `👋 Hello! Welcome to 3KS Pickleball Playground.\n\n` +
-              `To link your court booking for alerts, simply reply with your Booking Reference Number or 6-digit Code (e.g. 3KS-1234).\n\n` +
+            const helpText = `👋 Hello! Welcome to The Playground Pickleball.\n\n` +
+              `To link your Player Account for Messenger alerts, reply with your Account Code (e.g. PLAY-1234) or your registered mobile number.\n\n` +
               `🌐 Book online: https://pickleplay-pro.onrender.com`;
             await sendMessengerNotify(senderId, helpText);
           }

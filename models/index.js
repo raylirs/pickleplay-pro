@@ -5,6 +5,7 @@ const Court = require('./Court');
 const Reservation = require('./Reservation');
 const AuditLog = require('./AuditLog');
 const SystemSetting = require('./SystemSetting');
+const ChatMessage = require('./ChatMessage');
 
 // Relations
 CourtCategory.hasMany(Court, { foreignKey: 'category_id', as: 'courts', onDelete: 'CASCADE' });
@@ -16,6 +17,9 @@ Reservation.belongsTo(Court, { foreignKey: 'court_id', as: 'court' });
 User.hasMany(Reservation, { foreignKey: 'user_id', as: 'reservations' });
 Reservation.belongsTo(User, { foreignKey: 'user_id', as: 'player' });
 
+User.hasMany(ChatMessage, { foreignKey: 'user_id', as: 'chat_messages', onDelete: 'CASCADE' });
+ChatMessage.belongsTo(User, { foreignKey: 'user_id', as: 'player' });
+
 User.hasMany(AuditLog, { foreignKey: 'user_id', as: 'audit_logs' });
 AuditLog.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
@@ -26,5 +30,6 @@ module.exports = {
   Court,
   Reservation,
   AuditLog,
-  SystemSetting
+  SystemSetting,
+  ChatMessage
 };

@@ -27,7 +27,9 @@ async function seedDatabase() {
     const userColumns = [
       { name: 'full_name', type: 'VARCHAR(200)' },
       { name: 'email', type: 'VARCHAR(200)' },
-      { name: 'phone', type: 'VARCHAR(50)' }
+      { name: 'phone', type: 'VARCHAR(50)' },
+      { name: 'fb_psid', type: 'VARCHAR(100)' },
+      { name: 'binding_code', type: 'VARCHAR(20)' }
     ];
 
     for (const col of userColumns) {

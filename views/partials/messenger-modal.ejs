@@ -1,39 +1,78 @@
-<!-- Messenger QR Popup Modal for Public Visitors -->
+<!-- Account Messenger Alerts Modal (Inside Individual Player Account) -->
 <div class="modal fade" id="messengerModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-4 text-center p-3 shadow-lg">
+    <div class="modal-content rounded-4 text-center p-3 shadow-lg border-0">
       <div class="modal-header border-0 pb-0">
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <div class="badge bg-primary-subtle text-primary rounded-circle p-3 mb-2 fs-3">
+      <div class="modal-body pt-1">
+        <div class="badge bg-primary-subtle text-primary rounded-circle p-3 mb-2 fs-3 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
           <i class="bi bi-messenger"></i>
         </div>
-        <h4 class="fw-bold text-dark mb-1">Connect with The Playground on Messenger</h4>
-        <p class="small text-secondary mb-3">Scan this QR code with your phone camera or tap below to open Messenger chat with <strong>The Playground Pickleball</strong>.</p>
+        <h4 class="fw-bold text-dark font-display mb-1">Account Messenger Alerts</h4>
+        <p class="small text-secondary mb-3">
+          Link your personal Facebook Messenger to your player account once to receive instant digital passes and booking confirmations automatically.
+        </p>
 
-        <div class="p-3 bg-light rounded-4 border d-inline-block mb-3 shadow-sm">
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https://m.me/1224751467396635" alt="Messenger QR" width="170" height="170" class="rounded-3">
-          <span class="small d-block text-muted mt-2" style="font-size: 11px;">https://m.me/1224751467396635</span>
+        <!-- Live Connection Status Pill -->
+        <div class="mb-3" id="messengerModalStatusWrap">
+          <% if (typeof user !== 'undefined' && user && user.fb_psid) { %>
+            <span class="badge bg-success-subtle text-success border border-success px-3 py-1.5 rounded-pill fw-bold" id="messengerModalStatusBadge">
+              <i class="bi bi-check-circle-fill me-1"></i> Messenger Connected to Your Account
+            </span>
+          <% } else { %>
+            <span class="badge bg-warning-subtle text-dark border border-warning px-3 py-1.5 rounded-pill fw-bold" id="messengerModalStatusBadge">
+              <i class="bi bi-dot me-1"></i> Not Linked Yet — Follow Step Below
+            </span>
+          <% } %>
         </div>
 
-        <div class="bg-primary-subtle text-dark p-3 rounded-3 mb-3 text-start small border border-primary-subtle">
-          <div class="fw-bold mb-1"><i class="bi bi-info-circle-fill text-primary me-1"></i>How to link your booking:</div>
-          <ul class="mb-0 ps-3 text-secondary" style="font-size: 12px;">
-            <li>If you have booked a court, send your <strong>Booking Reference Number</strong> (e.g. <code>3KS2026A1B2</code>) or your <strong>6-digit Quick Code</strong> in the chat.</li>
-            <li>Your Messenger will be instantly linked to receive digital passes and live schedule updates!</li>
-          </ul>
+        <!-- Personal Account Binding Code Card -->
+        <div class="bg-light rounded-4 border p-3 mb-3 text-center">
+          <span class="text-uppercase text-muted fw-bold d-block mb-1" style="font-size: 10px; letter-spacing: 0.08em;">Your Personal Account Code</span>
+          <div class="d-flex align-items-center justify-content-center gap-2">
+            <span class="fs-4 fw-extrabold font-monospace text-primary" id="messengerModalBindingCode">
+              <%= (typeof user !== 'undefined' && user && user.binding_code) ? user.binding_code : 'PLAY-XXXX' %>
+            </span>
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-0.5 fw-semibold" onclick="copyAccountBindingCode()" title="Copy Code">
+              <i class="bi bi-clipboard me-1"></i><span id="copyBindingCodeText">Copy</span>
+            </button>
+          </div>
+          <span class="text-secondary d-block mt-1" style="font-size: 11.5px;">
+            Send this code (or your registered mobile number <strong id="messengerModalPhone"><%= (typeof user !== 'undefined' && user && user.phone) ? user.phone : '' %></strong>) in our Messenger chat.
+          </span>
+        </div>
+
+        <div class="p-3 bg-white rounded-4 border d-inline-block mb-3 shadow-xs">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://m.me/1224751467396635" alt="Messenger QR" width="150" height="150" class="rounded-3">
+          <span class="small d-block text-muted mt-1" style="font-size: 11px;">Scan QR or tap button below</span>
         </div>
 
         <div class="d-flex flex-column gap-2">
           <a href="https://m.me/1224751467396635" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg rounded-pill fw-bold w-100">
-            <i class="bi bi-chat-dots-fill me-2"></i>Open Chat in Messenger
+            <i class="bi bi-messenger me-2"></i>Open Messenger &amp; Send Code
           </a>
-          <a href="/reservations/lookup" class="btn btn-outline-secondary btn-sm rounded-pill">
-            <i class="bi bi-search me-1"></i>Lookup My Booking Reference
-          </a>
+          <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" data-bs-dismiss="modal">
+            Done
+          </button>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  function copyAccountBindingCode() {
+    const codeEl = document.getElementById('messengerModalBindingCode');
+    const btnText = document.getElementById('copyBindingCodeText');
+    if (!codeEl) return;
+    const code = codeEl.innerText.trim();
+    if (navigator.clipboard && code) {
+      navigator.clipboard.writeText(code);
+      if (btnText) {
+        btnText.innerText = 'Copied!';
+        setTimeout(() => { btnText.innerText = 'Copy'; }, 2000);
+      }
+    }
+  }
+</script>

@@ -1,4 +1,4 @@
-const { Reservation, Court, CourtCategory } = require('../models');
+const { Reservation, Court, CourtCategory, User } = require('../models');
 const { Op } = require('sequelize');
 const { isSlotRangeAvailable, areSlotsAvailable, getCourtAvailability } = require('../services/availabilityService');
 const paymentService = require('../services/paymentService');
@@ -141,7 +141,9 @@ const reservationController = {
 
         const masterReference = generateReferenceNumber();
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-        const bindingCode = 'PLAY-' + Math.floor(1000 + Math.random() * 9000);
+        const dbUser = (req.session && req.session.user) ? await User.findByPk(req.session.user.id) : null;
+        const bindingCode = (dbUser && dbUser.binding_code) ? dbUser.binding_code : ('PLAY-' + Math.floor(1000 + Math.random() * 9000));
+        const accountPsid = dbUser && dbUser.fb_psid ? dbUser.fb_psid : null;
 
         let primaryReservation = null;
         let totalBookingAmount = 0;
@@ -176,6 +178,7 @@ const reservationController = {
             status: 'AWAITING_PAYMENT',
             payment_provider: 'GCASH_QR',
             special_requests: special_requests ? special_requests.trim() : null,
+            fb_psid: accountPsid,
             binding_code: bindingCode,
             expires_at: expiresAt
           });
@@ -207,8 +210,17 @@ const reservationController = {
 
         if (primaryReservation) {
           try {
-            const { sendReservationCreatedNotification } = require('../services/facebookService');
-            sendReservationCreatedNotification(primaryReservation).catch(() => {});
+            const { postBookingSystemMessage } = require('../services/chatService');
+            const courtSummary = courtIdKeys.length > 1 ? `${courtIdKeys.length} Courts` : `Court ${primaryReservation.court_id}`;
+            postBookingSystemMessage(primaryReservation, 'BOOKING_CREATED', {
+              courtSummary,
+              totalAmount: totalBookingAmount
+            }).catch(() => {});
+          } catch (e) {}
+
+          try {
+            const { notifyAdminNewBooking } = require('../services/facebookService');
+            notifyAdminNewBooking(primaryReservation).catch(() => {});
           } catch (e) {}
 
           if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
@@ -294,7 +306,9 @@ const reservationController = {
       const referenceNumber = generateReferenceNumber();
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins validity
 
-      const bindingCode = '3KS-' + Math.floor(1000 + Math.random() * 9000);
+      const dbUser = (req.session && req.session.user) ? await User.findByPk(req.session.user.id) : null;
+      const bindingCode = (dbUser && dbUser.binding_code) ? dbUser.binding_code : ('PLAY-' + Math.floor(1000 + Math.random() * 9000));
+      const accountPsid = dbUser && dbUser.fb_psid ? dbUser.fb_psid : null;
 
       const reservation = await Reservation.create({
         reference_number: referenceNumber,
@@ -312,6 +326,7 @@ const reservationController = {
         status: 'AWAITING_PAYMENT',
         payment_provider: 'GCASH_QR',
         special_requests: special_requests ? special_requests.trim() : null,
+        fb_psid: accountPsid,
         binding_code: bindingCode,
         expires_at: expiresAt
       });
@@ -335,6 +350,15 @@ const reservationController = {
       } catch (e) {
         console.warn('Socket broadcast error:', e.message);
       }
+
+      // Post Booking Card to Player's In-App Account Chat
+      try {
+        const { postBookingSystemMessage } = require('../services/chatService');
+        postBookingSystemMessage(reservation, 'BOOKING_CREATED', {
+          courtSummary: court.display_name,
+          totalAmount
+        }).catch(() => {});
+      } catch (e) {}
 
       // Dispatch Facebook Messenger notification to Admin Profile (Async)
       try {
@@ -520,9 +544,19 @@ const reservationController = {
       if (!req.session || !req.session.user) {
         return res.status(401).json({ success: false, requiresAuth: true, error: 'Not logged in.' });
       }
+      const dbUser = await User.findByPk(req.session.user.id);
+      if (dbUser) {
+        if (!dbUser.binding_code) {
+          dbUser.binding_code = 'PLAY-' + Math.floor(1000 + Math.random() * 9000);
+          await dbUser.save();
+        }
+        req.session.user.fb_psid = dbUser.fb_psid || null;
+        req.session.user.binding_code = dbUser.binding_code;
+      }
       const bookings = await reservationController.getPlayerReservationsGrouped(req.session.user);
       res.json({
         success: true,
+        user: req.session.user,
         bookings
       });
     } catch (err) {

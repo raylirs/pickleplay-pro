@@ -161,6 +161,12 @@ const paymentController = {
         notifyAdminPaymentProof(reservation).catch(e => console.warn('[FB Notify Error]:', e.message));
       } catch (e) {}
 
+      // Post automated Booking Card to Player In-App Account Chat
+      try {
+        const { postBookingSystemMessage } = require('../services/chatService');
+        postBookingSystemMessage(reservation, 'PAYMENT_SUBMITTED').catch(e => console.warn('[Chat Notify Error]:', e.message));
+      } catch (e) {}
+
       req.flash('success', 'GCash payment proof submitted successfully! The admin will verify and confirm your slot.');
       res.redirect(`/reservations/${reservation.reference_number}`);
     } catch (err) {

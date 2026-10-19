@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const authController = require('../controllers/authController');
+const chatController = require('../controllers/chatController');
 const { requireAuth, redirectIfAuthenticated } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
@@ -43,6 +44,11 @@ router.post('/facebook/test-notification', requireAuth, adminController.testFace
 router.post('/facebook/send-direct', requireAuth, adminController.sendDirectMessage);
 router.post('/facebook/toggle-admin-recipient', requireAuth, adminController.toggleAdminRecipient);
 router.post('/facebook/subscribers/:id/unbind', requireAuth, adminController.unbindSubscriber);
+
+// Player Account Chat & Booking Inbox
+router.get('/chat', requireAuth, chatController.showAdminChatInbox);
+router.get('/api/chat/:userId', requireAuth, chatController.getAdminUserChatJson);
+router.post('/api/chat/:userId', requireAuth, chatController.sendAdminChatMessage);
 
 // User & Staff Accounts Management
 router.get('/users', requireAuth, adminController.showUsers);
