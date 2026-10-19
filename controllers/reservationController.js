@@ -209,9 +209,9 @@ const reservationController = {
         // Each court preserves its individual accurate court total_amount (no double-counting)
 
         if (primaryReservation) {
+          const courtSummary = courtIdKeys.length > 1 ? `${courtIdKeys.length} Courts` : `Court ${primaryReservation.court_id}`;
           try {
             const { postBookingSystemMessage } = require('../services/chatService');
-            const courtSummary = courtIdKeys.length > 1 ? `${courtIdKeys.length} Courts` : `Court ${primaryReservation.court_id}`;
             postBookingSystemMessage(primaryReservation, 'BOOKING_CREATED', {
               courtSummary,
               totalAmount: totalBookingAmount
@@ -219,8 +219,9 @@ const reservationController = {
           } catch (e) {}
 
           try {
-            const { notifyAdminNewBooking } = require('../services/facebookService');
-            notifyAdminNewBooking(primaryReservation).catch(() => {});
+            const { notifyAdminNewBooking, notifyPlayerNewBooking } = require('../services/facebookService');
+            notifyAdminNewBooking(primaryReservation, { courtSummary, totalAmount: totalBookingAmount }).catch(() => {});
+            notifyPlayerNewBooking(primaryReservation, { courtSummary, totalAmount: totalBookingAmount }).catch(() => {});
           } catch (e) {}
 
           if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
@@ -360,10 +361,11 @@ const reservationController = {
         }).catch(() => {});
       } catch (e) {}
 
-      // Dispatch Facebook Messenger notification to Admin Profile (Async)
+      // Dispatch Facebook Messenger notification to Admin & Player Profiles (Async)
       try {
-        const { notifyAdminNewBooking } = require('../services/facebookService');
-        notifyAdminNewBooking(reservation).catch(e => console.warn('[FB Notify Error]:', e.message));
+        const { notifyAdminNewBooking, notifyPlayerNewBooking } = require('../services/facebookService');
+        notifyAdminNewBooking(reservation, { courtSummary: court.display_name, totalAmount }).catch(e => console.warn('[FB Notify Error]:', e.message));
+        notifyPlayerNewBooking(reservation, { courtSummary: court.display_name, totalAmount }).catch(e => console.warn('[FB Player Notify Error]:', e.message));
       } catch (e) {}
 
       const paymentIntent = await paymentService.createPaymentIntent(reservation);

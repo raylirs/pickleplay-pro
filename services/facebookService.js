@@ -4,6 +4,69 @@ const { Op } = require('sequelize');
 
 const FB_VERSION = 'v24.0';
 
+// Queue for alerts blocked by Meta's 24-hour standard messaging window (auto-flushed as soon as recipient messages the Page)
+const pendingMessengerQueue = new Map(); // psid -> Array<{ payload, queuedAt }>
+// Track last known user interaction timestamp per PSID
+const lastUserInteractionMap = new Map(); // psid -> timestamp (ms)
+const keepAliveSentMap = new Map(); // psid -> timestamp (ms)
+
+function enqueuePendingMessage(psid, payload) {
+  const cleanPsid = String(psid).trim();
+  if (!pendingMessengerQueue.has(cleanPsid)) {
+    pendingMessengerQueue.set(cleanPsid, []);
+  }
+  const list = pendingMessengerQueue.get(cleanPsid);
+  // Keep max 15 recent alerts per recipient
+  if (list.length >= 15) {
+    list.shift();
+  }
+  list.push({ payload, queuedAt: Date.now() });
+}
+
+/**
+ * Flush any queued alerts for a PSID once their 24-hour window reopens
+ */
+async function flushPendingMessages(psid) {
+  const cleanPsid = String(psid).trim();
+  const list = pendingMessengerQueue.get(cleanPsid);
+  if (!list || list.length === 0) return 0;
+
+  pendingMessengerQueue.delete(cleanPsid);
+  let sentCount = 0;
+  for (const item of list) {
+    const res = await sendMessengerNotify(cleanPsid, item.payload, { skipQueueOnWindowError: true });
+    if (res && res.success) {
+      sentCount++;
+    }
+  }
+  return sentCount;
+}
+
+function recordUserInteraction(psid, timestampMs = Date.now()) {
+  if (!psid) return;
+  const cleanPsid = String(psid).trim();
+  const prev = lastUserInteractionMap.get(cleanPsid) || 0;
+  if (timestampMs > prev) {
+    lastUserInteractionMap.set(cleanPsid, timestampMs);
+    keepAliveSentMap.delete(cleanPsid);
+  }
+}
+
+function getWindowStatusForPsid(psid) {
+  const cleanPsid = String(psid || '').trim();
+  const lastMs = lastUserInteractionMap.get(cleanPsid) || 0;
+  const ageMs = Date.now() - lastMs;
+  const windowOpen = lastMs > 0 && ageMs < 24 * 60 * 60 * 1000;
+  const queuedCount = (pendingMessengerQueue.get(cleanPsid) || []).length;
+  return {
+    psid: cleanPsid,
+    lastInteractionAt: lastMs ? new Date(lastMs).toISOString() : null,
+    windowOpen,
+    hoursRemaining: windowOpen ? Math.max(0, ((24 * 60 * 60 * 1000 - ageMs) / (60 * 60 * 1000)).toFixed(1)) : 0,
+    queuedCount
+  };
+}
+
 /**
  * Get setting value helper
  */
@@ -15,7 +78,7 @@ async function getSetting(key) {
 /**
  * Send Facebook Messenger Notification
  */
-async function sendMessengerNotify(psid, payload) {
+async function sendMessengerNotify(psid, payload, options = {}) {
   const token = await getSetting('fb_page_token');
   if (!token) {
     console.log('[FB Service] Page access token is missing in settings.');
@@ -33,6 +96,7 @@ async function sendMessengerNotify(psid, payload) {
 
     const requestBody = {
       recipient: { id: cleanPsid },
+      messaging_type: 'RESPONSE',
       message: messageBody
     };
 
@@ -44,8 +108,40 @@ async function sendMessengerNotify(psid, payload) {
 
     const data = await response.json();
     if (data.error) {
-      console.error('[FB Messenger Error]:', data.error.message);
-      return { success: false, error: data.error.message };
+      const errCode = data.error.code;
+      const errMsg = data.error.message || 'Unknown Meta Graph API error';
+      console.error('[FB Messenger Error]:', errMsg);
+
+      // If template/button payload failed (e.g. invalid URL or unsupported attachment), fallback to plain text if possible
+      if (typeof payload === 'object' && payload.attachment && payload.attachment.payload && payload.attachment.payload.text && errCode !== 10) {
+        const fallbackText = payload.attachment.payload.text +
+          `\n\n✅ Reply "APPROVE" or "DECLINE" in Messenger, or manage at: https://pickleplay-pro.onrender.com/admin/reservations`;
+        return await sendMessengerNotify(cleanPsid, fallbackText, options);
+      }
+
+      // Meta 24-Hour Messaging Window Policy (#10)
+      if (errCode === 10 || errMsg.toLowerCase().includes('outside of allowed window')) {
+        if (!options.skipQueueOnWindowError) {
+          enqueuePendingMessage(cleanPsid, payload);
+          console.log(`[FB Service] Queued alert for PSID ${cleanPsid} (will auto-deliver as soon as recipient sends any message to the Page).`);
+        }
+        try {
+          const io = getIO();
+          io.emit('fb_window_expired', {
+            psid: cleanPsid,
+            pageId: (await getSetting('fb_page_id')) || '1224751467396635',
+            error: '24-hour Messenger window expired. Send "ACTIVATE" or "Hi" to The Playground Pickleball on Messenger to reopen instant alerts.'
+          });
+        } catch (e) {}
+
+        return {
+          success: false,
+          windowExpired: true,
+          error: 'Meta 24-hour messaging window expired for this recipient. Open Messenger with "The Playground Pickleball" (m.me/1224751467396635) and send "Hi" or "ACTIVATE" to reopen instant alerts (queued alerts will deliver automatically within 5 seconds).'
+        };
+      }
+
+      return { success: false, error: errMsg };
     }
     console.log('[FB Service] Message delivered to PSID:', cleanPsid, 'ID:', data.message_id);
     return { success: true, messageId: data.message_id };
@@ -98,28 +194,46 @@ async function fetchUserPages(token) {
 }
 
 /**
- * Helper to get all Admin PSIDs (supports multiple comma/space-separated PSIDs)
+ * Helper to get all Admin PSIDs (respects Ryan & Karlo mute toggles + includes any admin accounts with fb_psid)
  */
 async function getAllAdminPsids() {
   const raw = await getSetting('fb_admin_psid');
+  const ryanActive = (await getSetting('fb_admin_ryan_active')) !== 'false';
+  const karloActive = (await getSetting('fb_admin_karlo_active')) !== 'false';
   const activePsids = [];
 
   if (raw) {
     const parsed = raw.split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
     for (const p of parsed) {
+      if (p === '27030144379994794' && !ryanActive) continue;
+      if (p === '38090624017219189' && !karloActive) continue;
       if (!activePsids.includes(p)) {
         activePsids.push(p);
       }
     }
-  }
-
-  // Fallback to legacy default PSIDs only if none configured
-  if (activePsids.length === 0) {
-    const ryanActive = (await getSetting('fb_admin_ryan_active')) !== 'false';
-    const karloActive = (await getSetting('fb_admin_karlo_active')) !== 'false';
+  } else {
     if (ryanActive) activePsids.push('27030144379994794');
     if (karloActive) activePsids.push('38090624017219189');
   }
+
+  // Also include any User with role='admin' who has bound their fb_psid
+  try {
+    const adminUsers = await User.findAll({
+      where: {
+        role: 'admin',
+        fb_psid: { [Op.ne]: null }
+      }
+    });
+    for (const u of adminUsers) {
+      const p = String(u.fb_psid || '').trim();
+      if (!p) continue;
+      if (p === '27030144379994794' && !ryanActive) continue;
+      if (p === '38090624017219189' && !karloActive) continue;
+      if (!activePsids.includes(p)) {
+        activePsids.push(p);
+      }
+    }
+  } catch (e) {}
 
   return activePsids;
 }
@@ -127,16 +241,20 @@ async function getAllAdminPsids() {
 /**
  * Notify Admin when a new booking is submitted (with 1-Click Interactive Buttons)
  */
-async function notifyAdminNewBooking(reservation) {
+async function notifyAdminNewBooking(reservation, extra = {}) {
   const adminPsids = await getAllAdminPsids();
   if (!adminPsids || adminPsids.length === 0) return;
+
+  const courtLabel = extra.courtSummary || (reservation.court ? reservation.court.display_name : `Court ${reservation.court_id}`);
+  const totalAmount = extra.totalAmount !== undefined ? parseFloat(extra.totalAmount) : parseFloat(reservation.total_amount || 0);
+  const timeRange = reservation.end_time ? `${reservation.start_time} - ${reservation.end_time}` : reservation.start_time;
 
   const text = `🔔 [THE PLAYGROUND] NEW BOOKING RECEIVED!\n\n` +
     `📋 Ref: ${reservation.reference_number}\n` +
     `👤 Player: ${reservation.user_name} (${reservation.user_contact})\n` +
-    `🏟️ Court: Court ${reservation.court_id} | 📅 ${reservation.reservation_date}\n` +
-    `⏰ Time: ${reservation.start_time}\n` +
-    `💰 Total: ₱${parseFloat(reservation.total_amount).toFixed(2)}`;
+    `🏟️ Court: ${courtLabel} | 📅 ${reservation.reservation_date}\n` +
+    `⏰ Time: ${timeRange}\n` +
+    `💰 Total: ₱${totalAmount.toFixed(2)}`;
 
   const buttonPayload = {
     attachment: {
@@ -177,9 +295,11 @@ async function notifyAdminPaymentProof(reservation) {
   const adminPsids = await getAllAdminPsids();
   if (!adminPsids || adminPsids.length === 0) return;
 
-  const baseUrl = 'https://pickleplay-pro.onrender.com';
+  const baseUrl = process.env.APP_URL && process.env.APP_URL.startsWith('https://')
+    ? process.env.APP_URL.replace(/\/$/, '')
+    : 'https://pickleplay-pro.onrender.com';
 
-  // 1. If screenshot is uploaded, send the image attachment to Admin first
+  // 1. If screenshot is uploaded and publicly accessible via HTTPS, attempt to send image attachment
   if (reservation.payment_screenshot) {
     const screenshotUrl = reservation.payment_screenshot.startsWith('http')
       ? reservation.payment_screenshot
@@ -196,16 +316,33 @@ async function notifyAdminPaymentProof(reservation) {
     };
 
     for (const psid of adminPsids) {
-      await sendMessengerNotify(psid, imagePayload);
+      // Do not queue failed local image attachments if running on localhost
+      await sendMessengerNotify(psid, imagePayload, { skipQueueOnWindowError: true }).catch(() => {});
     }
   }
+
+  // Compute total order amount across sibling courts if multi-court
+  let totalOrderAmount = parseFloat(reservation.total_amount || 0);
+  try {
+    const masterRef = (reservation.reference_number || '').split('-')[0];
+    const siblings = await Reservation.findAll({
+      where: {
+        reference_number: {
+          [Op.or]: [masterRef, { [Op.like]: `${masterRef}-%` }]
+        }
+      }
+    });
+    if (siblings && siblings.length > 0) {
+      totalOrderAmount = siblings.reduce((sum, s) => sum + parseFloat(s.total_amount || 0), 0);
+    }
+  } catch (e) {}
 
   // 2. Send transaction details and 1-Click Action Buttons
   const text = `💳 [THE PLAYGROUND] GCASH PROOF SUBMITTED!\n\n` +
     `📋 Ref: ${reservation.reference_number}\n` +
     `👤 Player: ${reservation.user_name}\n` +
     `🧾 GCash Ref: ${reservation.gcash_reference_no || 'Attached Screenshot'}\n` +
-    `💰 Amount: ₱${parseFloat(reservation.total_amount).toFixed(2)}`;
+    `💰 Amount: ₱${totalOrderAmount.toFixed(2)}`;
 
   const buttonPayload = {
     attachment: {
@@ -240,18 +377,76 @@ async function notifyAdminPaymentProof(reservation) {
 }
 
 /**
- * Notify Player when their booking is CONFIRMED by Admin
+ * Helper to resolve Player's FB PSID from reservation or User record
  */
-async function notifyPlayerBookingConfirmed(reservation) {
-  let targetPsid = reservation.fb_psid;
-  if (!targetPsid && reservation.user_id) {
+async function resolvePlayerPsid(reservation) {
+  if (!reservation) return null;
+  if (reservation.fb_psid) return String(reservation.fb_psid).trim();
+  if (reservation.user_id) {
     try {
       const playerUser = await User.findByPk(reservation.user_id);
       if (playerUser && playerUser.fb_psid) {
-        targetPsid = playerUser.fb_psid;
+        return String(playerUser.fb_psid).trim();
       }
     } catch (e) {}
   }
+  if (reservation.user_contact) {
+    try {
+      const matchedUser = await User.findOne({ where: { phone: reservation.user_contact } });
+      if (matchedUser && matchedUser.fb_psid) {
+        return String(matchedUser.fb_psid).trim();
+      }
+    } catch (e) {}
+  }
+  return null;
+}
+
+/**
+ * Notify Player when they create a new booking (AWAITING_PAYMENT hold)
+ */
+async function notifyPlayerNewBooking(reservation, extra = {}) {
+  const targetPsid = await resolvePlayerPsid(reservation);
+  if (!targetPsid) return;
+
+  const courtLabel = extra.courtSummary || (reservation.court ? reservation.court.display_name : `Court ${reservation.court_id}`);
+  const totalAmount = extra.totalAmount !== undefined ? parseFloat(extra.totalAmount) : parseFloat(reservation.total_amount || 0);
+  const timeRange = reservation.end_time ? `${reservation.start_time} - ${reservation.end_time}` : reservation.start_time;
+
+  const msg = `🏓 [THE PLAYGROUND] BOOKING CREATED (AWAITING PAYMENT)\n\n` +
+    `Hello ${reservation.user_name}! Your court slot is held for 15 minutes while awaiting GCash payment proof.\n\n` +
+    `📋 Ref: ${reservation.reference_number}\n` +
+    `🏟️ Court: ${courtLabel}\n` +
+    `📅 Date: ${reservation.reservation_date}\n` +
+    `⏰ Time: ${timeRange}\n` +
+    `💰 Total Due: ₱${totalAmount.toFixed(2)}\n\n` +
+    `👉 Complete GCash Payment: https://pickleplay-pro.onrender.com/payment/gcash?ref=${reservation.reference_number}`;
+
+  await sendMessengerNotify(targetPsid, msg);
+}
+
+/**
+ * Notify Player when their GCash payment proof is submitted
+ */
+async function notifyPlayerPaymentSubmitted(reservation, totalOrderAmount) {
+  const targetPsid = await resolvePlayerPsid(reservation);
+  if (!targetPsid) return;
+
+  const amountVal = totalOrderAmount !== undefined ? parseFloat(totalOrderAmount) : parseFloat(reservation.total_amount || 0);
+  const msg = `🧾 [THE PLAYGROUND] GCASH PROOF RECEIVED!\n\n` +
+    `Hello ${reservation.user_name}! We received your GCash payment proof for Booking #${reservation.reference_number}.\n\n` +
+    `🧾 GCash Ref: ${reservation.gcash_reference_no || 'Submitted'}\n` +
+    `💰 Amount: ₱${amountVal.toFixed(2)}\n` +
+    `⏳ Status: Verifying Payment\n\n` +
+    `You will receive your confirmed digital pass here as soon as Admin verifies your payment! 🏓`;
+
+  await sendMessengerNotify(targetPsid, msg);
+}
+
+/**
+ * Notify Player when their booking is CONFIRMED by Admin
+ */
+async function notifyPlayerBookingConfirmed(reservation) {
+  const targetPsid = await resolvePlayerPsid(reservation);
   if (!targetPsid) return;
 
   const msg = `🎉 [THE PLAYGROUND] YOUR BOOKING IS CONFIRMED!\n\n` +
@@ -268,18 +463,26 @@ async function notifyPlayerBookingConfirmed(reservation) {
 }
 
 /**
+ * Notify Player when their booking is CANCELLED by Admin
+ */
+async function notifyPlayerBookingCancelled(reservation) {
+  const targetPsid = await resolvePlayerPsid(reservation);
+  if (!targetPsid) return;
+
+  const reason = reservation.cancellation_reason || 'Cancelled by Administrator';
+  const msg = `⚠️ [THE PLAYGROUND] BOOKING CANCELLED (#${reservation.reference_number})\n\n` +
+    `Hello ${reservation.user_name || 'Player'}, your reservation on ${reservation.reservation_date} (${reservation.start_time}) has been cancelled.\n` +
+    `📝 Reason: ${reason}\n\n` +
+    `Visit https://pickleplay-pro.onrender.com to book another court time or message us here if you need assistance.`;
+
+  await sendMessengerNotify(targetPsid, msg);
+}
+
+/**
  * Notify Player when their unpaid 15-minute hold expires and is automatically cancelled
  */
 async function notifyPlayerHoldExpired(reservation) {
-  let targetPsid = reservation.fb_psid;
-  if (!targetPsid && reservation.user_id) {
-    try {
-      const playerUser = await User.findByPk(reservation.user_id);
-      if (playerUser && playerUser.fb_psid) {
-        targetPsid = playerUser.fb_psid;
-      }
-    } catch (e) {}
-  }
+  const targetPsid = await resolvePlayerPsid(reservation);
   if (!targetPsid) return;
 
   const masterRef = (reservation.reference_number || '').split('-')[0];
@@ -291,44 +494,167 @@ async function notifyPlayerHoldExpired(reservation) {
 }
 
 /**
- * Process Admin 1-Click Action (Confirm or Cancel via Messenger buttons/messages)
+ * Send Admin Alert Hub confirmation card (with 1-tap Keep-Alive button)
  */
-async function processAdminAction(senderId, rawText) {
+async function sendAdminStatusCard(senderId, extraNote = '') {
+  const pendingCount = await Reservation.count({
+    where: { status: { [Op.in]: ['AWAITING_CONFIRMATION', 'AWAITING_PAYMENT', 'PENDING'] } }
+  });
+
+  const text = `✅ [THE PLAYGROUND] ADMIN ALERTS ACTIVE!\n\n` +
+    (extraNote ? `${extraNote}\n\n` : '') +
+    `🟢 Your 24-hour Meta Messenger alert window is now OPEN.\n` +
+    `📋 Active Pending Bookings: ${pendingCount}\n\n` +
+    `💡 Tip: Tap "Keep Alerts Active" anytime to reset your 24h alert window.`;
+
+  const payload = {
+    attachment: {
+      type: 'template',
+      payload: {
+        template_type: 'button',
+        text: text.slice(0, 640),
+        buttons: [
+          {
+            type: 'postback',
+            title: 'Keep Alerts Active',
+            payload: 'KEEP_ALERTS_ACTIVE'
+          },
+          {
+            type: 'web_url',
+            url: 'https://pickleplay-pro.onrender.com/admin/reservations',
+            title: 'Admin Dashboard'
+          }
+        ]
+      }
+    }
+  };
+
+  return await sendMessengerNotify(senderId, payload, { skipQueueOnWindowError: true });
+}
+
+/**
+ * Process Admin 1-Click Action (Confirm, Cancel, or Keep-Alive via Messenger buttons/messages)
+ */
+async function processAdminAction(senderId, rawText, contextRef = null) {
   const adminPsids = await getAllAdminPsids();
-  if (!adminPsids.includes(senderId)) return false;
+  const isDefaultAdmin = senderId === '27030144379994794' || senderId === '38090624017219189';
+  if (!adminPsids.includes(senderId) && !isDefaultAdmin) return false;
+
+  recordUserInteraction(senderId, Date.now());
+  const flushedCount = await flushPendingMessages(senderId);
 
   const upper = (rawText || '').trim().toUpperCase();
-  const isApprove = upper.startsWith('APPROVE_') || upper.startsWith('CONFIRM_') || upper.startsWith('APPROVE ') || upper.startsWith('CONFIRM ');
-  const isCancel = upper.startsWith('CANCEL_') || upper.startsWith('REJECT_') || upper.startsWith('CANCEL ') || upper.startsWith('REJECT ');
+
+  // Check if Admin tapped Keep-Alive or sent an activation keyword
+  if (
+    upper === 'KEEP_ALERTS_ACTIVE' ||
+    upper === 'KEEP ALERTS ACTIVE' ||
+    upper === 'ACTIVATE' ||
+    upper === 'ACTIVATE_ALERTS' ||
+    upper === 'PING' ||
+    upper === 'STATUS' ||
+    upper === 'TEST' ||
+    upper === 'HI' ||
+    upper === 'HELLO' ||
+    upper === 'YOW'
+  ) {
+    const flushedNote = flushedCount > 0 ? `📬 Delivered ${flushedCount} queued booking alert(s)!` : '';
+    await sendAdminStatusCard(senderId, flushedNote);
+    return true;
+  }
+
+  const isApprove =
+    upper === 'APPROVE' ||
+    upper === 'CONFIRM' ||
+    upper.startsWith('APPROVE_') ||
+    upper.startsWith('CONFIRM_') ||
+    upper.startsWith('APPROVE ') ||
+    upper.startsWith('CONFIRM ');
+  const isCancel =
+    upper === 'CANCEL' ||
+    upper === 'DECLINE' ||
+    upper === 'REJECT' ||
+    upper.startsWith('CANCEL_') ||
+    upper.startsWith('DECLINE_') ||
+    upper.startsWith('REJECT_') ||
+    upper.startsWith('CANCEL ') ||
+    upper.startsWith('DECLINE ') ||
+    upper.startsWith('REJECT ');
 
   if (!isApprove && !isCancel) return false;
 
-  const refMatch = upper.replace(/^(APPROVE_|CONFIRM_|CANCEL_|REJECT_|APPROVE\s+|CONFIRM\s+|CANCEL\s+|REJECT\s+)/, '').trim();
-  if (!refMatch) return false;
+  let refMatch = upper
+    .replace(/^(APPROVE_|CONFIRM_|CANCEL_|DECLINE_|REJECT_|APPROVE\s+|CONFIRM\s+|CANCEL\s+|DECLINE\s+|REJECT\s+|APPROVE|CONFIRM|CANCEL|DECLINE|REJECT)/, '')
+    .replace(/^#/, '')
+    .trim();
+
+  if (!refMatch && contextRef) {
+    refMatch = String(contextRef).trim().toUpperCase();
+  }
 
   const { getCourtAvailability } = require('./availabilityService');
 
-  const reservation = await Reservation.findOne({
+  let reservation = null;
+  if (refMatch) {
+    reservation = await Reservation.findOne({
+      where: {
+        [Op.or]: [
+          { reference_number: refMatch },
+          { reference_number: { [Op.like]: `%${refMatch}%` } },
+          { binding_code: refMatch },
+          { binding_code: { [Op.like]: `%${refMatch}%` } }
+        ]
+      },
+      include: [{ model: Court, as: 'court' }],
+      order: [['id', 'DESC']]
+    });
+  } else {
+    // Fallback to the latest reservation awaiting confirmation/payment
+    reservation = await Reservation.findOne({
+      where: {
+        status: { [Op.in]: ['AWAITING_CONFIRMATION', 'AWAITING_PAYMENT', 'PENDING'] }
+      },
+      include: [{ model: Court, as: 'court' }],
+      order: [['updated_at', 'DESC'], ['id', 'DESC']]
+    });
+  }
+
+  if (!reservation) {
+    await sendMessengerNotify(senderId, `⚠️ Reservation ${refMatch ? '"' + refMatch + '" ' : ''}not found or no pending bookings to process.`);
+    return true;
+  }
+
+  const masterRef = reservation.reference_number.split('-')[0];
+  const allSiblings = await Reservation.findAll({
     where: {
-      [Op.or]: [
-        { reference_number: refMatch },
-        { reference_number: { [Op.like]: `%${refMatch}%` } },
-        { binding_code: refMatch },
-        { binding_code: { [Op.like]: `%${refMatch}%` } }
-      ]
+      reference_number: {
+        [Op.or]: [masterRef, { [Op.like]: `${masterRef}-%` }]
+      }
     },
     include: [{ model: Court, as: 'court' }]
   });
 
-  if (!reservation) {
-    await sendMessengerNotify(senderId, `⚠️ Reservation "${refMatch}" not found.`);
-    return true;
-  }
-
   if (isApprove) {
-    reservation.status = 'CONFIRMED';
-    reservation.payment_transaction_id = `MESSENGER-1CLICK-${Date.now()}`;
-    await reservation.save();
+    const txId = `MESSENGER-1CLICK-${Date.now()}`;
+    for (const resv of allSiblings) {
+      resv.status = 'CONFIRMED';
+      resv.payment_transaction_id = txId;
+      await resv.save();
+
+      try {
+        const io = getIO();
+        const avail = await getCourtAvailability(resv.court_id, resv.reservation_date);
+        io.emit('court_availability_updated', {
+          courtId: resv.court_id,
+          date: resv.reservation_date,
+          slots: avail.slots
+        });
+        io.emit('payment_confirmed', {
+          reference: resv.reference_number,
+          courtId: resv.court_id
+        });
+      } catch (e) {}
+    }
 
     // Send confirmed pass to player if bound
     await notifyPlayerBookingConfirmed(reservation);
@@ -338,50 +664,35 @@ async function processAdminAction(senderId, rawText) {
       await postBookingSystemMessage(reservation, 'BOOKING_CONFIRMED');
     } catch (e) {}
 
-    // Broadcast real-time availability update to all browsers
-    try {
-      const io = getIO();
-      const avail = await getCourtAvailability(reservation.court_id, reservation.reservation_date);
-      io.emit('court_availability_updated', {
-        courtId: reservation.court_id,
-        date: reservation.reservation_date,
-        slots: avail.slots
-      });
-      io.emit('payment_confirmed', {
-        reference: reservation.reference_number,
-        courtId: reservation.court_id
-      });
-    } catch (e) {}
-
-    await sendMessengerNotify(senderId, `🎉 [1-CLICK APPROVED] Reservation #${reservation.reference_number} for ${reservation.user_name} is now CONFIRMED!\n\nPlayer has been sent their confirmed digital pass on Messenger & In-App Chat.`);
+    await sendMessengerNotify(senderId, `🎉 [1-CLICK APPROVED] Reservation #${masterRef} for ${reservation.user_name} is now CONFIRMED!\n\nPlayer has been sent their confirmed digital pass on Messenger & In-App Chat.`);
     return true;
   }
 
   if (isCancel) {
-    reservation.status = 'CANCELLED';
-    reservation.cancellation_reason = 'Cancelled by Admin via 1-Click Messenger';
-    await reservation.save();
+    for (const resv of allSiblings) {
+      resv.status = 'CANCELLED';
+      resv.cancellation_reason = 'Cancelled by Admin via 1-Click Messenger';
+      await resv.save();
+
+      try {
+        const io = getIO();
+        const avail = await getCourtAvailability(resv.court_id, resv.reservation_date);
+        io.emit('court_availability_updated', {
+          courtId: resv.court_id,
+          date: resv.reservation_date,
+          slots: avail.slots
+        });
+      } catch (e) {}
+    }
 
     try {
       const { postBookingSystemMessage } = require('./chatService');
       await postBookingSystemMessage(reservation, 'BOOKING_CANCELLED');
     } catch (e) {}
 
-    try {
-      const io = getIO();
-      const avail = await getCourtAvailability(reservation.court_id, reservation.reservation_date);
-      io.emit('court_availability_updated', {
-        courtId: reservation.court_id,
-        date: reservation.reservation_date,
-        slots: avail.slots
-      });
-    } catch (e) {}
+    await notifyPlayerBookingCancelled(reservation);
 
-    if (reservation.fb_psid) {
-      await sendMessengerNotify(reservation.fb_psid, `⚠️ [THE PLAYGROUND] Your booking #${reservation.reference_number} has been cancelled by Admin.`);
-    }
-
-    await sendMessengerNotify(senderId, `❌ [1-CLICK CANCELLED] Reservation #${reservation.reference_number} has been cancelled and slots released.`);
+    await sendMessengerNotify(senderId, `❌ [1-CLICK CANCELLED] Reservation #${masterRef} has been cancelled and slots released.`);
     return true;
   }
 
@@ -419,6 +730,8 @@ async function handleWebhookEvents(req, res) {
       if (!webhookEvent) continue;
 
       const senderId = webhookEvent.sender.id;
+      recordUserInteraction(senderId, Date.now());
+      await flushPendingMessages(senderId);
 
       let incomingText = '';
       if (webhookEvent.postback && webhookEvent.postback.payload) {
@@ -434,7 +747,7 @@ async function handleWebhookEvents(req, res) {
       console.log(`[FB Webhook] Received event from PSID ${senderId}: "${incomingText}"`);
 
       if (incomingText) {
-        // 1. Check if this is an Admin 1-Click Approve/Cancel action
+        // 1. Check if this is an Admin 1-Click Approve/Cancel/Keep-Alive action
         const handledAdmin = await processAdminAction(senderId, incomingText);
         if (handledAdmin) continue;
 
@@ -545,11 +858,22 @@ async function handleWebhookEvents(req, res) {
 
           await sendMessengerNotify(senderId, replyText);
         } else {
-          if (incomingText.toLowerCase().includes('hi') || incomingText.toLowerCase().includes('hello') || incomingText.toLowerCase().includes('help')) {
-            const helpText = `👋 Hello! Welcome to The Playground Pickleball.\n\n` +
-              `To link your Player Account for Messenger alerts, reply with your Account Code (e.g. PLAY-1234) or your registered mobile number.\n\n` +
-              `🌐 Book online: https://pickleplay-pro.onrender.com`;
-            await sendMessengerNotify(senderId, helpText);
+          const adminPsids = await getAllAdminPsids();
+          if (adminPsids.includes(senderId)) {
+            await sendAdminStatusCard(senderId);
+          } else {
+            const alreadyBoundUser = await User.findOne({ where: { fb_psid: senderId } });
+            if (alreadyBoundUser) {
+              await sendMessengerNotify(
+                senderId,
+                `🏓 [THE PLAYGROUND] Hi ${alreadyBoundUser.full_name || alreadyBoundUser.username}! Your Messenger alerts are active and linked to your account (${alreadyBoundUser.binding_code || alreadyBoundUser.phone}).\n\n🌐 Book or view passes: https://pickleplay-pro.onrender.com`
+              );
+            } else {
+              const helpText = `👋 Hello! Welcome to The Playground Pickleball.\n\n` +
+                `To link your Player Account for Messenger alerts, reply with your Account Code (e.g. PLAY-1234) or your registered mobile number.\n\n` +
+                `🌐 Book online: https://pickleplay-pro.onrender.com`;
+              await sendMessengerNotify(senderId, helpText);
+            }
           }
         }
       }
@@ -566,9 +890,17 @@ module.exports = {
   fetchUserPages,
   notifyAdminNewBooking,
   notifyAdminPaymentProof,
+  notifyPlayerNewBooking,
+  notifyPlayerPaymentSubmitted,
   notifyPlayerBookingConfirmed,
+  notifyPlayerBookingCancelled,
   notifyPlayerHoldExpired,
   processAdminAction,
+  sendAdminStatusCard,
+  flushPendingMessages,
+  recordUserInteraction,
+  getWindowStatusForPsid,
+  keepAliveSentMap,
   handleWebhookVerification,
   handleWebhookEvents,
   getAllAdminPsids,

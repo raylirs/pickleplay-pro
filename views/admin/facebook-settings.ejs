@@ -74,6 +74,62 @@
         </form>
       </div>
 
+      <!-- Live 24-Hour Meta Window Status & 1-Click Activation Card -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4 border-start border-4 <%= (typeof ryanWindow !== 'undefined' && ryanWindow.windowOpen) ? 'border-success' : 'border-warning' %>">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+          <div>
+            <h5 class="fw-bold text-dark mb-1">
+              <i class="bi bi-broadcast-pin text-primary me-2"></i>Live Meta 24-Hour Alert Window Status
+            </h5>
+            <p class="small text-secondary mb-0">
+              Meta requires a message or button tap from your profile every 24 hours to allow instant Page-to-Admin push alerts. Any alerts sent while closed are <strong>queued automatically</strong> and delivered within 5 seconds of messaging the Page!
+            </p>
+          </div>
+          <a href="https://m.me/<%= settings.fb_page_id || '1224751467396635' %>?text=ACTIVATE" target="_blank" class="btn btn-primary fw-bold rounded-pill px-4 text-nowrap shadow-sm">
+            <i class="bi bi-messenger me-1"></i>Activate 24h Alerts Now
+          </a>
+        </div>
+
+        <div class="row g-2">
+          <div class="col-md-6">
+            <div class="p-3 rounded-3 border <%= (typeof ryanWindow !== 'undefined' && ryanWindow.windowOpen) ? 'bg-success-subtle border-success-subtle' : 'bg-warning-subtle border-warning-subtle' %> d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold text-dark small">Ryan (Master Admin)</div>
+                <div class="text-muted font-monospace" style="font-size: 11px;">PSID: 27030144379994794</div>
+                <% if (typeof ryanWindow !== 'undefined' && ryanWindow.queuedCount > 0) { %>
+                  <span class="badge bg-danger mt-1"><%= ryanWindow.queuedCount %> Queued Alert(s)</span>
+                <% } %>
+              </div>
+              <div class="text-end">
+                <% if (typeof ryanWindow !== 'undefined' && ryanWindow.windowOpen) { %>
+                  <span class="badge bg-success rounded-pill px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i>Active (<%= ryanWindow.hoursRemaining %>h left)</span>
+                <% } else { %>
+                  <span class="badge bg-warning text-dark rounded-pill px-2 py-1"><i class="bi bi-clock-history me-1"></i>Send "ACTIVATE"</span>
+                <% } %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3 rounded-3 border <%= (typeof karloWindow !== 'undefined' && karloWindow.windowOpen) ? 'bg-success-subtle border-success-subtle' : 'bg-warning-subtle border-warning-subtle' %> d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold text-dark small">Karlo (Co-Admin)</div>
+                <div class="text-muted font-monospace" style="font-size: 11px;">PSID: 38090624017219189</div>
+                <% if (typeof karloWindow !== 'undefined' && karloWindow.queuedCount > 0) { %>
+                  <span class="badge bg-danger mt-1"><%= karloWindow.queuedCount %> Queued Alert(s)</span>
+                <% } %>
+              </div>
+              <div class="text-end">
+                <% if (typeof karloWindow !== 'undefined' && karloWindow.windowOpen) { %>
+                  <span class="badge bg-success rounded-pill px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i>Active (<%= karloWindow.hoursRemaining %>h left)</span>
+                <% } else { %>
+                  <span class="badge bg-warning text-dark rounded-pill px-2 py-1"><i class="bi bi-clock-history me-1"></i>Send "ACTIVATE"</span>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Test Notification Card -->
       <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
         <h5 class="fw-bold text-dark mb-2"><i class="bi bi-send-fill text-primary me-2"></i>Send Test Notification</h5>

@@ -151,42 +151,46 @@ async function seedDatabase() {
       description: 'Merchant GCash Mobile Number'
     });
 
-    // Seed Facebook Meta credentials
-    await SystemSetting.upsert({
-      key: 'fb_app_id',
-      value: '1573381463838687',
-      description: 'Facebook Meta App ID'
-    });
+    // Seed Facebook Meta credentials (preserve any custom values saved in Admin Settings)
+    const fbDefaults = [
+      {
+        key: 'fb_app_id',
+        value: '1573381463838687',
+        description: 'Facebook Meta App ID'
+      },
+      {
+        key: 'fb_app_secret',
+        value: '3bf7fffdea2dc18e4327c1b1888f9452',
+        description: 'Facebook Meta App Secret'
+      },
+      {
+        key: 'fb_page_id',
+        value: '1224751467396635',
+        description: 'Facebook Page ID (The Playground Pickleball)'
+      },
+      {
+        key: 'fb_page_name',
+        value: 'The Playground Pickleball',
+        description: 'Facebook Page Name'
+      },
+      {
+        key: 'fb_page_token',
+        value: 'EAAWWZB2sZCj98BStXkhzebYUyqbVZBRMvylumn14cXdkhCqAGZButIek2SmOYAsLO3v8PI6p5g54L7hXyq9v2A61SezkZAbK5LwL8MenFvCm8jwGygRGWqIqEPmB1Bv2IX9KBTAkQr2HnFDRZBPFws98Pd52TDArvMWCaOQfjHClhZCA3EpiARhTujWoNyYllAs00SV',
+        description: 'Permanent Never-Expiring Facebook Page Access Token'
+      },
+      {
+        key: 'fb_admin_psid',
+        value: '27030144379994794, 38090624017219189',
+        description: 'Admin Facebook Messenger Profile PSIDs (Ryan & Karlo)'
+      }
+    ];
 
-    await SystemSetting.upsert({
-      key: 'fb_app_secret',
-      value: '3bf7fffdea2dc18e4327c1b1888f9452',
-      description: 'Facebook Meta App Secret'
-    });
-
-    await SystemSetting.upsert({
-      key: 'fb_page_id',
-      value: '1224751467396635',
-      description: 'Facebook Page ID (The Playground Pickleball)'
-    });
-
-    await SystemSetting.upsert({
-      key: 'fb_page_name',
-      value: 'The Playground Pickleball',
-      description: 'Facebook Page Name'
-    });
-
-    await SystemSetting.upsert({
-      key: 'fb_page_token',
-      value: 'EAAWWZB2sZCj98BStXkhzebYUyqbVZBRMvylumn14cXdkhCqAGZButIek2SmOYAsLO3v8PI6p5g54L7hXyq9v2A61SezkZAbK5LwL8MenFvCm8jwGygRGWqIqEPmB1Bv2IX9KBTAkQr2HnFDRZBPFws98Pd52TDArvMWCaOQfjHClhZCA3EpiARhTujWoNyYllAs00SV',
-      description: 'Permanent Never-Expiring Facebook Page Access Token'
-    });
-
-    await SystemSetting.upsert({
-      key: 'fb_admin_psid',
-      value: '27030144379994794, 38090624017219189',
-      description: 'Admin Facebook Messenger Profile PSIDs (Ryan & Karlo)'
-    });
+    for (const item of fbDefaults) {
+      const existing = await SystemSetting.findOne({ where: { key: item.key } });
+      if (!existing || !existing.value || !String(existing.value).trim()) {
+        await SystemSetting.upsert(item);
+      }
+    }
 
     console.log('[Seed] The Playground Pickleball synchronized with 4 courts, GCash QR, and Facebook Meta settings.');
     console.log('[Seed] Database initialization completed successfully.');

@@ -512,6 +512,11 @@ const adminController = {
         postBookingSystemMessage(reservation, 'BOOKING_CANCELLED').catch(e => console.warn('[Chat Notify Error]:', e.message));
       } catch (e) {}
 
+      try {
+        const { notifyPlayerBookingCancelled } = require('../services/facebookService');
+        notifyPlayerBookingCancelled(reservation).catch(e => console.warn('[FB Player Cancel Notify Error]:', e.message));
+      } catch (e) {}
+
       req.flash('success', `Reservation order ${masterRef} cancelled.`);
       res.redirect(req.headers.referer || '/admin/reservations');
     } catch (err) {
@@ -826,17 +831,26 @@ const adminController = {
 
   async showFacebookSettings(req, res, next) {
     try {
+      const { getWindowStatusForPsid } = require('../services/facebookService');
+      const { checkAndSyncMessengerInbox } = require('../services/messengerSyncWorker');
+      await checkAndSyncMessengerInbox().catch(() => {});
+
       const allSettings = await SystemSetting.findAll();
       const settingsMap = {};
       allSettings.forEach(s => {
         settingsMap[s.key] = s.value;
       });
 
+      const ryanWindow = getWindowStatusForPsid('27030144379994794');
+      const karloWindow = getWindowStatusForPsid('38090624017219189');
+
       res.render('admin/facebook-settings', {
         title: 'Facebook & Meta Settings - The Playground Pickleball',
         layout: 'layouts/admin',
         user: req.session.user,
         settings: settingsMap,
+        ryanWindow,
+        karloWindow,
         error: req.flash('error'),
         success: req.flash('success')
       });
@@ -909,6 +923,9 @@ const adminController = {
   async testFacebookNotification(req, res, next) {
     try {
       const { sendMessengerNotify, getSetting, getAllAdminPsids } = require('../services/facebookService');
+      const { checkAndSyncMessengerInbox } = require('../services/messengerSyncWorker');
+      await checkAndSyncMessengerInbox().catch(() => {});
+
       const { test_message } = req.body;
       const token = await getSetting('fb_page_token');
 
@@ -938,7 +955,7 @@ const adminController = {
       if (successCount > 0) {
         req.flash('success', `Test Messenger notification sent successfully to ${successCount} admin recipient(s)!`);
       } else {
-        req.flash('error', `Failed to send Messenger notification: ${errorDetails.join(' | ')}`);
+        req.flash('error', `Messenger Alert Queued: ${errorDetails.join(' | ')}`);
       }
       res.redirect('/admin/facebook');
     } catch (err) {
@@ -948,11 +965,16 @@ const adminController = {
 
   async showFacebookSubscribers(req, res, next) {
     try {
-      const { getSetting } = require('../services/facebookService');
+      const { getSetting, getWindowStatusForPsid } = require('../services/facebookService');
+      const { checkAndSyncMessengerInbox } = require('../services/messengerSyncWorker');
+      await checkAndSyncMessengerInbox().catch(() => {});
+
       const adminPsid = await getSetting('fb_admin_psid');
       const pageName = await getSetting('fb_page_name');
       const ryanActive = (await getSetting('fb_admin_ryan_active')) !== 'false';
       const karloActive = (await getSetting('fb_admin_karlo_active')) !== 'false';
+      const ryanWindow = getWindowStatusForPsid('27030144379994794');
+      const karloWindow = getWindowStatusForPsid('38090624017219189');
 
       const boundSubscribers = await Reservation.findAll({
         where: {
@@ -970,6 +992,8 @@ const adminController = {
         pageName,
         ryanActive,
         karloActive,
+        ryanWindow,
+        karloWindow,
         error: req.flash('error'),
         success: req.flash('success')
       });

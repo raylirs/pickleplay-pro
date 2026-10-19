@@ -202,10 +202,12 @@ const paymentController = {
         console.warn('Socket broadcast warning:', socketErr.message);
       }
 
-      // Dispatch Facebook Messenger alert to Admin Profile (Async)
+      // Dispatch Facebook Messenger alert to Admin & Player Profiles (Async)
       try {
-        const { notifyAdminPaymentProof } = require('../services/facebookService');
+        const totalOrderAmount = allSiblings.reduce((sum, r) => sum + parseFloat(r.total_amount || 0), 0);
+        const { notifyAdminPaymentProof, notifyPlayerPaymentSubmitted } = require('../services/facebookService');
         notifyAdminPaymentProof(reservation).catch(e => console.warn('[FB Notify Error]:', e.message));
+        notifyPlayerPaymentSubmitted(reservation, totalOrderAmount).catch(e => console.warn('[FB Player Notify Error]:', e.message));
       } catch (e) {}
 
       // Post automated Booking Card to Player In-App Account Chat

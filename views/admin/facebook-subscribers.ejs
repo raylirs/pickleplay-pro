@@ -113,6 +113,18 @@
                 <div>
                   <strong class="text-dark">Ryan Kristoffer Liray (Admin)</strong>
                   <span class="badge <%= ryanActive ? 'bg-primary' : 'bg-secondary' %> ms-1 small" style="font-size: 10px;">Facility Owner</span>
+                  <% if (typeof ryanWindow !== 'undefined') { %>
+                    <div class="mt-1">
+                      <% if (ryanWindow.windowOpen) { %>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 10px;"><i class="bi bi-check-circle-fill me-1"></i>24h Window Open (<%= ryanWindow.hoursRemaining %>h left)</span>
+                      <% } else { %>
+                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle" style="font-size: 10px;"><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>24h Window Closed — Click "Activate 24h"</span>
+                      <% } %>
+                      <% if (ryanWindow.queuedCount > 0) { %>
+                        <span class="badge bg-danger ms-1" style="font-size: 10px;"><%= ryanWindow.queuedCount %> Queued</span>
+                      <% } %>
+                    </div>
+                  <% } %>
                 </div>
               </div>
             </td>
@@ -134,9 +146,14 @@
               </form>
             </td>
             <td class="text-end">
-              <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" onclick="openDirectMessageModal('27030144379994794', 'Ryan Kristoffer Liray')">
-                <i class="bi bi-send me-1"></i>Send Alert
-              </button>
+              <div class="d-inline-flex gap-1">
+                <a href="https://m.me/1224751467396635?text=ACTIVATE" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-2 fw-bold" title="Open Messenger to activate 24-hour alert window">
+                  <i class="bi bi-messenger me-1"></i>Activate 24h
+                </a>
+                <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" onclick="openDirectMessageModal('27030144379994794', 'Ryan Kristoffer Liray')">
+                  <i class="bi bi-send me-1"></i>Send Alert
+                </button>
+              </div>
             </td>
           </tr>
 
@@ -149,6 +166,18 @@
                 <div>
                   <strong class="text-dark">Karlo (Admin)</strong>
                   <span class="badge <%= karloActive ? 'bg-info text-dark' : 'bg-secondary' %> ms-1 small" style="font-size: 10px;">Co-Admin / Merchant</span>
+                  <% if (typeof karloWindow !== 'undefined') { %>
+                    <div class="mt-1">
+                      <% if (karloWindow.windowOpen) { %>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 10px;"><i class="bi bi-check-circle-fill me-1"></i>24h Window Open (<%= karloWindow.hoursRemaining %>h left)</span>
+                      <% } else { %>
+                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle" style="font-size: 10px;"><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>24h Window Closed — Click "Activate 24h"</span>
+                      <% } %>
+                      <% if (karloWindow.queuedCount > 0) { %>
+                        <span class="badge bg-danger ms-1" style="font-size: 10px;"><%= karloWindow.queuedCount %> Queued</span>
+                      <% } %>
+                    </div>
+                  <% } %>
                 </div>
               </div>
             </td>
@@ -170,9 +199,14 @@
               </form>
             </td>
             <td class="text-end">
-              <button type="button" class="btn btn-sm btn-info text-dark rounded-pill px-3 fw-semibold" onclick="openDirectMessageModal('38090624017219189', 'Karlo')">
-                <i class="bi bi-send me-1"></i>Send Alert
-              </button>
+              <div class="d-inline-flex gap-1">
+                <a href="https://m.me/1224751467396635?text=ACTIVATE" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-2 fw-bold" title="Open Messenger to activate 24-hour alert window">
+                  <i class="bi bi-messenger me-1"></i>Activate 24h
+                </a>
+                <button type="button" class="btn btn-sm btn-info text-dark rounded-pill px-3 fw-semibold" onclick="openDirectMessageModal('38090624017219189', 'Karlo')">
+                  <i class="bi bi-send me-1"></i>Send Alert
+                </button>
+              </div>
             </td>
           </tr>
 
