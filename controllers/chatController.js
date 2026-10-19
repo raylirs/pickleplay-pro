@@ -150,7 +150,7 @@ const chatController = {
       });
 
       res.render('admin/chat', {
-        title: 'Player Account Chat & Booking Inbox - 3KS Admin',
+        title: 'Player Account Chat & Booking Inbox - The Playground Pickleball',
         layout: 'layouts/admin',
         user: req.session.user,
         threads,
@@ -225,7 +225,7 @@ const chatController = {
 
       const adminName = (req.session && req.session.user && req.session.user.full_name)
         ? req.session.user.full_name
-        : '3KS Playground Admin';
+        : 'The Playground Admin';
 
       const chatMsg = await ChatMessage.create({
         user_id: userId,

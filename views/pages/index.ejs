@@ -106,7 +106,7 @@
 
       <!-- Action Buttons In-Line with Tabs (Right) -->
       <div class="d-flex align-items-center gap-2 py-2 py-md-0 ms-md-3 justify-content-end flex-shrink-0 flex-wrap">
-        <button type="button" onclick="triggerPwaInstall()" class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1 fw-bold d-inline-flex align-items-center gap-1" title="Install 3KS Mobile App">
+        <button type="button" onclick="triggerPwaInstall()" class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1 fw-bold d-inline-flex align-items-center gap-1" title="Install The Playground Mobile App">
           <i class="bi bi-phone-fill"></i>
           <span>Install App</span>
         </button>
@@ -1027,7 +1027,7 @@
               <span class="badge bg-success text-white rounded-pill px-2 py-0.5" style="font-size: 10px;">Live</span>
             </div>
             <div class="small text-white-50" style="font-size: 11.5px;">
-              Automated court passes, payment updates &amp; direct chat with 3KS Playground Admin
+              Automated court passes, payment updates &amp; direct chat with The Playground Admin
             </div>
           </div>
         </div>
@@ -2387,7 +2387,7 @@
           <div class="card border-0 border-start border-4 ${borderClass} shadow-sm rounded-4 bg-white p-3 mx-auto w-100" style="max-width: 620px;">
             <div class="d-flex align-items-center justify-content-between gap-2 pb-2 mb-2 border-bottom">
               <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-dark text-warning rounded-pill px-2 py-1" style="font-size: 10.5px;"><i class="bi bi-robot me-1"></i>3KS Booking Bot</span>
+                <span class="badge bg-dark text-warning rounded-pill px-2 py-1" style="font-size: 10.5px;"><i class="bi bi-robot me-1"></i>The Playground Bot</span>
                 ${refClean ? `<span class="badge bg-light text-dark border font-monospace">${escapeChatHtml(refClean)}</span>` : ''}
               </div>
               ${badgeHtml}
@@ -2416,7 +2416,7 @@
           <div class="d-flex flex-column align-items-start">
             <div class="p-2.5 px-3.5 rounded-4 bg-white text-dark border shadow-xs" style="max-width: 82%; border-bottom-left-radius: 4px !important;">
               <div class="d-flex align-items-center gap-1.5 mb-1">
-                <span class="badge bg-primary text-warning rounded-pill px-2 py-0.5" style="font-size: 10px;"><i class="bi bi-shield-check me-1"></i>${escapeChatHtml(msg.sender_name || '3KS Admin')}</span>
+                <span class="badge bg-primary text-warning rounded-pill px-2 py-0.5" style="font-size: 10px;"><i class="bi bi-shield-check me-1"></i>${escapeChatHtml(msg.sender_name || 'The Playground Admin')}</span>
                 ${msg.booking_ref ? `<span class="badge bg-light text-dark border font-monospace" style="font-size: 10px;">#${escapeChatHtml(msg.booking_ref)}</span>` : ''}
               </div>
               <div class="small" style="white-space: pre-line; line-height: 1.45;">${escapeChatHtml(msg.message)}</div>
@@ -2532,7 +2532,7 @@
         } else if (msg.sender_role !== 'player') {
           updateChatUnreadBadges(accountChatUnreadCount + 1);
           showLiveToast(msg.sender_role === 'admin'
-            ? `New message from ${msg.sender_name || '3KS Admin'} in your Account Chat!`
+            ? `New message from ${msg.sender_name || 'The Playground Admin'} in your Account Chat!`
             : `Booking update posted to your Account Chat (${msg.booking_ref || ''})!`);
         }
 

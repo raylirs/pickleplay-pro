@@ -131,7 +131,7 @@ async function notifyAdminNewBooking(reservation) {
   const adminPsids = await getAllAdminPsids();
   if (!adminPsids || adminPsids.length === 0) return;
 
-  const text = `🔔 [3KS] NEW BOOKING RECEIVED!\n\n` +
+  const text = `🔔 [THE PLAYGROUND] NEW BOOKING RECEIVED!\n\n` +
     `📋 Ref: ${reservation.reference_number}\n` +
     `👤 Player: ${reservation.user_name} (${reservation.user_contact})\n` +
     `🏟️ Court: Court ${reservation.court_id} | 📅 ${reservation.reservation_date}\n` +
@@ -201,7 +201,7 @@ async function notifyAdminPaymentProof(reservation) {
   }
 
   // 2. Send transaction details and 1-Click Action Buttons
-  const text = `💳 [3KS] GCASH PROOF SUBMITTED!\n\n` +
+  const text = `💳 [THE PLAYGROUND] GCASH PROOF SUBMITTED!\n\n` +
     `📋 Ref: ${reservation.reference_number}\n` +
     `👤 Player: ${reservation.user_name}\n` +
     `🧾 GCash Ref: ${reservation.gcash_reference_no || 'Attached Screenshot'}\n` +
@@ -355,7 +355,7 @@ async function processAdminAction(senderId, rawText) {
     } catch (e) {}
 
     if (reservation.fb_psid) {
-      await sendMessengerNotify(reservation.fb_psid, `⚠️ [3KS PLAYGROUND] Your booking #${reservation.reference_number} has been cancelled by Admin.`);
+      await sendMessengerNotify(reservation.fb_psid, `⚠️ [THE PLAYGROUND] Your booking #${reservation.reference_number} has been cancelled by Admin.`);
     }
 
     await sendMessengerNotify(senderId, `❌ [1-CLICK CANCELLED] Reservation #${reservation.reference_number} has been cancelled and slots released.`);

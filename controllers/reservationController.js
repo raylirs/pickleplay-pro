@@ -23,7 +23,7 @@ const reservationController = {
       const initialSlot = req.query.slot || '08:00';
 
       res.render('pages/reservation', {
-        title: 'Book a Court - 3KS Playground',
+        title: 'Book a Court - The Playground Pickleball',
         courts,
         selectedCourtId: selectedCourtId ? parseInt(selectedCourtId, 10) : null,
         selectedDate,

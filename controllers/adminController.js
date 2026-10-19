@@ -687,7 +687,7 @@ const adminController = {
       const numSetting = await SystemSetting.findByPk('GCASH_ACCOUNT_NUMBER');
 
       res.render('admin/settings', {
-        title: 'GCash Payment & Facility Settings - 3KS Playground',
+        title: 'GCash Payment & Facility Settings - The Playground Pickleball',
         layout: 'layouts/admin',
         user: req.session.user,
         gcashQrImage: qrSetting ? qrSetting.value : '/images/gcash-qr.jpg',
@@ -751,7 +751,7 @@ const adminController = {
       });
 
       res.render('admin/users', {
-        title: 'User & Staff Accounts - 3KS Playground',
+        title: 'User & Staff Accounts - The Playground Pickleball',
         layout: 'layouts/admin',
         user: req.session.user,
         users,
@@ -833,7 +833,7 @@ const adminController = {
       });
 
       res.render('admin/facebook-settings', {
-        title: 'Facebook & Meta Settings - 3KS Playground',
+        title: 'Facebook & Meta Settings - The Playground Pickleball',
         layout: 'layouts/admin',
         user: req.session.user,
         settings: settingsMap,
@@ -927,7 +927,7 @@ const adminController = {
       let errorDetails = [];
 
       for (const singlePsid of adminPsids) {
-        const result = await sendMessengerNotify(singlePsid, test_message || '🔔 Test notification from 3KS Playground');
+        const result = await sendMessengerNotify(singlePsid, test_message || '🔔 Test notification from The Playground Pickleball');
         if (result && result.success) {
           successCount++;
         } else {
@@ -962,7 +962,7 @@ const adminController = {
       });
 
       res.render('admin/facebook-subscribers', {
-        title: 'Bound Messenger Users - 3KS Playground',
+        title: 'Bound Messenger Users - The Playground Pickleball',
         layout: 'layouts/admin',
         user: req.session.user,
         boundSubscribers,

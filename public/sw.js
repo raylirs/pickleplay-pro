@@ -1,4 +1,4 @@
-const CACHE_NAME = '3ks-pickleball-pwa-v1';
+const CACHE_NAME = 'the-playground-pickleball-pwa-v2';
 const STATIC_ASSETS = [
   '/css/style.css',
   '/js/main.js',
