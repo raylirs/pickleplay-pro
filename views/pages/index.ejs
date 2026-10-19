@@ -104,8 +104,8 @@
         </button>
       </div>
 
-      <!-- Single-Line Action Bar (Full width 1-line on Mobile, Right-aligned on Desktop) -->
-      <div class="d-flex align-items-center justify-content-between justify-content-md-end gap-1.5 py-2 py-md-0 ms-md-3 w-100 w-md-auto flex-nowrap">
+      <!-- Single-Line Action Bar (Full width 1-line on Mobile, Compact Right-aligned on Desktop) -->
+      <div class="d-flex align-items-center justify-content-between justify-content-md-end gap-1.5 py-2 py-md-0 ms-md-2 flex-grow-1 flex-md-grow-0 flex-shrink-0 flex-nowrap">
         <div id="headerAccountControls" class="d-inline-flex align-items-center gap-1.5 min-w-0">
           <% if (typeof user !== 'undefined' && user) { %>
             <button type="button" class="btn btn-dark btn-sm rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-xs text-truncate" style="max-width: 185px;" onclick="switchVenueTab('my-bookings')" title="View My Bookings">
@@ -1078,6 +1078,39 @@
 </div>
 
 <!-- =========================================================
+     IN-APP OFFICIAL BOOKING RECEIPT & RECORD MODAL
+========================================================= -->
+<div class="modal fade" id="accountReceiptModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-md modal-fullscreen-sm-down">
+    <div class="modal-content border-0 rounded-4 rounded-sm-0 shadow-lg overflow-hidden">
+      <!-- Receipt Header -->
+      <div class="modal-header border-0 py-3 px-4 text-white" style="background: linear-gradient(135deg, #0B2545 0%, #134074 100%);">
+        <div class="d-flex align-items-center gap-2.5">
+          <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm flex-shrink-0" style="width: 38px; height: 38px;">
+            <i class="bi bi-receipt-cutoff fs-5"></i>
+          </div>
+          <div>
+            <h6 class="modal-title fw-bold mb-0 font-display text-white">Official Booking Receipt &amp; Record</h6>
+            <div class="small text-warning" style="font-size: 11px;">The Playground Pickleball · Camaman-an, CDO</div>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Printable Receipt Body -->
+      <div class="modal-body p-3 p-sm-4 bg-light" id="accountReceiptModalBody">
+        <!-- Populated dynamically by openBookingReceiptModal(ref) -->
+      </div>
+
+      <!-- Receipt Footer Actions -->
+      <div class="modal-footer border-top bg-white p-2.5 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2" id="accountReceiptModalFooter">
+        <!-- Populated dynamically by openBookingReceiptModal(ref) -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
      LEAFLET MAP LIBS & CLIENT INTERACTION JAVASCRIPT
 ========================================================= -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -1113,8 +1146,8 @@
       fetchAccountChat(false);
     }
 
-    // 5. Hide floating booking rail when checkout, auth, or chat modal opens, restore when closed
-    ['checkoutModal', 'playerAuthModal', 'accountChatModal'].forEach(modalId => {
+    // 5. Hide floating booking rail when checkout, auth, chat, or receipt modal opens, restore when closed
+    ['checkoutModal', 'playerAuthModal', 'accountChatModal', 'accountReceiptModal'].forEach(modalId => {
       const modalEl = document.getElementById(modalId);
       if (modalEl) {
         modalEl.addEventListener('show.bs.modal', function () {
@@ -2145,7 +2178,49 @@
       return;
     }
 
-    let html = '<div class="d-flex flex-column gap-3">';
+    // Compute Account Records Summary Stats
+    const totalBookingsCount = myBookingsData.length;
+    const confirmedCount = myBookingsData.filter(b => b.status === 'CONFIRMED').length;
+    const totalHoursBooked = myBookingsData.reduce((acc, b) => acc + (parseInt(b.total_hours || 0, 10)), 0);
+    const totalAmountSpent = myBookingsData
+      .filter(b => b.status === 'CONFIRMED' || b.status === 'AWAITING_CONFIRMATION')
+      .reduce((acc, b) => acc + parseFloat(b.total_amount || 0), 0);
+
+    let html = `
+      <!-- Account Booking Records & Receipts Summary Bar -->
+      <div class="row g-2 g-sm-3 mb-3">
+        <div class="col-6 col-md-3">
+          <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+            <div class="text-muted text-uppercase fw-bold" style="font-size: 10.5px; letter-spacing: 0.05em;">Booking Records</div>
+            <div class="fw-extrabold text-dark fs-4 font-display mt-1">${totalBookingsCount}</div>
+            <div class="text-secondary" style="font-size: 11px;"><i class="bi bi-journal-check text-primary me-1"></i>Saved in account</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+            <div class="text-muted text-uppercase fw-bold" style="font-size: 10.5px; letter-spacing: 0.05em;">Confirmed Passes</div>
+            <div class="fw-extrabold text-success fs-4 font-display mt-1">${confirmedCount}</div>
+            <div class="text-secondary" style="font-size: 11px;"><i class="bi bi-patch-check-fill text-success me-1"></i>Official receipts</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+            <div class="text-muted text-uppercase fw-bold" style="font-size: 10.5px; letter-spacing: 0.05em;">Court Hours</div>
+            <div class="fw-extrabold text-dark fs-4 font-display mt-1">${totalHoursBooked} <span class="fs-6 fw-semibold text-muted">hr${totalHoursBooked === 1 ? '' : 's'}</span></div>
+            <div class="text-secondary" style="font-size: 11px;"><i class="bi bi-clock-fill text-warning me-1"></i>Total reserved</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+            <div class="text-muted text-uppercase fw-bold" style="font-size: 10.5px; letter-spacing: 0.05em;">Paid / Submitted</div>
+            <div class="fw-extrabold text-primary fs-4 font-display mt-1">₱${totalAmountSpent.toFixed(2)}</div>
+            <div class="text-secondary" style="font-size: 11px;"><i class="bi bi-receipt-cutoff text-primary me-1"></i>GCash verified</div>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex flex-column gap-3">
+    `;
+
     myBookingsData.forEach(b => {
       const isAwaitingPay = b.status === 'AWAITING_PAYMENT';
       const isVerifying = b.status === 'AWAITING_CONFIRMATION';
@@ -2154,9 +2229,9 @@
 
       let statusBadge = '';
       if (isConfirmed) {
-        statusBadge = `<span class="badge bg-success text-white rounded-pill px-3 py-1 fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Confirmed</span>`;
+        statusBadge = `<span class="badge bg-success text-white rounded-pill px-3 py-1 fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Official Receipt · Confirmed</span>`;
       } else if (isVerifying) {
-        statusBadge = `<span class="badge bg-info text-dark rounded-pill px-3 py-1 fw-bold"><i class="bi bi-clock-history me-1"></i>Verifying Payment</span>`;
+        statusBadge = `<span class="badge bg-info text-dark rounded-pill px-3 py-1 fw-bold"><i class="bi bi-clock-history me-1"></i>Payment Submitted · Verifying</span>`;
       } else if (isAwaitingPay && !isExpired) {
         statusBadge = `<span class="badge bg-warning text-dark rounded-pill px-3 py-1 fw-bold"><i class="bi bi-hourglass-split me-1"></i>Awaiting GCash Payment</span>`;
       } else if (isExpired) {
@@ -2171,6 +2246,10 @@
         day: 'numeric',
         year: 'numeric'
       });
+
+      const bookedOnFormatted = b.created_at
+        ? new Date(b.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+        : '';
 
       const courtsHtml = (b.courts || []).map(c => {
         const startLbl = formatSlotTimeLabel(c.start_time);
@@ -2187,8 +2266,30 @@
         `;
       }).join('');
 
+      // Payment proof & GCash Reference record strip
+      let paymentRecordStrip = '';
+      if (b.gcash_reference_no || b.payment_screenshot) {
+        paymentRecordStrip = `
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 px-3 py-2 rounded-3 mb-3" style="background: #F8FAFC; border: 1px dashed #CBD5E1;">
+            <div class="d-flex align-items-center gap-2 flex-wrap small">
+              <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 fw-bold" style="font-size: 10.5px;">
+                <i class="bi bi-shield-check me-1"></i>GCash Payment Record
+              </span>
+              ${b.gcash_reference_no ? `<span class="text-secondary small">Ref No: <strong class="font-monospace text-dark">${escapeChatHtml(b.gcash_reference_no)}</strong></span>` : ''}
+              ${b.payment_screenshot ? `<span class="badge bg-success-subtle text-success rounded-pill px-2 py-0.5" style="font-size: 10.5px;"><i class="bi bi-image-fill me-1"></i>Receipt Screenshot Saved</span>` : ''}
+            </div>
+            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fw-bold small" onclick="openBookingReceiptModal('${escapeChatHtml(b.reference_number)}')">
+              Inspect Receipt &amp; Proof &rarr;
+            </button>
+          </div>
+        `;
+      }
+
       let actionButtons = `
-        <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3 py-1.5 fw-semibold" onclick="openAccountChatModal('${b.reference_number}')">
+        <button type="button" class="btn btn-dark btn-sm rounded-pill px-3 py-1.5 fw-bold shadow-xs" onclick="openBookingReceiptModal('${escapeChatHtml(b.reference_number)}')">
+          <i class="bi bi-receipt-cutoff text-warning me-1"></i>View Receipt / Record
+        </button>
+        <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3 py-1.5 fw-semibold" onclick="openAccountChatModal('${escapeChatHtml(b.reference_number)}')">
           <i class="bi bi-chat-dots-fill text-warning me-1"></i>Chat / Ask Admin
         </button>
       `;
@@ -2201,7 +2302,7 @@
       } else {
         actionButtons += `
           <a href="/reservations/${encodeURIComponent(b.reference_number)}" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1.5 fw-bold">
-            <i class="bi bi-ticket-perforated me-1"></i>View Pass / Receipt &rarr;
+            <i class="bi bi-qr-code me-1"></i>Full QR Pass &rarr;
           </a>
         `;
       }
@@ -2209,9 +2310,12 @@
       html += `
         <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white">
           <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-              <span class="badge bg-dark text-warning font-monospace px-2.5 py-1.5 rounded-3 fs-6">${b.reference_number}</span>
-              <span class="fw-bold text-dark"><i class="bi bi-calendar3 text-primary me-1"></i>${dateFormatted}</span>
+            <div>
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="badge bg-dark text-warning font-monospace px-2.5 py-1.5 rounded-3 fs-6">${b.reference_number}</span>
+                <span class="fw-bold text-dark"><i class="bi bi-calendar3 text-primary me-1"></i>Play Date: ${dateFormatted}</span>
+              </div>
+              ${bookedOnFormatted ? `<div class="text-muted mt-1" style="font-size: 11.5px;"><i class="bi bi-clock-history me-1"></i>Booked on ${bookedOnFormatted}</div>` : ''}
             </div>
             <div>${statusBadge}</div>
           </div>
@@ -2220,9 +2324,11 @@
             ${courtsHtml}
           </div>
 
+          ${paymentRecordStrip}
+
           <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-2 pt-2 border-top">
             <div>
-              <span class="text-muted small">Total Order Amount (${b.total_hours} hr${b.total_hours > 1 ? 's' : ''}):</span>
+              <span class="text-muted small">Total Receipt Amount (${b.total_hours} hr${b.total_hours > 1 ? 's' : ''}):</span>
               <span class="fw-extrabold text-primary fs-5 ms-1 font-display">₱${parseFloat(b.total_amount || 0).toFixed(2)}</span>
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -2234,6 +2340,276 @@
     });
     html += '</div>';
     container.innerHTML = html;
+  }
+
+  // =========================================================
+  // IN-APP OFFICIAL BOOKING RECEIPT & RECORD MODAL VIEWER
+  // =========================================================
+  function openBookingReceiptModal(refNumber) {
+    if (!refNumber) return;
+    const booking = (myBookingsData || []).find(item => item.reference_number === refNumber);
+    if (!booking) {
+      // Fallback to full reservation pass page if not in local array yet
+      window.location.href = '/reservations/' + encodeURIComponent(refNumber);
+      return;
+    }
+
+    const bodyEl = document.getElementById('accountReceiptModalBody');
+    const footerEl = document.getElementById('accountReceiptModalFooter');
+    if (!bodyEl || !footerEl) return;
+
+    const isConfirmed = booking.status === 'CONFIRMED';
+    const isVerifying = booking.status === 'AWAITING_CONFIRMATION';
+    const isAwaitingPay = booking.status === 'AWAITING_PAYMENT';
+    const isExpired = booking.status === 'EXPIRED' || (isAwaitingPay && booking.expires_at && new Date() > new Date(booking.expires_at));
+
+    let stampClass = 'bg-secondary-subtle text-secondary border-secondary';
+    let stampIcon = 'bi-hourglass';
+    let stampLabel = booking.status;
+    if (isConfirmed) {
+      stampClass = 'bg-success-subtle text-success border-success';
+      stampIcon = 'bi-patch-check-fill';
+      stampLabel = 'PAID & CONFIRMED OFFICIAL RECEIPT';
+    } else if (isVerifying) {
+      stampClass = 'bg-info-subtle text-dark border-info';
+      stampIcon = 'bi-shield-lock-fill';
+      stampLabel = 'PAYMENT SUBMITTED · UNDER VERIFICATION';
+    } else if (isAwaitingPay && !isExpired) {
+      stampClass = 'bg-warning-subtle text-dark border-warning';
+      stampIcon = 'bi-exclamation-circle-fill';
+      stampLabel = 'UNPAID HOLD · AWAITING GCASH';
+    } else if (isExpired) {
+      stampClass = 'bg-secondary-subtle text-secondary border-secondary';
+      stampIcon = 'bi-clock-history';
+      stampLabel = 'EXPIRED RESERVATION HOLD';
+    } else if (booking.status === 'CANCELLED') {
+      stampClass = 'bg-danger-subtle text-danger border-danger';
+      stampIcon = 'bi-x-octagon-fill';
+      stampLabel = 'CANCELLED BOOKING RECORD';
+    }
+
+    const playDateStr = new Date(booking.reservation_date + 'T00:00:00').toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+
+    const bookedAtStr = booking.created_at
+      ? new Date(booking.created_at).toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit'
+        })
+      : '—';
+
+    const playerName = booking.user_name || (currentPlayerUser && (currentPlayerUser.full_name || currentPlayerUser.username)) || 'Player';
+    const playerPhone = booking.user_contact || (currentPlayerUser && currentPlayerUser.phone) || '—';
+    const playerEmail = booking.user_email || (currentPlayerUser && currentPlayerUser.email) || '';
+
+    const itemizedRowsHtml = (booking.courts || []).map(c => {
+      const sLbl = formatSlotTimeLabel(c.start_time);
+      const eLbl = formatSlotTimeLabel(c.end_time);
+      const unitRate = c.hours > 0 ? (parseFloat(c.amount || 0) / c.hours) : parseFloat(c.amount || 0);
+      return `
+        <tr>
+          <td class="py-2 ps-0">
+            <div class="fw-bold text-dark">${escapeChatHtml(c.court_name)}</div>
+            <div class="text-muted" style="font-size: 11.5px;">${sLbl} – ${eLbl}</div>
+          </td>
+          <td class="py-2 text-center align-middle small fw-semibold">${c.hours} hr${c.hours > 1 ? 's' : ''}</td>
+          <td class="py-2 text-end align-middle small text-muted font-monospace">₱${unitRate.toFixed(0)}/hr</td>
+          <td class="py-2 pe-0 text-end align-middle fw-bold font-monospace text-dark">₱${parseFloat(c.amount || 0).toFixed(2)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    let paymentProofSectionHtml = '';
+    if (booking.gcash_reference_no || booking.payment_screenshot || booking.payment_transaction_id) {
+      paymentProofSectionHtml = `
+        <div class="rounded-4 p-3 mb-3 border" style="background: #F8FAFC;">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="text-uppercase fw-bold text-primary" style="font-size: 11px; letter-spacing: 0.05em;">
+              <i class="bi bi-wallet2 me-1"></i>GCash Payment &amp; Verification Record
+            </span>
+            <span class="badge bg-primary-subtle text-primary rounded-pill" style="font-size: 10px;">Saved Proof</span>
+          </div>
+          <div class="row g-2 small">
+            <div class="col-6">
+              <div class="text-muted" style="font-size: 11px;">Payment Method</div>
+              <div class="fw-bold text-dark">GCash QR / Express</div>
+            </div>
+            <div class="col-6">
+              <div class="text-muted" style="font-size: 11px;">GCash Ref Number</div>
+              <div class="fw-bold font-monospace text-dark">${booking.gcash_reference_no ? escapeChatHtml(booking.gcash_reference_no) : '—'}</div>
+            </div>
+            ${booking.payment_transaction_id ? `
+              <div class="col-12">
+                <div class="text-muted" style="font-size: 11px;">System Transaction ID</div>
+                <div class="font-monospace small text-secondary">${escapeChatHtml(booking.payment_transaction_id)}</div>
+              </div>
+            ` : ''}
+          </div>
+          ${booking.payment_screenshot ? `
+            <div class="mt-3 pt-2 border-top">
+              <div class="d-flex align-items-center justify-content-between mb-1.5">
+                <span class="text-muted" style="font-size: 11px;"><i class="bi bi-image me-1"></i>Uploaded GCash Receipt Screenshot:</span>
+                <a href="${escapeChatHtml(booking.payment_screenshot)}" target="_blank" rel="noopener" class="small fw-bold text-primary text-decoration-none">
+                  Open Full Image <i class="bi bi-box-arrow-up-right ms-1"></i>
+                </a>
+              </div>
+              <a href="${escapeChatHtml(booking.payment_screenshot)}" target="_blank" rel="noopener" class="d-block text-center bg-white rounded-3 border p-2 shadow-xs">
+                <img src="${escapeChatHtml(booking.payment_screenshot)}" alt="Uploaded GCash Receipt Proof" class="img-fluid rounded-2" style="max-height: 220px; object-fit: contain;" />
+              </a>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    } else if (isAwaitingPay && !isExpired) {
+      paymentProofSectionHtml = `
+        <div class="alert alert-warning rounded-4 py-2.5 px-3 small mb-3 d-flex align-items-center justify-content-between gap-2">
+          <div>
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            <strong>No GCash payment submitted yet.</strong> Complete payment before the hold timer expires.
+          </div>
+          <a href="/payment/gcash?ref=${encodeURIComponent(booking.reference_number)}" class="btn btn-dark btn-sm rounded-pill px-3 fw-bold flex-shrink-0">Pay Now</a>
+        </div>
+      `;
+    }
+
+    bodyEl.innerHTML = `
+      <div id="printableAccountReceiptArea" class="bg-white rounded-4 p-3 p-sm-4 shadow-sm border position-relative">
+        <!-- Official Venue Receipt Banner -->
+        <div class="text-center pb-3 mb-3 border-bottom">
+          <div class="fw-extrabold text-dark font-display fs-5">THE PLAYGROUND PICKLEBALL</div>
+          <div class="text-muted small" style="font-size: 11.5px;">Camaman-an, Cagayan de Oro City · Official Court Reservation Record</div>
+          <div class="mt-2">
+            <span class="badge border ${stampClass} rounded-pill px-3 py-1.5 fw-bold" style="font-size: 11px; letter-spacing: 0.04em;">
+              <i class="bi ${stampIcon} me-1"></i>${stampLabel}
+            </span>
+          </div>
+        </div>
+
+        <!-- Reference & Timestamps Grid -->
+        <div class="row g-2 mb-3 pb-3 border-bottom small">
+          <div class="col-6">
+            <div class="text-muted" style="font-size: 11px;">BOOKING REFERENCE</div>
+            <div class="fw-extrabold font-monospace text-dark fs-6">${escapeChatHtml(booking.reference_number)}</div>
+          </div>
+          <div class="col-6 text-end">
+            <div class="text-muted" style="font-size: 11px;">DATE BOOKED</div>
+            <div class="fw-semibold text-dark">${bookedAtStr}</div>
+          </div>
+          <div class="col-6 mt-2">
+            <div class="text-muted" style="font-size: 11px;">SCHEDULED PLAY DATE</div>
+            <div class="fw-bold text-primary">${playDateStr}</div>
+          </div>
+          <div class="col-6 mt-2 text-end">
+            <div class="text-muted" style="font-size: 11px;">ACCOUNT HOLDER</div>
+            <div class="fw-bold text-dark">${escapeChatHtml(playerName)}</div>
+            <div class="text-secondary" style="font-size: 11px;">${escapeChatHtml(playerPhone)}${playerEmail ? ' · ' + escapeChatHtml(playerEmail) : ''}</div>
+          </div>
+        </div>
+
+        <!-- Itemized Court & Slot Breakdown Table -->
+        <div class="mb-3">
+          <div class="text-uppercase fw-bold text-secondary mb-1" style="font-size: 10.5px; letter-spacing: 0.05em;">Itemized Court Schedule &amp; Rates</div>
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr class="text-muted border-bottom" style="font-size: 11px;">
+                  <th class="ps-0 fw-semibold">Court / Time Slot</th>
+                  <th class="text-center fw-semibold">Hrs</th>
+                  <th class="text-end fw-semibold">Rate</th>
+                  <th class="pe-0 text-end fw-semibold">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemizedRowsHtml}
+              </tbody>
+              <tfoot>
+                <tr class="border-top">
+                  <td colspan="2" class="pt-2.5 ps-0 fw-bold text-dark">Total (${booking.total_hours} hr${booking.total_hours > 1 ? 's' : ''})</td>
+                  <td colspan="2" class="pt-2.5 pe-0 text-end fw-extrabold text-primary fs-5 font-display">₱${parseFloat(booking.total_amount || 0).toFixed(2)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        ${paymentProofSectionHtml}
+
+        ${booking.cancellation_reason ? `
+          <div class="alert alert-danger rounded-3 py-2 px-3 small mb-2">
+            <strong>Admin Note / Cancellation Reason:</strong> ${escapeChatHtml(booking.cancellation_reason)}
+          </div>
+        ` : ''}
+
+        <div class="text-center text-muted pt-2 border-top" style="font-size: 11px;">
+          Present your Reference Number (<strong>${escapeChatHtml(booking.reference_number)}</strong>) or QR Pass upon arrival at The Playground Pickleball court desk.
+        </div>
+      </div>
+    `;
+
+    footerEl.innerHTML = `
+      <div class="d-flex align-items-center gap-1.5 flex-wrap">
+        <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-semibold" onclick="printAccountReceipt()">
+          <i class="bi bi-printer-fill me-1"></i>Print / Save PDF
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold" data-bs-dismiss="modal" onclick="openAccountChatModal('${escapeChatHtml(booking.reference_number)}')">
+          <i class="bi bi-chat-dots-fill text-warning me-1"></i>Ask Admin
+        </button>
+      </div>
+      <div class="d-flex align-items-center gap-1.5">
+        ${(isAwaitingPay && !isExpired) ? `
+          <a href="/payment/gcash?ref=${encodeURIComponent(booking.reference_number)}" class="btn btn-book-now-gold btn-sm rounded-pill px-3 fw-bold">
+            <i class="bi bi-qr-code-scan me-1"></i>Complete GCash &rarr;
+          </a>
+        ` : `
+          <a href="/reservations/${encodeURIComponent(booking.reference_number)}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold">
+            <i class="bi bi-qr-code me-1"></i>Open Full QR Pass &rarr;
+          </a>
+        `}
+      </div>
+    `;
+
+    const modalEl = document.getElementById('accountReceiptModal');
+    if (modalEl) {
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    }
+  }
+
+  function printAccountReceipt() {
+    const area = document.getElementById('printableAccountReceiptArea');
+    if (!area) return;
+    const win = window.open('', '_blank', 'width=680,height=800');
+    if (!win) {
+      window.print();
+      return;
+    }
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Official Booking Receipt — The Playground Pickleball</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+          body { padding: 24px; background: #fff; font-family: system-ui, -apple-system, sans-serif; }
+          @media print { body { padding: 0; } }
+        </style>
+      </head>
+      <body>
+        ${area.outerHTML}
+        <script>
+          window.onload = function() { setTimeout(function() { window.print(); }, 350); };
+        <\/script>
+      </body>
+      </html>
+    `);
+    win.document.close();
   }
 
   // =========================================================
@@ -2370,16 +2746,21 @@
         const refClean = msg.booking_ref || '';
         let actionBtnHtml = '';
         if (refClean) {
+          actionBtnHtml += `
+            <button type="button" class="btn btn-dark btn-sm rounded-pill px-2.5 py-1 fw-bold" style="font-size: 11px;" onclick="openBookingReceiptModal('${escapeChatHtml(refClean)}')">
+              <i class="bi bi-receipt-cutoff text-warning me-1"></i>View Receipt
+            </button>
+          `;
           if (st === 'AWAITING_PAYMENT') {
-            actionBtnHtml = `
+            actionBtnHtml += `
               <a href="/payment/gcash?ref=${encodeURIComponent(refClean)}" class="btn btn-book-now-gold btn-sm rounded-pill px-3 py-1 fw-bold" style="font-size: 11.5px;">
-                <i class="bi bi-qr-code-scan me-1"></i>Complete GCash Payment &rarr;
+                <i class="bi bi-qr-code-scan me-1"></i>Complete GCash &rarr;
               </a>
             `;
           } else {
-            actionBtnHtml = `
+            actionBtnHtml += `
               <a href="/reservations/${encodeURIComponent(refClean)}" class="btn btn-primary btn-sm rounded-pill px-3 py-1 fw-bold" style="font-size: 11.5px;">
-                <i class="bi bi-ticket-perforated-fill me-1"></i>Open Digital Court Pass &rarr;
+                <i class="bi bi-ticket-perforated-fill me-1"></i>QR Pass &rarr;
               </a>
             `;
           }

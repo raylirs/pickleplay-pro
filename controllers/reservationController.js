@@ -502,6 +502,13 @@ const reservationController = {
           status: r.status,
           expires_at: r.expires_at,
           created_at: r.created_at,
+          user_name: r.user_name,
+          user_contact: r.user_contact,
+          user_email: r.user_email,
+          gcash_reference_no: r.gcash_reference_no || null,
+          payment_screenshot: r.payment_screenshot || null,
+          payment_transaction_id: r.payment_transaction_id || null,
+          cancellation_reason: r.cancellation_reason || null,
           total_amount: parseFloat(r.total_amount || 0),
           total_hours: parseInt(r.total_hours || 1, 10),
           courts: [
@@ -519,6 +526,9 @@ const reservationController = {
         const entry = groupedMap.get(masterRef);
         entry.total_amount += parseFloat(r.total_amount || 0);
         entry.total_hours += parseInt(r.total_hours || 1, 10);
+        if (!entry.gcash_reference_no && r.gcash_reference_no) entry.gcash_reference_no = r.gcash_reference_no;
+        if (!entry.payment_screenshot && r.payment_screenshot) entry.payment_screenshot = r.payment_screenshot;
+        if (!entry.payment_transaction_id && r.payment_transaction_id) entry.payment_transaction_id = r.payment_transaction_id;
         let parsedSlots = [];
         try {
           parsedSlots = r.slots_json ? JSON.parse(r.slots_json) : [r.start_time];
