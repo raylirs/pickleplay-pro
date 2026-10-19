@@ -13,6 +13,9 @@ Court.belongsTo(CourtCategory, { foreignKey: 'category_id', as: 'category' });
 Court.hasMany(Reservation, { foreignKey: 'court_id', as: 'reservations', onDelete: 'CASCADE' });
 Reservation.belongsTo(Court, { foreignKey: 'court_id', as: 'court' });
 
+User.hasMany(Reservation, { foreignKey: 'user_id', as: 'reservations' });
+Reservation.belongsTo(User, { foreignKey: 'user_id', as: 'player' });
+
 User.hasMany(AuditLog, { foreignKey: 'user_id', as: 'audit_logs' });
 AuditLog.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 

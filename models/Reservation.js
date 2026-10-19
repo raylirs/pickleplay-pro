@@ -15,6 +15,10 @@ const Reservation = sequelize.define('Reservation', {
     type: DataTypes.INTEGER,
     allowNull: false
   },
+  user_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
   user_name: {
     type: DataTypes.STRING(200),
     allowNull: false

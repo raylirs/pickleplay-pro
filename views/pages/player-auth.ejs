@@ -1,0 +1,135 @@
+<section class="py-5" style="min-height: 82vh; display: flex; align-items: center; background: linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%);">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-5 col-md-7">
+        <!-- Back to Venue Header -->
+        <div class="mb-3 d-flex align-items-center justify-content-between">
+          <a href="/" class="text-decoration-none text-secondary small fw-semibold d-inline-flex align-items-center gap-1">
+            <i class="bi bi-arrow-left"></i> Back to Court Schedule
+          </a>
+          <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold" style="font-size: 11px;">
+            <i class="bi bi-shield-lock-fill me-1"></i>Player Account
+          </span>
+        </div>
+
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white">
+          <!-- Brand Header -->
+          <div class="p-4 text-white text-center" style="background: linear-gradient(135deg, #0B2545 0%, #134074 100%); border-bottom: 3px solid #E5C365;">
+            <img src="/images/the-playground-logo.jpg" alt="The Playground Pickleball" class="rounded-circle mb-2 border border-2 border-warning shadow-sm" style="width: 58px; height: 58px; object-fit: cover;">
+            <h4 class="fw-bold font-display mb-1 text-white">The Playground Pickleball</h4>
+            <p class="small text-white-50 mb-0">Sign in or create an account to book courts &amp; manage reservations</p>
+          </div>
+
+          <!-- Toggle Tabs -->
+          <div class="d-flex border-bottom bg-light">
+            <button type="button" id="authPageTabLogin" class="flex-fill btn rounded-0 py-2.5 fw-bold small border-0 <%= mode !== 'register' ? 'bg-white text-primary border-bottom border-2 border-primary' : 'text-secondary' %>" onclick="switchAuthPageMode('login')">
+              <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+            </button>
+            <button type="button" id="authPageTabRegister" class="flex-fill btn rounded-0 py-2.5 fw-bold small border-0 <%= mode === 'register' ? 'bg-white text-primary border-bottom border-2 border-primary' : 'text-secondary' %>" onclick="switchAuthPageMode('register')">
+              <i class="bi bi-person-plus-fill me-1"></i> Create Account
+            </button>
+          </div>
+
+          <div class="card-body p-4">
+            <!-- LOGIN FORM -->
+            <form id="authPageLoginForm" action="/account/login" method="POST" class="<%= mode === 'register' ? 'd-none' : '' %>">
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-dark">Email or GCash Mobile Number <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light text-primary"><i class="bi bi-person-badge"></i></span>
+                  <input type="text" name="identifier" class="form-control" placeholder="09171234567 or player@email.com" required autofocus>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label small fw-bold text-dark">Password <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light text-primary"><i class="bi bi-lock-fill"></i></span>
+                  <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-book-now-gold w-100 py-2.5 fw-bold rounded-pill shadow-sm">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Sign In &amp; Continue
+              </button>
+
+              <div class="text-center mt-3 pt-2 border-top">
+                <span class="small text-secondary">New player at The Playground?</span>
+                <a href="javascript:void(0)" onclick="switchAuthPageMode('register')" class="small fw-bold text-primary text-decoration-none ms-1">Create an account &rarr;</a>
+              </div>
+            </form>
+
+            <!-- REGISTER FORM -->
+            <form id="authPageRegisterForm" action="/account/register" method="POST" class="<%= mode === 'register' ? '' : 'd-none' %>">
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-dark">Player Full Name <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light text-primary"><i class="bi bi-person-fill"></i></span>
+                  <input type="text" name="full_name" class="form-control" placeholder="e.g. Juan Dela Cruz" required>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-dark">GCash Mobile Number <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light text-primary"><i class="bi bi-phone-fill"></i></span>
+                  <input type="tel" name="phone" class="form-control font-monospace" placeholder="09171234567" required>
+                </div>
+                <div class="form-text" style="font-size: 11px;">Used to log in and link your GCash court reservations automatically.</div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-dark">Email Address <span class="text-muted fw-normal">(Optional - can also be used for login)</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light text-primary"><i class="bi bi-envelope-fill"></i></span>
+                  <input type="email" name="email" class="form-control" placeholder="player@email.com">
+                </div>
+              </div>
+
+              <div class="row g-2 mb-4">
+                <div class="col-sm-6">
+                  <label class="form-label small fw-bold text-dark">Password <span class="text-danger">*</span></label>
+                  <input type="password" name="password" class="form-control" placeholder="Min. 6 characters" minlength="6" required>
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label small fw-bold text-dark">Confirm Password <span class="text-danger">*</span></label>
+                  <input type="password" name="confirm_password" class="form-control" placeholder="Re-enter password" minlength="6" required>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-book-now-gold w-100 py-2.5 fw-bold rounded-pill shadow-sm">
+                <i class="bi bi-person-check-fill me-1"></i> Create Player Account
+              </button>
+
+              <div class="text-center mt-3 pt-2 border-top">
+                <span class="small text-secondary">Already have an account?</span>
+                <a href="javascript:void(0)" onclick="switchAuthPageMode('login')" class="small fw-bold text-primary text-decoration-none ms-1">Sign in here &rarr;</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  function switchAuthPageMode(mode) {
+    const loginForm = document.getElementById('authPageLoginForm');
+    const registerForm = document.getElementById('authPageRegisterForm');
+    const tabLogin = document.getElementById('authPageTabLogin');
+    const tabRegister = document.getElementById('authPageTabRegister');
+
+    if (mode === 'register') {
+      loginForm.classList.add('d-none');
+      registerForm.classList.remove('d-none');
+      tabRegister.className = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 bg-white text-primary border-bottom border-2 border-primary';
+      tabLogin.className = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 text-secondary';
+    } else {
+      registerForm.classList.add('d-none');
+      loginForm.classList.remove('d-none');
+      tabLogin.className = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 bg-white text-primary border-bottom border-2 border-primary';
+      tabRegister.className = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 text-secondary';
+    }
+  }
+</script>

@@ -163,9 +163,10 @@ const reservationController = {
           const resv = await Reservation.create({
             reference_number: refNum,
             court_id: court.id,
-            user_name: user_name.trim(),
-            user_contact: user_contact.trim(),
-            user_email: user_email ? user_email.trim().toLowerCase() : null,
+            user_id: req.session && req.session.user ? req.session.user.id : null,
+            user_name: (user_name || (req.session?.user?.full_name) || '').trim(),
+            user_contact: (user_contact || (req.session?.user?.phone) || '').trim(),
+            user_email: (user_email || (req.session?.user?.email) || '') ? (user_email || req.session?.user?.email).trim().toLowerCase() : null,
             reservation_date,
             start_time: firstSlot,
             end_time: endTime,
@@ -298,9 +299,10 @@ const reservationController = {
       const reservation = await Reservation.create({
         reference_number: referenceNumber,
         court_id: court.id,
-        user_name: user_name.trim(),
-        user_contact: user_contact.trim(),
-        user_email: user_email ? user_email.trim().toLowerCase() : null,
+        user_id: req.session && req.session.user ? req.session.user.id : null,
+        user_name: (user_name || (req.session?.user?.full_name) || '').trim(),
+        user_contact: (user_contact || (req.session?.user?.phone) || '').trim(),
+        user_email: (user_email || (req.session?.user?.email) || '') ? (user_email || req.session?.user?.email).trim().toLowerCase() : null,
         reservation_date,
         start_time: firstSlot,
         end_time: endTime,
@@ -436,6 +438,92 @@ const reservationController = {
         status: reservation.status,
         expiresAt: reservation.expires_at,
         isExpired: reservation.status === 'EXPIRED' || (new Date() > new Date(reservation.expires_at) && reservation.status === 'AWAITING_PAYMENT')
+      });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  },
+
+  async getPlayerReservationsGrouped(sessionUser) {
+    if (!sessionUser) return [];
+
+    const matchConditions = [{ user_id: sessionUser.id }];
+    if (sessionUser.phone) {
+      matchConditions.push({ user_contact: sessionUser.phone });
+    }
+    if (sessionUser.email) {
+      matchConditions.push({ user_email: sessionUser.email.toLowerCase() });
+    }
+
+    const rawReservations = await Reservation.findAll({
+      where: { [Op.or]: matchConditions },
+      include: [{ model: Court, as: 'court', include: [{ model: CourtCategory, as: 'category' }] }],
+      order: [['created_at', 'DESC'], ['id', 'ASC']]
+    });
+
+    // Group multi-court orders by master reference number
+    const groupedMap = new Map();
+    for (const r of rawReservations) {
+      const masterRef = r.reference_number;
+      if (!groupedMap.has(masterRef)) {
+        let parsedSlots = [];
+        try {
+          parsedSlots = r.slots_json ? JSON.parse(r.slots_json) : [r.start_time];
+        } catch (e) {
+          parsedSlots = [r.start_time];
+        }
+        groupedMap.set(masterRef, {
+          reference_number: masterRef,
+          reservation_date: r.reservation_date,
+          status: r.status,
+          expires_at: r.expires_at,
+          created_at: r.created_at,
+          total_amount: parseFloat(r.total_amount || 0),
+          total_hours: parseInt(r.total_hours || 1, 10),
+          courts: [
+            {
+              court_name: r.court ? r.court.display_name : `Court ${r.court_id}`,
+              start_time: r.start_time,
+              end_time: r.end_time,
+              hours: parseInt(r.total_hours || 1, 10),
+              amount: parseFloat(r.total_amount || 0),
+              slots: parsedSlots
+            }
+          ]
+        });
+      } else {
+        const entry = groupedMap.get(masterRef);
+        entry.total_amount += parseFloat(r.total_amount || 0);
+        entry.total_hours += parseInt(r.total_hours || 1, 10);
+        let parsedSlots = [];
+        try {
+          parsedSlots = r.slots_json ? JSON.parse(r.slots_json) : [r.start_time];
+        } catch (e) {
+          parsedSlots = [r.start_time];
+        }
+        entry.courts.push({
+          court_name: r.court ? r.court.display_name : `Court ${r.court_id}`,
+          start_time: r.start_time,
+          end_time: r.end_time,
+          hours: parseInt(r.total_hours || 1, 10),
+          amount: parseFloat(r.total_amount || 0),
+          slots: parsedSlots
+        });
+      }
+    }
+
+    return Array.from(groupedMap.values());
+  },
+
+  async getMyBookingsJson(req, res, next) {
+    try {
+      if (!req.session || !req.session.user) {
+        return res.status(401).json({ success: false, requiresAuth: true, error: 'Not logged in.' });
+      }
+      const bookings = await reservationController.getPlayerReservationsGrouped(req.session.user);
+      res.json({
+        success: true,
+        bookings
       });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });

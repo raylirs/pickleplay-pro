@@ -12,12 +12,27 @@ async function seedDatabase() {
       { name: 'payment_screenshot', type: 'VARCHAR(255)' },
       { name: 'slots_json', type: 'TEXT' },
       { name: 'fb_psid', type: 'VARCHAR(100)' },
-      { name: 'binding_code', type: 'VARCHAR(20)' }
+      { name: 'binding_code', type: 'VARCHAR(20)' },
+      { name: 'user_id', type: 'INTEGER' }
     ];
 
     for (const col of newColumns) {
       try {
         await sequelize.query(`ALTER TABLE reservations ADD COLUMN ${col.name} ${col.type};`);
+      } catch (colErr) {
+        // Ignored if column already exists
+      }
+    }
+
+    const userColumns = [
+      { name: 'full_name', type: 'VARCHAR(200)' },
+      { name: 'email', type: 'VARCHAR(200)' },
+      { name: 'phone', type: 'VARCHAR(50)' }
+    ];
+
+    for (const col of userColumns) {
+      try {
+        await sequelize.query(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type};`);
       } catch (colErr) {
         // Ignored if column already exists
       }

@@ -18,7 +18,8 @@
           <table class="table table-hover align-middle mb-0">
             <thead class="table-light small text-uppercase">
               <tr>
-                <th>Username</th>
+                <th>Account / Name</th>
+                <th>Contact &amp; Email</th>
                 <th>Role</th>
                 <th>Created Date</th>
                 <th class="text-end">Actions</th>
@@ -29,20 +30,32 @@
                 <tr>
                   <td>
                     <div class="d-flex align-items-center">
-                      <div class="badge bg-primary-subtle text-primary rounded-circle p-2 me-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
-                        <i class="bi bi-person-fill fs-6"></i>
+                      <div class="badge <%= u.role === 'player' ? 'bg-warning-subtle text-dark' : 'bg-primary-subtle text-primary' %> rounded-circle p-2 me-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                        <i class="bi <%= u.role === 'player' ? 'bi-person-badge-fill' : 'bi-shield-lock-fill' %> fs-6"></i>
                       </div>
                       <div>
-                        <strong class="text-dark"><%= u.username %></strong>
+                        <strong class="text-dark d-block"><%= u.full_name || u.username %></strong>
+                        <span class="text-muted small font-monospace">@<%= u.username %></span>
                         <% if (u.id === user.id) { %>
                           <span class="badge bg-success-subtle text-success ms-1 small">You</span>
                         <% } %>
                       </div>
                     </div>
                   </td>
+                  <td class="small">
+                    <% if (u.phone) { %>
+                      <div class="fw-semibold text-dark font-monospace"><i class="bi bi-telephone me-1 text-primary"></i><%= u.phone %></div>
+                    <% } %>
+                    <% if (u.email) { %>
+                      <div class="text-secondary"><i class="bi bi-envelope me-1"></i><%= u.email %></div>
+                    <% } %>
+                    <% if (!u.phone && !u.email) { %>
+                      <span class="text-muted">—</span>
+                    <% } %>
+                  </td>
                   <td>
-                    <span class="badge <%= u.role === 'admin' ? 'bg-primary' : 'bg-secondary' %> px-3 py-1 rounded-pill">
-                      <%= u.role.toUpperCase() %>
+                    <span class="badge <%= u.role === 'admin' ? 'bg-primary' : (u.role === 'staff' ? 'bg-info text-dark' : 'bg-warning text-dark') %> px-3 py-1 rounded-pill">
+                      <%= (u.role || 'player').toUpperCase() %>
                     </span>
                   </td>
                   <td class="small text-secondary">
@@ -50,7 +63,7 @@
                   </td>
                   <td class="text-end">
                     <% if (u.id !== user.id) { %>
-                      <form action="/admin/users/<%= u.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete admin user \'<%= u.username %>\'?');">
+                      <form action="/admin/users/<%= u.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete user \'<%= u.full_name || u.username %>\'?');">
                         <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3" title="Delete User">
                           <i class="bi bi-trash me-1"></i>Delete
                         </button>

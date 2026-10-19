@@ -735,12 +735,12 @@ const adminController = {
   async showUsers(req, res, next) {
     try {
       const users = await User.findAll({
-        order: [['created_at', 'ASC']],
-        attributes: ['id', 'username', 'role', 'created_at']
+        order: [['created_at', 'DESC']],
+        attributes: ['id', 'username', 'full_name', 'email', 'phone', 'role', 'created_at']
       });
 
       res.render('admin/users', {
-        title: 'Admin & Staff Accounts - 3KS Playground',
+        title: 'User & Staff Accounts - 3KS Playground',
         layout: 'layouts/admin',
         user: req.session.user,
         users,

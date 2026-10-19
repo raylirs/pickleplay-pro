@@ -74,6 +74,14 @@
           <span>Book Court</span>
         </button>
 
+        <button class="courtogo-tab-btn" id="tab-btn-my-bookings" onclick="switchVenueTab('my-bookings')">
+          <i class="bi bi-ticket-perforated-fill text-primary"></i>
+          <span>My Bookings</span>
+          <span class="courtogo-tab-badge <%= (typeof myBookings !== 'undefined' && myBookings.length > 0) ? '' : 'd-none' %>" id="myBookingsTabBadge">
+            <%= typeof myBookings !== 'undefined' ? myBookings.length : 0 %>
+          </span>
+        </button>
+
         <button class="courtogo-tab-btn" id="tab-btn-about" onclick="switchVenueTab('about')">
           <i class="bi bi-info-circle-fill"></i>
           <span>About Facility</span>
@@ -97,15 +105,37 @@
       </div>
 
       <!-- Action Buttons In-Line with Tabs (Right) -->
-      <div class="d-flex align-items-center gap-2 py-2 py-md-0 ms-md-3 justify-content-end flex-shrink-0">
-        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-none" onclick="shareVenueLink()">
-          <i class="bi bi-share-fill"></i>
-          <span>Share</span>
-        </button>
+      <div class="d-flex align-items-center gap-2 py-2 py-md-0 ms-md-3 justify-content-end flex-shrink-0 flex-wrap">
         <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-none" data-bs-toggle="modal" data-bs-target="#messengerModal">
           <i class="bi bi-messenger text-primary"></i>
-          <span>Messenger Alerts</span>
+          <span class="d-none d-sm-inline">Messenger Alerts</span>
         </button>
+
+        <div id="headerAccountControls" class="d-inline-flex align-items-center gap-2">
+          <% if (typeof user !== 'undefined' && user) { %>
+            <button type="button" class="btn btn-dark btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-xs" onclick="switchVenueTab('my-bookings')" title="View My Bookings">
+              <i class="bi bi-person-check-fill text-warning"></i>
+              <span><%= user.full_name || user.username %></span>
+            </button>
+            <% if (user.role === 'admin' || user.role === 'staff') { %>
+              <a href="/admin" class="btn btn-outline-dark btn-sm rounded-pill px-2.5 py-1 fw-semibold" title="Admin Panel">
+                <i class="bi bi-speedometer2"></i>
+              </a>
+            <% } %>
+            <a href="/account/logout" class="btn btn-outline-danger btn-sm rounded-pill px-2.5 py-1 fw-semibold" title="Sign Out">
+              <i class="bi bi-box-arrow-right"></i>
+            </a>
+          <% } else { %>
+            <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1" onclick="openPlayerAuthModal('login', false)">
+              <i class="bi bi-box-arrow-in-right"></i>
+              <span>Sign In</span>
+            </button>
+            <button type="button" class="btn btn-book-now-gold btn-sm rounded-pill px-3 py-1 fw-bold d-inline-flex align-items-center gap-1" onclick="openPlayerAuthModal('register', false)">
+              <i class="bi bi-person-plus-fill"></i>
+              <span>Sign Up</span>
+            </button>
+          <% } %>
+        </div>
       </div>
     </div>
   </div>
@@ -426,6 +456,83 @@
     </div>
   </div>
 
+  <!-- =========================================================
+       TAB 6: MY BOOKINGS (Authenticated Player Dashboard)
+  ========================================================= -->
+  <div id="tab-content-my-bookings" class="venue-tab-pane d-none">
+    <!-- Guest Prompt (Shown when not signed in) -->
+    <div id="myBookingsGuestCard" class="<%= (typeof user !== 'undefined' && user) ? 'd-none' : '' %>">
+      <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+          <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white text-center">
+            <div class="badge bg-warning-subtle text-dark rounded-circle p-3 mb-3 fs-3 d-inline-flex align-items-center justify-content-center mx-auto" style="width: 64px; height: 64px;">
+              <i class="bi bi-person-lock"></i>
+            </div>
+            <h3 class="fw-bold text-dark font-display mb-2">Player Account Required</h3>
+            <p class="text-secondary small mb-4">
+              Sign in or create a free player account to book courts, track active holds, resume GCash payments, and view your complete booking history.
+            </p>
+            <div class="d-flex flex-column flex-sm-row justify-content-center gap-2">
+              <button type="button" class="btn btn-book-now-gold rounded-pill px-4 py-2.5 fw-bold" onclick="openPlayerAuthModal('login', false)">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Sign In to Account
+              </button>
+              <button type="button" class="btn btn-outline-primary rounded-pill px-4 py-2.5 fw-bold" onclick="openPlayerAuthModal('register', false)">
+                <i class="bi bi-person-plus-fill me-1"></i> Create Player Account
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Authenticated Player Dashboard -->
+    <div id="myBookingsUserDashboard" class="<%= (typeof user !== 'undefined' && user) ? '' : 'd-none' %>">
+      <!-- Player Profile Header Card -->
+      <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white mb-4">
+        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <div class="badge bg-primary text-warning rounded-circle d-flex align-items-center justify-content-center fw-bold fs-4 flex-shrink-0 shadow-sm" style="width: 54px; height: 54px;">
+              <i class="bi bi-person-check-fill"></i>
+            </div>
+            <div>
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h4 class="fw-bold text-dark font-display mb-0" id="dashboardPlayerName">
+                  <%= (typeof user !== 'undefined' && user) ? (user.full_name || user.username) : 'Player' %>
+                </h4>
+                <span class="badge bg-success-subtle text-success rounded-pill px-2.5 py-1 small fw-bold">Verified Player</span>
+              </div>
+              <div class="text-secondary small mt-1 d-flex flex-wrap gap-3">
+                <span id="dashboardPlayerPhone">
+                  <i class="bi bi-phone-fill text-primary me-1"></i><%= (typeof user !== 'undefined' && user && user.phone) ? user.phone : '—' %>
+                </span>
+                <% if (typeof user !== 'undefined' && user && user.email) { %>
+                  <span id="dashboardPlayerEmail">
+                    <i class="bi bi-envelope-fill text-secondary me-1"></i><%= user.email %>
+                  </span>
+                <% } else { %>
+                  <span id="dashboardPlayerEmail" class="d-none"></span>
+                <% } %>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1.5 fw-semibold" onclick="refreshMyBookings()">
+              <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+            </button>
+            <button type="button" class="btn btn-book-now-gold btn-sm rounded-pill px-3 py-1.5 fw-bold" onclick="switchVenueTab('book')">
+              <i class="bi bi-plus-circle-fill me-1"></i>Book a Court
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bookings List Container -->
+      <div id="myBookingsListContainer">
+        <!-- Populated by renderMyBookingsList() on load & refresh -->
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- =========================================================
@@ -706,17 +813,17 @@
 
           <div class="mb-3">
             <label class="form-label small fw-bold text-dark">Player Full Name <span class="text-danger">*</span></label>
-            <input type="text" name="user_name" class="form-control rounded-3" placeholder="e.g. Juan Dela Cruz" required>
+            <input type="text" name="user_name" id="checkoutUserName" class="form-control rounded-3" placeholder="e.g. Juan Dela Cruz" value="<%= (typeof user !== 'undefined' && user) ? (user.full_name || user.username || '') : '' %>" required>
           </div>
 
           <div class="row g-2 mb-3">
             <div class="col-sm-6">
               <label class="form-label small fw-bold text-dark">GCash Mobile <span class="text-danger">*</span></label>
-              <input type="tel" name="user_contact" class="form-control rounded-3 font-monospace" required>
+              <input type="tel" name="user_contact" id="checkoutUserContact" class="form-control rounded-3 font-monospace" value="<%= (typeof user !== 'undefined' && user && user.phone) ? user.phone : '' %>" required>
             </div>
             <div class="col-sm-6">
               <label class="form-label small fw-bold text-dark">Email <span class="text-muted fw-normal">(Optional)</span></label>
-              <input type="email" name="user_email" class="form-control rounded-3" placeholder="player@email.com">
+              <input type="email" name="user_email" id="checkoutUserEmail" class="form-control rounded-3" placeholder="player@email.com" value="<%= (typeof user !== 'undefined' && user && user.email) ? user.email : '' %>">
             </div>
           </div>
 
@@ -738,18 +845,125 @@
 </div>
 
 <!-- =========================================================
+     PLAYER ACCOUNT LOGIN / REGISTER MODAL (Seamless Matrix Auth)
+========================================================= -->
+<div class="modal fade" id="playerAuthModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+      <div class="modal-header modal-checkout-header p-4">
+        <div>
+          <h5 class="modal-title fw-bold font-display text-white mb-0" id="playerAuthModalTitle">Player Account Required</h5>
+          <span class="text-white-50 small">The Playground Pickleball · Sign In or Create Account</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Mode Switcher Tabs -->
+      <div class="d-flex border-bottom bg-light">
+        <button type="button" id="modalAuthTabLogin" class="flex-fill btn rounded-0 py-2.5 fw-bold small border-0 bg-white text-primary border-bottom border-2 border-primary" onclick="switchPlayerAuthModalMode('login')">
+          <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+        </button>
+        <button type="button" id="modalAuthTabRegister" class="flex-fill btn rounded-0 py-2.5 fw-bold small border-0 text-secondary" onclick="switchPlayerAuthModalMode('register')">
+          <i class="bi bi-person-plus-fill me-1"></i> Create Account
+        </button>
+      </div>
+
+      <div class="modal-body p-4">
+        <!-- Context Notice when triggered from Continue to Booking -->
+        <div id="playerAuthCheckoutNotice" class="alert alert-warning border-warning py-2 px-3 small rounded-3 mb-3 d-none">
+          <i class="bi bi-shield-lock-fill me-1 text-dark"></i>
+          <strong>Almost there!</strong> Please sign in or create an account to reserve your selected court slots.
+        </div>
+
+        <div id="playerAuthErrorBox" class="alert alert-danger py-2 px-3 small rounded-3 mb-3 d-none"></div>
+
+        <!-- Modal Login Form -->
+        <form id="modalPlayerLoginForm" onsubmit="handleModalPlayerLogin(event)">
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark">Email or GCash Mobile Number <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-primary"><i class="bi bi-person-badge"></i></span>
+              <input type="text" id="modalLoginIdentifier" name="identifier" class="form-control" placeholder="09171234567 or player@email.com" required>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label small fw-bold text-dark">Password <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-primary"><i class="bi bi-lock-fill"></i></span>
+              <input type="password" id="modalLoginPassword" name="password" class="form-control" placeholder="Enter your password" required>
+            </div>
+          </div>
+
+          <button type="submit" id="modalLoginSubmitBtn" class="btn btn-book-now-gold w-100 py-2.5 fw-bold rounded-pill shadow-sm">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Sign In &amp; Continue
+          </button>
+
+          <div class="text-center mt-3 pt-2 border-top">
+            <span class="small text-secondary">Don't have a player account yet?</span>
+            <a href="javascript:void(0)" onclick="switchPlayerAuthModalMode('register')" class="small fw-bold text-primary text-decoration-none ms-1">Create Account &rarr;</a>
+          </div>
+        </form>
+
+        <!-- Modal Register Form -->
+        <form id="modalPlayerRegisterForm" class="d-none" onsubmit="handleModalPlayerRegister(event)">
+          <div class="mb-2.5">
+            <label class="form-label small fw-bold text-dark mb-1">Player Full Name <span class="text-danger">*</span></label>
+            <input type="text" id="modalRegFullName" name="full_name" class="form-control rounded-3" placeholder="e.g. Juan Dela Cruz" required>
+          </div>
+
+          <div class="row g-2 mb-2.5 mt-1">
+            <div class="col-sm-6">
+              <label class="form-label small fw-bold text-dark mb-1">GCash Mobile <span class="text-danger">*</span></label>
+              <input type="tel" id="modalRegPhone" name="phone" class="form-control rounded-3 font-monospace" placeholder="09171234567" required>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label small fw-bold text-dark mb-1">Email <span class="text-muted fw-normal">(Optional)</span></label>
+              <input type="email" id="modalRegEmail" name="email" class="form-control rounded-3" placeholder="player@email.com">
+            </div>
+          </div>
+
+          <div class="row g-2 mb-4 mt-1">
+            <div class="col-sm-6">
+              <label class="form-label small fw-bold text-dark mb-1">Password <span class="text-danger">*</span></label>
+              <input type="password" id="modalRegPassword" name="password" class="form-control rounded-3" placeholder="Min. 6 chars" minlength="6" required>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label small fw-bold text-dark mb-1">Confirm Password <span class="text-danger">*</span></label>
+              <input type="password" id="modalRegConfirm" name="confirm_password" class="form-control rounded-3" placeholder="Repeat password" minlength="6" required>
+            </div>
+          </div>
+
+          <button type="submit" id="modalRegisterSubmitBtn" class="btn btn-book-now-gold w-100 py-2.5 fw-bold rounded-pill shadow-sm">
+            <i class="bi bi-person-check-fill me-1"></i> Create Account &amp; Continue
+          </button>
+
+          <div class="text-center mt-3 pt-2 border-top">
+            <span class="small text-secondary">Already have an account?</span>
+            <a href="javascript:void(0)" onclick="switchPlayerAuthModalMode('login')" class="small fw-bold text-primary text-decoration-none ms-1">Sign In &rarr;</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
      LEAFLET MAP LIBS & CLIENT INTERACTION JAVASCRIPT
 ========================================================= -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 <script>
-  // Global State for Courtogo Matrix
+  // Global State for Courtogo Matrix & Player Account
   let currentDate = '<%= today %>';
   let matrixCourtsData = [];
   let selectedSlotItems = []; // Array of { courtId, courtName, startTime, endTime, rate, startLabel, endLabel }
   let mapInitialized = false;
   let leafletMap = null;
+  let currentPlayerUser = <%- JSON.stringify(typeof user !== 'undefined' && user ? user : null) %>;
+  let myBookingsData = <%- JSON.stringify(typeof myBookings !== 'undefined' && myBookings ? myBookings : []) %>;
+  let pendingCheckoutAfterAuth = false;
 
   document.addEventListener('DOMContentLoaded', function () {
     // 1. Initialize Date picker and buttons
@@ -761,30 +975,35 @@
     // 3. Listen to Socket.io for Real-Time Updates
     initMatrixSocket();
 
-    // 4. Hide floating booking rail when checkout modal opens, restore when closed
-    const checkoutModalEl = document.getElementById('checkoutModal');
-    if (checkoutModalEl) {
-      checkoutModalEl.addEventListener('show.bs.modal', function () {
-        const rail = document.getElementById('bookingActionBar');
-        if (rail) rail.classList.remove('is-visible');
-      });
-      checkoutModalEl.addEventListener('hidden.bs.modal', function () {
-        const rail = document.getElementById('bookingActionBar');
-        if (rail && selectedSlotItems && selectedSlotItems.length > 0) {
-          rail.classList.add('is-visible');
-        }
-      });
-    }
+    // 4. Render initial My Bookings list if logged in
+    renderMyBookingsList();
 
-    // 5. Handle direct tab routing via URL hash
+    // 5. Hide floating booking rail when checkout or auth modal opens, restore when closed
+    ['checkoutModal', 'playerAuthModal'].forEach(modalId => {
+      const modalEl = document.getElementById(modalId);
+      if (modalEl) {
+        modalEl.addEventListener('show.bs.modal', function () {
+          const rail = document.getElementById('bookingActionBar');
+          if (rail) rail.classList.remove('is-visible');
+        });
+        modalEl.addEventListener('hidden.bs.modal', function () {
+          const rail = document.getElementById('bookingActionBar');
+          if (rail && selectedSlotItems && selectedSlotItems.length > 0) {
+            rail.classList.add('is-visible');
+          }
+        });
+      }
+    });
+
+    // 6. Handle direct tab routing via URL hash
     if (window.location.hash) {
       const targetTab = window.location.hash.replace('#', '');
-      if (['book', 'about', 'photos', 'location', 'lookup'].includes(targetTab)) {
+      if (['book', 'my-bookings', 'about', 'photos', 'location', 'lookup'].includes(targetTab)) {
         switchVenueTab(targetTab);
       }
     }
 
-    // 6. Check for active unpaid booking in localStorage to show recovery banner
+    // 7. Check for active unpaid booking in localStorage to show recovery banner
     checkUnpaidBookingBanner();
   });
 
@@ -816,6 +1035,8 @@
         const input = document.getElementById('inlineRefInput');
         if (input) input.focus();
       }, 150);
+    } else if (tabName === 'my-bookings' && currentPlayerUser) {
+      refreshMyBookings();
     }
     history.replaceState(null, null, '#' + tabName);
   }
@@ -1350,10 +1571,16 @@
     document.getElementById('bookingActionBar').classList.remove('is-visible');
   }
 
-  // Open Checkout Modal
+  // Open Checkout Modal (Strict Player Login Required)
   function openCheckoutModal() {
     if (!selectedSlotItems || selectedSlotItems.length === 0) return;
     toggleSelectedSlotsDrawer(false);
+
+    // Require player login / signup before proceeding to checkout
+    if (!currentPlayerUser) {
+      openPlayerAuthModal('login', true);
+      return;
+    }
 
     const totalCount = selectedSlotItems.length;
     const totalPrice = selectedSlotItems.reduce((sum, item) => sum + item.rate, 0);
@@ -1422,6 +1649,16 @@
     const totalEl = document.getElementById('modalSummaryTotal');
     if (totalEl) totalEl.innerText = `₱${totalPrice.toFixed(2)}`;
 
+    // Ensure player profile fields are populated
+    const nameInput = document.getElementById('checkoutUserName');
+    const phoneInput = document.getElementById('checkoutUserContact');
+    const emailInput = document.getElementById('checkoutUserEmail');
+    if (currentPlayerUser) {
+      if (nameInput && !nameInput.value) nameInput.value = currentPlayerUser.full_name || currentPlayerUser.username || '';
+      if (phoneInput && !phoneInput.value) phoneInput.value = currentPlayerUser.phone || '';
+      if (emailInput && !emailInput.value) emailInput.value = currentPlayerUser.email || '';
+    }
+
     // Populate Hidden Form Fields
     document.getElementById('formCourtId').value = selectedSlotItems[0].courtId;
     document.getElementById('formDate').value = currentDate;
@@ -1429,8 +1666,366 @@
     document.getElementById('formTotalHours').value = totalCount;
     document.getElementById('formSelectedSlots').value = JSON.stringify(selectedSlotItems);
 
-    const modal = new bootstrap.Modal(document.getElementById('checkoutModal'));
+    const modalEl = document.getElementById('checkoutModal');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
+  }
+
+  // =========================================================
+  // PLAYER ACCOUNT MODAL & MY BOOKINGS DASHBOARD FUNCTIONS
+  // =========================================================
+  function openPlayerAuthModal(mode = 'login', fromCheckout = false) {
+    pendingCheckoutAfterAuth = !!fromCheckout;
+    switchPlayerAuthModalMode(mode);
+
+    const noticeEl = document.getElementById('playerAuthCheckoutNotice');
+    if (noticeEl) {
+      if (fromCheckout) {
+        noticeEl.classList.remove('d-none');
+      } else {
+        noticeEl.classList.add('d-none');
+      }
+    }
+
+    const errBox = document.getElementById('playerAuthErrorBox');
+    if (errBox) errBox.classList.add('d-none');
+
+    const modalEl = document.getElementById('playerAuthModal');
+    if (modalEl) {
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    }
+  }
+
+  function switchPlayerAuthModalMode(mode) {
+    const loginForm = document.getElementById('modalPlayerLoginForm');
+    const regForm = document.getElementById('modalPlayerRegisterForm');
+    const tabLogin = document.getElementById('modalAuthTabLogin');
+    const tabReg = document.getElementById('modalAuthTabRegister');
+    const titleEl = document.getElementById('playerAuthModalTitle');
+    const errBox = document.getElementById('playerAuthErrorBox');
+    if (errBox) errBox.classList.add('d-none');
+
+    if (mode === 'register') {
+      if (loginForm) loginForm.classList.add('d-none');
+      if (regForm) regForm.classList.remove('d-none');
+      if (tabReg) tabReg.className = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 bg-white text-primary border-bottom border-2 border-primary';
+      if (tabLogin) tabLogin.className = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 text-secondary';
+      if (titleEl) titleEl.innerText = 'Create Player Account';
+    } else {
+      if (regForm) regForm.classList.add('d-none');
+      if (loginForm) loginForm.classList.remove('d-none');
+      if (tabLogin) tabLogin.className = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 bg-white text-primary border-bottom border-2 border-primary';
+      if (tabReg) tabReg.className = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 text-secondary';
+      if (titleEl) titleEl.innerText = 'Sign In to Player Account';
+    }
+  }
+
+  async function handleModalPlayerLogin(e) {
+    e.preventDefault();
+    const identifier = document.getElementById('modalLoginIdentifier').value.trim();
+    const password = document.getElementById('modalLoginPassword').value;
+    const btn = document.getElementById('modalLoginSubmitBtn');
+    const errBox = document.getElementById('playerAuthErrorBox');
+
+    if (errBox) errBox.classList.add('d-none');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in...';
+    }
+
+    try {
+      const res = await fetch('/account/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ identifier, password })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        if (errBox) {
+          errBox.innerText = (data && data.error) || 'Sign in failed. Please check your credentials.';
+          errBox.classList.remove('d-none');
+        }
+        return;
+      }
+
+      onPlayerAuthenticatedSuccess(data.user, data.message);
+    } catch (err) {
+      if (errBox) {
+        errBox.innerText = 'Network error. Please try again.';
+        errBox.classList.remove('d-none');
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Sign In &amp; Continue';
+      }
+    }
+  }
+
+  async function handleModalPlayerRegister(e) {
+    e.preventDefault();
+    const full_name = document.getElementById('modalRegFullName').value.trim();
+    const phone = document.getElementById('modalRegPhone').value.trim();
+    const email = document.getElementById('modalRegEmail').value.trim();
+    const password = document.getElementById('modalRegPassword').value;
+    const confirm_password = document.getElementById('modalRegConfirm').value;
+    const btn = document.getElementById('modalRegisterSubmitBtn');
+    const errBox = document.getElementById('playerAuthErrorBox');
+
+    if (errBox) errBox.classList.add('d-none');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating account...';
+    }
+
+    try {
+      const res = await fetch('/account/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ full_name, phone, email, password, confirm_password })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        if (errBox) {
+          errBox.innerText = (data && data.error) || 'Could not create account. Please verify your details.';
+          errBox.classList.remove('d-none');
+        }
+        return;
+      }
+
+      onPlayerAuthenticatedSuccess(data.user, data.message);
+    } catch (err) {
+      if (errBox) {
+        errBox.innerText = 'Network error. Please try again.';
+        errBox.classList.remove('d-none');
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-person-check-fill me-1"></i> Create Account &amp; Continue';
+      }
+    }
+  }
+
+  function onPlayerAuthenticatedSuccess(userObj, welcomeMessage) {
+    currentPlayerUser = userObj;
+    applyAuthenticatedUserToUI(userObj);
+    refreshMyBookings();
+
+    // Hide Auth Modal
+    const authModalEl = document.getElementById('playerAuthModal');
+    if (authModalEl) {
+      const modalInstance = bootstrap.Modal.getInstance(authModalEl);
+      if (modalInstance) modalInstance.hide();
+    }
+
+    if (welcomeMessage) {
+      showLiveToast(welcomeMessage);
+    }
+
+    // If user clicked "Continue to Booking", immediately open Checkout Modal with pre-filled details!
+    if (pendingCheckoutAfterAuth && selectedSlotItems && selectedSlotItems.length > 0) {
+      pendingCheckoutAfterAuth = false;
+      setTimeout(() => {
+        openCheckoutModal();
+      }, 220);
+    }
+  }
+
+  function applyAuthenticatedUserToUI(userObj) {
+    if (!userObj) return;
+    const displayName = userObj.full_name || userObj.username || 'Player';
+
+    // 1. Update top right header controls
+    const headerControls = document.getElementById('headerAccountControls');
+    if (headerControls) {
+      const adminBtn = (userObj.role === 'admin' || userObj.role === 'staff')
+        ? `<a href="/admin" class="btn btn-outline-dark btn-sm rounded-pill px-2.5 py-1 fw-semibold" title="Admin Panel"><i class="bi bi-speedometer2"></i></a>`
+        : '';
+      headerControls.innerHTML = `
+        <button type="button" class="btn btn-dark btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-xs" onclick="switchVenueTab('my-bookings')" title="View My Bookings">
+          <i class="bi bi-person-check-fill text-warning"></i>
+          <span>${displayName}</span>
+        </button>
+        ${adminBtn}
+        <a href="/account/logout" class="btn btn-outline-danger btn-sm rounded-pill px-2.5 py-1 fw-semibold" title="Sign Out">
+          <i class="bi bi-box-arrow-right"></i>
+        </a>
+      `;
+    }
+
+    // 2. Pre-fill Checkout Modal inputs
+    const nameInput = document.getElementById('checkoutUserName');
+    const phoneInput = document.getElementById('checkoutUserContact');
+    const emailInput = document.getElementById('checkoutUserEmail');
+    if (nameInput) nameInput.value = displayName;
+    if (phoneInput) phoneInput.value = userObj.phone || '';
+    if (emailInput) emailInput.value = userObj.email || '';
+
+    // 3. Toggle My Bookings tab guest vs authenticated view
+    const guestCard = document.getElementById('myBookingsGuestCard');
+    const userDash = document.getElementById('myBookingsUserDashboard');
+    if (guestCard) guestCard.classList.add('d-none');
+    if (userDash) userDash.classList.remove('d-none');
+
+    const dName = document.getElementById('dashboardPlayerName');
+    const dPhone = document.getElementById('dashboardPlayerPhone');
+    const dEmail = document.getElementById('dashboardPlayerEmail');
+    if (dName) dName.innerText = displayName;
+    if (dPhone) dPhone.innerHTML = `<i class="bi bi-phone-fill text-primary me-1"></i>${userObj.phone || '—'}`;
+    if (dEmail) {
+      if (userObj.email) {
+        dEmail.innerHTML = `<i class="bi bi-envelope-fill text-secondary me-1"></i>${userObj.email}`;
+        dEmail.classList.remove('d-none');
+      } else {
+        dEmail.classList.add('d-none');
+      }
+    }
+  }
+
+  async function refreshMyBookings() {
+    if (!currentPlayerUser) return;
+    try {
+      const res = await fetch('/api/my-bookings', {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.bookings)) {
+          myBookingsData = data.bookings;
+          renderMyBookingsList();
+        }
+      }
+    } catch (e) {
+      console.warn('Could not refresh bookings:', e);
+    }
+  }
+
+  function renderMyBookingsList() {
+    const container = document.getElementById('myBookingsListContainer');
+    const badgeEl = document.getElementById('myBookingsTabBadge');
+
+    if (badgeEl) {
+      if (myBookingsData && myBookingsData.length > 0) {
+        badgeEl.innerText = myBookingsData.length;
+        badgeEl.classList.remove('d-none');
+      } else {
+        badgeEl.classList.add('d-none');
+      }
+    }
+
+    if (!container) return;
+
+    if (!myBookingsData || myBookingsData.length === 0) {
+      container.innerHTML = `
+        <div class="card border-0 shadow-sm rounded-4 p-5 bg-white text-center">
+          <div class="badge bg-light text-secondary rounded-circle p-3 mb-3 fs-3 d-inline-flex align-items-center justify-content-center mx-auto" style="width: 60px; height: 60px;">
+            <i class="bi bi-calendar2-x"></i>
+          </div>
+          <h5 class="fw-bold text-dark font-display mb-1">No Court Reservations Yet</h5>
+          <p class="text-secondary small mb-3">Once you book a court, your active holds, upcoming sessions, and digital passes will appear right here.</p>
+          <div>
+            <button type="button" class="btn btn-book-now-gold rounded-pill px-4 py-2 fw-bold" onclick="switchVenueTab('book')">
+              <i class="bi bi-calendar2-check-fill me-1"></i> Browse Available Courts
+            </button>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '<div class="d-flex flex-column gap-3">';
+    myBookingsData.forEach(b => {
+      const isAwaitingPay = b.status === 'AWAITING_PAYMENT';
+      const isVerifying = b.status === 'AWAITING_CONFIRMATION';
+      const isConfirmed = b.status === 'CONFIRMED';
+      const isExpired = b.status === 'EXPIRED' || (isAwaitingPay && b.expires_at && new Date() > new Date(b.expires_at));
+
+      let statusBadge = '';
+      if (isConfirmed) {
+        statusBadge = `<span class="badge bg-success text-white rounded-pill px-3 py-1 fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Confirmed</span>`;
+      } else if (isVerifying) {
+        statusBadge = `<span class="badge bg-info text-dark rounded-pill px-3 py-1 fw-bold"><i class="bi bi-clock-history me-1"></i>Verifying Payment</span>`;
+      } else if (isAwaitingPay && !isExpired) {
+        statusBadge = `<span class="badge bg-warning text-dark rounded-pill px-3 py-1 fw-bold"><i class="bi bi-hourglass-split me-1"></i>Awaiting GCash Payment</span>`;
+      } else if (isExpired) {
+        statusBadge = `<span class="badge bg-secondary text-white rounded-pill px-3 py-1 fw-semibold">Expired Hold</span>`;
+      } else {
+        statusBadge = `<span class="badge bg-danger text-white rounded-pill px-3 py-1 fw-semibold">${b.status}</span>`;
+      }
+
+      const dateFormatted = new Date(b.reservation_date + 'T00:00:00').toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+
+      const courtsHtml = (b.courts || []).map(c => {
+        const startLbl = formatSlotTimeLabel(c.start_time);
+        const endLbl = formatSlotTimeLabel(c.end_time);
+        return `
+          <div class="d-flex align-items-center justify-content-between py-1.5 px-2.5 rounded-3 bg-light border mb-1">
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-warning text-dark rounded-pill px-2 py-1 fw-bold" style="font-size: 11px;">${c.court_name}</span>
+              <span class="small fw-semibold text-dark">${startLbl} – ${endLbl}</span>
+              <span class="text-muted small">(${c.hours} hr${c.hours > 1 ? 's' : ''})</span>
+            </div>
+            <span class="small fw-bold font-monospace text-dark">₱${parseFloat(c.amount || 0).toFixed(2)}</span>
+          </div>
+        `;
+      }).join('');
+
+      let actionButtons = '';
+      if (isAwaitingPay && !isExpired) {
+        actionButtons = `
+          <a href="/payment/gcash?ref=${encodeURIComponent(b.reference_number)}" class="btn btn-book-now-gold btn-sm rounded-pill px-3 py-1.5 fw-bold">
+            <i class="bi bi-qr-code-scan me-1"></i>Resume GCash Payment &rarr;
+          </a>
+        `;
+      } else {
+        actionButtons = `
+          <a href="/reservations/${encodeURIComponent(b.reference_number)}" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1.5 fw-bold">
+            <i class="bi bi-ticket-perforated me-1"></i>View Pass / Receipt &rarr;
+          </a>
+        `;
+      }
+
+      html += `
+        <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white">
+          <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <span class="badge bg-dark text-warning font-monospace px-2.5 py-1.5 rounded-3 fs-6">${b.reference_number}</span>
+              <span class="fw-bold text-dark"><i class="bi bi-calendar3 text-primary me-1"></i>${dateFormatted}</span>
+            </div>
+            <div>${statusBadge}</div>
+          </div>
+
+          <div class="mb-3">
+            ${courtsHtml}
+          </div>
+
+          <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-2 pt-2 border-top">
+            <div>
+              <span class="text-muted small">Total Order Amount (${b.total_hours} hr${b.total_hours > 1 ? 's' : ''}):</span>
+              <span class="fw-extrabold text-primary fs-5 ms-1 font-display">₱${parseFloat(b.total_amount || 0).toFixed(2)}</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              ${actionButtons}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
   }
 
   // Share venue link

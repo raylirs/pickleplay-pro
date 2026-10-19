@@ -1,4 +1,4 @@
-﻿const { DataTypes } = require('sequelize');
+const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const bcrypt = require('bcryptjs');
 
@@ -13,13 +13,25 @@ const User = sequelize.define('User', {
     unique: true,
     allowNull: false
   },
+  full_name: {
+    type: DataTypes.STRING(200),
+    allowNull: true
+  },
+  email: {
+    type: DataTypes.STRING(200),
+    allowNull: true
+  },
+  phone: {
+    type: DataTypes.STRING(50),
+    allowNull: true
+  },
   password_hash: {
     type: DataTypes.STRING(255),
     allowNull: false
   },
   role: {
     type: DataTypes.STRING(50),
-    defaultValue: 'admin'
+    defaultValue: 'player'
   }
 }, {
   tableName: 'users',
