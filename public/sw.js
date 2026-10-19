@@ -1,4 +1,4 @@
-const CACHE_NAME = 'the-playground-pickleball-pwa-v4';
+const CACHE_NAME = 'the-playground-pickleball-pwa-v5';
 const STATIC_ASSETS = [
   '/images/the-playground-logo.jpg',
   '/images/app-icon.svg',

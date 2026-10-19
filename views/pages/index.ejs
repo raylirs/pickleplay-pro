@@ -230,12 +230,18 @@
          STEP 1: CURRENT MONTH CALENDAR VIEW (Shown First)
     ========================================================= -->
     <style>
+      html, body {
+        max-width: 100%;
+        overflow-x: hidden;
+      }
       .month-calendar-card {
         background: #ffffff;
         border-radius: 20px;
         border: 1px solid rgba(11, 37, 69, 0.12);
         box-shadow: 0 12px 32px rgba(11, 37, 69, 0.08);
         overflow: hidden;
+        width: 100%;
+        max-width: 100%;
       }
       .month-calendar-header {
         background: linear-gradient(135deg, #0B2545 0%, #134074 100%);
@@ -245,7 +251,7 @@
       }
       .month-calendar-weekdays {
         display: grid;
-        grid-template-columns: repeat(7, 1fr);
+        grid-template-columns: repeat(7, minmax(0, 1fr));
         background: #F8FAFC;
         border-bottom: 1px solid #E2E8F0;
         text-align: center;
@@ -258,12 +264,15 @@
       }
       .month-calendar-grid {
         display: grid;
-        grid-template-columns: repeat(7, 1fr);
+        grid-template-columns: repeat(7, minmax(0, 1fr));
         gap: 8px;
         padding: 16px;
         background: #ffffff;
+        width: 100%;
+        box-sizing: border-box;
       }
       .calendar-day-cell {
+        min-width: 0;
         min-height: 76px;
         border-radius: 14px;
         border: 1.5px solid #E2E8F0;
@@ -278,6 +287,8 @@
         position: relative;
         user-select: none;
         text-align: left;
+        overflow: hidden;
+        box-sizing: border-box;
       }
       .calendar-day-cell:hover:not(.is-disabled):not(.is-empty) {
         border-color: #0284C7;
@@ -308,6 +319,13 @@
         cursor: default;
         pointer-events: none;
       }
+      .calendar-day-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        gap: 2px;
+      }
       .calendar-day-number {
         font-size: 17px;
         font-weight: 800;
@@ -320,13 +338,28 @@
       .calendar-day-cell.is-disabled .calendar-day-number {
         color: #94A3B8;
       }
+      .calendar-day-badge {
+        font-size: 9px;
+        padding: 2px 5px;
+        border-radius: 999px;
+        font-weight: 800;
+        line-height: 1;
+        white-space: nowrap;
+      }
       .calendar-day-cta {
         font-size: 10.5px;
         font-weight: 700;
         color: #0284C7;
         display: inline-flex;
         align-items: center;
-        gap: 3px;
+        gap: 2px;
+        white-space: nowrap;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .calendar-day-cta-mobile {
+        display: none;
       }
       .calendar-day-cell.is-selected .calendar-day-cta {
         color: #ffffff;
@@ -336,11 +369,48 @@
         font-weight: 500;
       }
       @media (max-width: 767.98px) {
-        .month-calendar-header { padding: 14px 16px; }
-        .month-calendar-grid { gap: 5px; padding: 10px; }
-        .calendar-day-cell { min-height: 58px; padding: 6px; border-radius: 10px; }
-        .calendar-day-number { font-size: 14px; }
-        .calendar-day-cta { font-size: 9px; }
+        .month-calendar-header {
+          padding: 12px 14px;
+        }
+        .month-calendar-weekdays {
+          padding: 8px 4px;
+          font-size: 10px;
+          letter-spacing: 0.02em;
+        }
+        .month-calendar-grid {
+          gap: 4px;
+          padding: 8px 6px;
+        }
+        .calendar-day-cell {
+          min-height: 54px;
+          padding: 5px 3px;
+          border-radius: 10px;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          gap: 2px;
+        }
+        .calendar-day-top {
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 2px;
+        }
+        .calendar-day-number {
+          font-size: 14px;
+        }
+        .calendar-day-badge {
+          font-size: 7px;
+          padding: 1.5px 4px;
+        }
+        .calendar-day-cta-desktop {
+          display: none !important;
+        }
+        .calendar-day-cta-mobile {
+          display: inline-block;
+          font-size: 8.5px;
+          line-height: 1.1;
+        }
       }
     </style>
     <div id="bookingMonthCalendarCard" class="month-calendar-card mb-3">
@@ -1573,24 +1643,24 @@
 
       let badgeHtml = '';
       if (isToday) {
-        badgeHtml = `<span class="badge ${isSelected ? 'bg-warning text-dark' : 'bg-warning-subtle text-dark border border-warning'} rounded-pill px-1.5 py-0.5 fw-bold" style="font-size: 9px;">TODAY</span>`;
+        badgeHtml = `<span class="calendar-day-badge ${isSelected ? 'bg-warning text-dark' : 'bg-warning-subtle text-dark border border-warning'}">TODAY</span>`;
       } else if (isSelected) {
-        badgeHtml = `<span class="badge bg-warning text-dark rounded-pill px-1.5 py-0.5 fw-bold" style="font-size: 9px;">SELECTED</span>`;
+        badgeHtml = `<span class="calendar-day-badge bg-warning text-dark">PICKED</span>`;
       }
 
       const ctaLabel = isPast
-        ? '<span>Past</span>'
-        : `<span>Select Time</span><i class="bi bi-arrow-right-short"></i>`;
+        ? '<span class="calendar-day-cta-desktop">Past</span><span class="calendar-day-cta-mobile">Past</span>'
+        : `<span class="calendar-day-cta-desktop">Select Time <i class="bi bi-arrow-right-short"></i></span><span class="calendar-day-cta-mobile">${isToday ? '' : 'Open'}</span>`;
 
       const clickAttr = isPast ? '' : `onclick="selectCalendarDay('${dateStr}')"`;
 
       cellsHtml += `
         <div class="${cellClasses}" ${clickAttr} role="button" tabindex="${isPast ? '-1' : '0'}" aria-label="Select ${dateStr}">
-          <div class="d-flex align-items-center justify-content-between w-100">
+          <div class="calendar-day-top">
             <span class="calendar-day-number">${day}</span>
             ${badgeHtml}
           </div>
-          <div class="calendar-day-cta mt-1">
+          <div class="calendar-day-cta">
             ${ctaLabel}
           </div>
         </div>
