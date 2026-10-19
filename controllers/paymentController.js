@@ -4,6 +4,25 @@ const { getIO } = require('../config/socket');
 const { formatCurrency, formatTime12 } = require('../utils/dateTimeUtils');
 const { logAudit } = require('../utils/helpers');
 
+function isReservationOwner(reservation, currentUser) {
+  if (!reservation || !currentUser) return false;
+  if (currentUser.role === 'admin' || currentUser.role === 'staff') return true;
+  if (currentUser.id && reservation.user_id && Number(currentUser.id) === Number(reservation.user_id)) {
+    return true;
+  }
+  if (currentUser.phone && reservation.user_contact && reservation.user_contact === currentUser.phone) {
+    return true;
+  }
+  if (
+    currentUser.email &&
+    reservation.user_email &&
+    reservation.user_email.toLowerCase() === currentUser.email.toLowerCase()
+  ) {
+    return true;
+  }
+  return false;
+}
+
 const paymentController = {
   async showGcashPaymentPage(req, res, next) {
     try {
@@ -29,6 +48,21 @@ const paymentController = {
           message: `The reservation with reference "${ref}" was not found. Please create a new booking.`,
           statusCode: 404,
           user: req.session ? req.session.user : null
+        });
+      }
+
+      const currentUser = req.session ? req.session.user : null;
+      if (!currentUser) {
+        req.flash('error', 'Please sign in to the player account that created this booking to continue payment.');
+        return res.redirect(`/account/login?returnTo=${encodeURIComponent('/payment/gcash?ref=' + reservation.reference_number)}`);
+      }
+
+      if (!isReservationOwner(reservation, currentUser)) {
+        return res.status(403).render('pages/error', {
+          title: 'Unauthorized Transaction Access',
+          message: 'This court reservation belongs to another player account. Only the player who created this booking can complete its payment.',
+          statusCode: 403,
+          user: currentUser
         });
       }
 
@@ -75,7 +109,7 @@ const paymentController = {
         gcashAccountNumber: numSetting ? numSetting.value : '0939-075-XXXX',
         formatCurrency,
         formatTime12,
-        user: req.session ? req.session.user : null,
+        user: currentUser,
         hideNavbar: true
       });
     } catch (err) {
@@ -96,6 +130,12 @@ const paymentController = {
       if (!reservation) {
         req.flash('error', 'Reservation not found.');
         return res.redirect('/reservations');
+      }
+
+      const currentUser = req.session ? req.session.user : null;
+      if (!isReservationOwner(reservation, currentUser)) {
+        req.flash('error', 'Unauthorized: Only the player who created this reservation can submit payment proof.');
+        return res.redirect('/');
       }
 
       if (!gcash_reference_no || !gcash_reference_no.trim()) {

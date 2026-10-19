@@ -723,7 +723,7 @@
         </div>
         <div class="d-flex flex-column gap-2">
           <a id="pendingSlotPayBtn" href="#" class="btn btn-book-now-gold fw-bold rounded-pill py-2.5">
-            <i class="bi bi-qr-code-scan me-1"></i> Is this your booking? Resume GCash Payment &rarr;
+            <i class="bi bi-qr-code-scan me-1"></i> Resume Your GCash Payment &rarr;
           </a>
           <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
         </div>
@@ -1407,7 +1407,12 @@
           stateClass = 'state-selected';
         }
 
-        td.className = 'matrix-slot-cell ' + stateClass;
+        const isMine = Boolean(
+          courtSlot.isMyBooking &&
+          courtSlot.referenceNumber
+        );
+
+        td.className = 'matrix-slot-cell ' + stateClass + (isMine ? ' is-my-slot' : '');
         td.dataset.courtId = court.id;
         td.dataset.courtName = court.name;
         td.dataset.rate = court.pricePerHour;
@@ -1423,17 +1428,33 @@
           </div>
         `;
 
-        // Click handler for selection or status modals
+        // Click handler: Only the player who created the transaction can click Awaiting Pay / Verifying to continue!
         if (courtSlot.isAvailable) {
           td.addEventListener('click', () => handleSlotClick(court, slot));
         } else if (courtSlot.status === 'AWAITING_PAYMENT' || courtSlot.status === 'PENDING') {
-          td.style.cursor = 'pointer';
-          td.title = 'Awaiting GCash Payment - Click to resume payment';
-          td.addEventListener('click', () => handlePendingSlotClick(court, courtSlot));
+          if (isMine) {
+            td.style.cursor = 'pointer';
+            td.title = 'Your Pending Booking — Click to resume GCash payment';
+            td.addEventListener('click', () => handlePendingSlotClick(court, courtSlot));
+          } else {
+            td.style.cursor = 'not-allowed';
+            td.title = 'Held by another player (Awaiting Payment)';
+            td.addEventListener('click', () => {
+              showLiveToast('🔒 This slot is currently held by another player completing GCash payment.');
+            });
+          }
         } else if (courtSlot.status === 'AWAITING_CONFIRMATION') {
-          td.style.cursor = 'pointer';
-          td.title = 'Payment Received - Admin Verifying (Click to check status)';
-          td.addEventListener('click', () => handleVerifyingSlotClick(court, courtSlot));
+          if (isMine) {
+            td.style.cursor = 'pointer';
+            td.title = 'Your Booking — Payment under admin verification (Click to check status)';
+            td.addEventListener('click', () => handleVerifyingSlotClick(court, courtSlot));
+          } else {
+            td.style.cursor = 'not-allowed';
+            td.title = 'Reserved by another player (Verifying Payment)';
+            td.addEventListener('click', () => {
+              showLiveToast('🔒 This slot belongs to another player and is currently under admin verification.');
+            });
+          }
         }
 
         tr.appendChild(td);
@@ -1443,41 +1464,41 @@
     });
   }
 
-  // Pending Slot Modal Handler
+  // Pending Slot Modal Handler (Strictly for the transaction owner)
   function handlePendingSlotClick(court, slot) {
+    if (!slot || !slot.isMyBooking || !slot.referenceNumber) {
+      showLiveToast('🔒 Only the player who created this booking can continue its payment.');
+      return;
+    }
     const modalEl = document.getElementById('pendingSlotModal');
     if (!modalEl) return;
     document.getElementById('pendingSlotCourtName').innerText = court.name;
     document.getElementById('pendingSlotTime').innerText = `${slot.startLabel} - ${slot.endLabel}`;
-    document.getElementById('pendingSlotRef').innerText = slot.referenceNumber || 'Pending Order';
+    document.getElementById('pendingSlotRef').innerText = slot.referenceNumber;
 
     const payBtn = document.getElementById('pendingSlotPayBtn');
-    if (slot.referenceNumber) {
-      payBtn.href = `/payment/gcash?ref=${encodeURIComponent(slot.referenceNumber)}`;
-      payBtn.classList.remove('d-none');
-    } else {
-      payBtn.classList.add('d-none');
-    }
+    payBtn.href = `/payment/gcash?ref=${encodeURIComponent(slot.referenceNumber)}`;
+    payBtn.classList.remove('d-none');
 
     const modal = new bootstrap.Modal(modalEl);
     modal.show();
   }
 
-  // Verifying Slot Modal Handler (Payment Proof Uploaded, Awaiting Admin Review)
+  // Verifying Slot Modal Handler (Strictly for the transaction owner)
   function handleVerifyingSlotClick(court, slot) {
+    if (!slot || !slot.isMyBooking || !slot.referenceNumber) {
+      showLiveToast('🔒 Only the player who created this booking can view its verification pass.');
+      return;
+    }
     const modalEl = document.getElementById('verifyingSlotModal');
     if (!modalEl) return;
     document.getElementById('verifyingSlotCourtName').innerText = court.name;
     document.getElementById('verifyingSlotTime').innerText = `${slot.startLabel} - ${slot.endLabel}`;
-    document.getElementById('verifyingSlotRef').innerText = slot.referenceNumber || 'Verification In Progress';
+    document.getElementById('verifyingSlotRef').innerText = slot.referenceNumber;
 
     const passBtn = document.getElementById('verifyingSlotPassBtn');
-    if (slot.referenceNumber) {
-      passBtn.href = `/reservations/${encodeURIComponent(slot.referenceNumber)}`;
-      passBtn.classList.remove('d-none');
-    } else {
-      passBtn.classList.add('d-none');
-    }
+    passBtn.href = `/reservations/${encodeURIComponent(slot.referenceNumber)}`;
+    passBtn.classList.remove('d-none');
 
     const modal = new bootstrap.Modal(modalEl);
     modal.show();
@@ -2003,6 +2024,7 @@
     applyAuthenticatedUserToUI(userObj);
     refreshMyBookings();
     fetchAccountChat(false);
+    fetchMatrixAvailability(currentDate);
 
     // Hide Auth Modal
     const authModalEl = document.getElementById('playerAuthModal');

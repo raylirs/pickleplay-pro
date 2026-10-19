@@ -42,15 +42,16 @@ const courtController = {
 
       const today = formatDate(new Date());
       const selectedDate = req.query.date || today;
-      const availability = await getCourtAvailability(court.id, selectedDate);
+      const currentUser = req.session ? req.session.user : null;
+      const availability = await getCourtAvailability(court.id, selectedDate, currentUser);
 
       res.render('pages/court-detail', {
-        title: `${court.display_name} - PicklePlay Pro`,
+        title: `${court.display_name} - The Playground Pickleball`,
         court,
         selectedDate,
         availability,
         today,
-        user: req.session ? req.session.user : null
+        user: currentUser
       });
     } catch (err) {
       next(err);
@@ -61,7 +62,8 @@ const courtController = {
     try {
       const courtId = req.params.id;
       const date = req.query.date || formatDate(new Date());
-      const data = await getCourtAvailability(courtId, date);
+      const currentUser = req.session ? req.session.user : null;
+      const data = await getCourtAvailability(courtId, date, currentUser);
       res.json({ success: true, data });
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });
@@ -71,6 +73,7 @@ const courtController = {
   async getAllCourtsAvailabilityJson(req, res, next) {
     try {
       const date = req.query.date || formatDate(new Date());
+      const currentUser = req.session ? req.session.user : null;
       const courts = await Court.findAll({
         where: { is_active: true },
         include: [{ model: CourtCategory, as: 'category' }],
@@ -78,7 +81,7 @@ const courtController = {
       });
 
       const availabilityPromises = courts.map(async (c) => {
-        const avail = await getCourtAvailability(c.id, date);
+        const avail = await getCourtAvailability(c.id, date, currentUser);
         return {
           id: c.id,
           name: c.display_name,

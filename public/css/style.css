@@ -522,6 +522,10 @@ h1, h2, h3, h4, .font-display {
   cursor: not-allowed;
 }
 
+.matrix-slot-cell.state-processing.is-my-slot {
+  cursor: pointer;
+}
+
 .matrix-slot-cell.state-processing .slot-inner {
   background: #FEF3C7;
   border: 1.5px dashed #F59E0B;
@@ -534,8 +538,19 @@ h1, h2, h3, h4, .font-display {
   color: #B45309;
 }
 
+.matrix-slot-cell.state-processing.is-my-slot .slot-inner::after {
+  content: "Your Hold · Pay";
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #92400E;
+}
+
 /* 5. VERIFYING / AWAITING ADMIN CONFIRMATION */
 .matrix-slot-cell.state-verifying {
+  cursor: not-allowed;
+}
+
+.matrix-slot-cell.state-verifying.is-my-slot {
   cursor: pointer;
 }
 
@@ -550,6 +565,13 @@ h1, h2, h3, h4, .font-display {
   font-size: 10px;
   color: #2563EB;
   font-weight: 700;
+}
+
+.matrix-slot-cell.state-verifying.is-my-slot .slot-inner::after {
+  content: "Yours · Verifying";
+  font-size: 9.5px;
+  color: #1E40AF;
+  font-weight: 800;
 }
 
 .matrix-slot-cell.state-verifying:hover .slot-inner {

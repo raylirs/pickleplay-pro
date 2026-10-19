@@ -5,7 +5,7 @@ const { generateTimeSlots } = require('../utils/dateTimeUtils');
 /**
  * Get all available and booked time slots for a given court and date
  */
-async function getCourtAvailability(courtId, date) {
+async function getCourtAvailability(courtId, date, currentUser = null) {
   const court = await Court.findByPk(courtId);
   if (!court) {
     throw new Error('Court not found');
@@ -45,6 +45,16 @@ async function getCourtAvailability(courtId, date) {
       return slot.startTime < res.end_time && slot.endTime > res.start_time;
     });
 
+    const isOwner = Boolean(
+      currentUser && conflictingRes && (
+        currentUser.role === 'admin' ||
+        currentUser.role === 'staff' ||
+        (currentUser.id && conflictingRes.user_id && Number(currentUser.id) === Number(conflictingRes.user_id)) ||
+        (currentUser.phone && conflictingRes.user_contact && conflictingRes.user_contact === currentUser.phone) ||
+        (currentUser.email && conflictingRes.user_email && conflictingRes.user_email.toLowerCase() === currentUser.email.toLowerCase())
+      )
+    );
+
     return {
       startTime: slot.startTime,
       endTime: slot.endTime,
@@ -54,8 +64,9 @@ async function getCourtAvailability(courtId, date) {
       isAvailable: !conflictingRes && court.is_active,
       courtActive: court.is_active,
       status: !court.is_active ? 'MAINTENANCE' : (conflictingRes ? conflictingRes.status : 'AVAILABLE'),
-      reservationId: conflictingRes ? conflictingRes.id : null,
-      referenceNumber: conflictingRes ? conflictingRes.reference_number : null
+      isMyBooking: isOwner,
+      reservationId: isOwner ? conflictingRes.id : null,
+      referenceNumber: isOwner ? conflictingRes.reference_number : null
     };
   });
 
