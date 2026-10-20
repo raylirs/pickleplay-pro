@@ -208,6 +208,9 @@ const paymentController = {
         const { notifyAdminPaymentProof, notifyPlayerPaymentSubmitted } = require('../services/facebookService');
         notifyAdminPaymentProof(reservation).catch(e => console.warn('[FB Notify Error]:', e.message));
         notifyPlayerPaymentSubmitted(reservation, totalOrderAmount).catch(e => console.warn('[FB Player Notify Error]:', e.message));
+
+        const { notifyAdminsPaymentProofEmail } = require('../services/emailService');
+        notifyAdminsPaymentProofEmail(reservation, totalOrderAmount).catch(e => console.warn('[Admin Payment Email Error]:', e.message));
       } catch (e) {}
 
       // Post automated Booking Card to Player In-App Account Chat

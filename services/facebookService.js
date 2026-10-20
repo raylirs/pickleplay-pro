@@ -94,9 +94,11 @@ async function sendMessengerNotify(psid, payload, options = {}) {
     const url = `https://graph.facebook.com/${FB_VERSION}/me/messages?access_token=${token}`;
     let messageBody = typeof payload === 'string' ? { text: payload } : payload;
 
+    const isTagged = options.tag || options.useTag;
     const requestBody = {
       recipient: { id: cleanPsid },
-      messaging_type: 'RESPONSE',
+      messaging_type: isTagged ? 'MESSAGE_TAG' : 'RESPONSE',
+      ...(isTagged ? { tag: options.tag || 'CONFIRMED_EVENT_UPDATE' } : {}),
       message: messageBody
     };
 
@@ -119,8 +121,16 @@ async function sendMessengerNotify(psid, payload, options = {}) {
         return await sendMessengerNotify(cleanPsid, fallbackText, options);
       }
 
-      // Meta 24-Hour Messaging Window Policy (#10)
+      // Meta 24-Hour Messaging Window Policy (#10) - Try with MESSAGE_TAG first
       if (errCode === 10 || errMsg.toLowerCase().includes('outside of allowed window')) {
+        if (!options.isTagRetry) {
+          console.log(`[FB Service] PSID ${cleanPsid} outside 24h window. Retrying with CONFIRMED_EVENT_UPDATE tag...`);
+          const tagRetry = await sendMessengerNotify(cleanPsid, payload, { ...options, useTag: true, isTagRetry: true });
+          if (tagRetry && tagRetry.success) {
+            return tagRetry;
+          }
+        }
+
         if (!options.skipQueueOnWindowError) {
           enqueuePendingMessage(cleanPsid, payload);
           console.log(`[FB Service] Queued alert for PSID ${cleanPsid} (will auto-deliver as soon as recipient sends any message to the Page).`);

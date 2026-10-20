@@ -239,6 +239,11 @@ const reservationController = {
             notifyPlayerNewBooking(primaryReservation, { courtSummary, totalAmount: totalBookingAmount }).catch(() => {});
           } catch (e) {}
 
+          try {
+            const { notifyAdminsNewBookingEmail } = require('../services/emailService');
+            notifyAdminsNewBookingEmail(primaryReservation, { courtSummary, totalAmount: totalBookingAmount }).catch(() => {});
+          } catch (e) {}
+
           if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
             return res.json({
               success: true,
@@ -381,6 +386,12 @@ const reservationController = {
         const { notifyAdminNewBooking, notifyPlayerNewBooking } = require('../services/facebookService');
         notifyAdminNewBooking(reservation, { courtSummary: court.display_name, totalAmount }).catch(e => console.warn('[FB Notify Error]:', e.message));
         notifyPlayerNewBooking(reservation, { courtSummary: court.display_name, totalAmount }).catch(e => console.warn('[FB Player Notify Error]:', e.message));
+      } catch (e) {}
+
+      // Dispatch Instant Admin Email Alerts to Ryan & Karlo
+      try {
+        const { notifyAdminsNewBookingEmail } = require('../services/emailService');
+        notifyAdminsNewBookingEmail(reservation, { courtSummary: court.display_name, totalAmount }).catch(e => console.warn('[Admin Email Notify Error]:', e.message));
       } catch (e) {}
 
       const paymentIntent = await paymentService.createPaymentIntent(reservation);

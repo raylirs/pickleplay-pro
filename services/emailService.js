@@ -201,9 +201,128 @@ async function sendPasswordResetOTP(email, fullName, otpCode) {
   }
 }
 
+async function getAdminAlertEmails() {
+  let emails = [];
+  try {
+    const setting = await SystemSetting.findOne({ where: { key: 'ADMIN_ALERT_EMAILS' } });
+    if (setting && setting.value) {
+      emails = setting.value.split(/[\s,]+/).map(e => e.trim().toLowerCase()).filter(Boolean);
+    }
+  } catch (e) {}
+
+  if (emails.length === 0 && process.env.ADMIN_ALERT_EMAILS) {
+    emails = process.env.ADMIN_ALERT_EMAILS.split(/[\s,]+/).map(e => e.trim().toLowerCase()).filter(Boolean);
+  }
+
+  if (emails.length === 0) {
+    emails = ['cpe4ryan@gmail.com', 'karlopagador44@gmail.com'];
+  }
+
+  return [...new Set(emails)];
+}
+
+async function notifyAdminsNewBookingEmail(reservation, extra = {}) {
+  const recipients = await getAdminAlertEmails();
+  if (!recipients || recipients.length === 0) return;
+
+  const courtLabel = extra.courtSummary || (reservation.court ? reservation.court.display_name : `Court ${reservation.court_id}`);
+  const totalAmount = extra.totalAmount !== undefined ? parseFloat(extra.totalAmount) : parseFloat(reservation.total_amount || 0);
+  const timeRange = reservation.end_time ? `${reservation.start_time} - ${reservation.end_time}` : reservation.start_time;
+
+  const emailHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 12px;">
+      <div style="background: linear-gradient(135deg, #0B2545 0%, #134074 100%); color: white; padding: 18px; text-align: center; border-radius: 8px 8px 0 0; border-bottom: 3px solid #E5C365;">
+        <h2 style="margin: 0; font-size: 20px;">The Playground Pickleball</h2>
+        <p style="margin: 5px 0 0 0; font-size: 14px; color: #E5C365; font-weight: bold;">🔔 New Court Booking Received</p>
+      </div>
+      <div style="padding: 20px; color: #1e293b;">
+        <p>A new player reservation has been placed on the website:</p>
+        <div style="background-color: #f8fafc; border-left: 4px solid #0B2545; padding: 14px 18px; margin: 15px 0;">
+          <p style="margin: 0 0 6px 0;"><strong>Ref Number:</strong> <span style="font-family: monospace; font-size: 15px; color: #0d6efd;">${reservation.reference_number}</span></p>
+          <p style="margin: 0 0 6px 0;"><strong>Player Name:</strong> ${reservation.user_name}</p>
+          <p style="margin: 0 0 6px 0;"><strong>Contact / GCash:</strong> ${reservation.user_contact}</p>
+          <p style="margin: 0 0 6px 0;"><strong>Email:</strong> ${reservation.user_email || 'Not provided'}</p>
+          <p style="margin: 0 0 6px 0;"><strong>Court:</strong> ${courtLabel}</p>
+          <p style="margin: 0 0 6px 0;"><strong>Date:</strong> ${reservation.reservation_date}</p>
+          <p style="margin: 0 0 6px 0;"><strong>Time:</strong> ${timeRange}</p>
+          <p style="margin: 0;"><strong>Total Amount:</strong> ${formatCurrency(totalAmount)}</p>
+        </div>
+        <p style="margin-top: 15px;">
+          <a href="https://pickleplay-pro.onrender.com/admin/reservations" style="display: inline-block; background-color: #0B2545; color: #ffffff; padding: 10px 22px; text-decoration: none; border-radius: 20px; font-weight: bold; font-size: 13px;">Open Admin Dashboard &rarr;</a>
+        </p>
+      </div>
+      <div style="text-align: center; font-size: 11px; color: #94a3b8; padding-top: 15px; border-top: 1px solid #eee;">
+        Sent automatically to Admins (Ryan &amp; Karlo) &bull; The Playground Pickleball
+      </div>
+    </div>
+  `;
+
+  try {
+    const { transporter, cfg } = await createDynamicTransporter();
+    if (!transporter) return;
+
+    await transporter.sendMail({
+      from: `"${cfg.fromName} Alerts" <${cfg.user}>`,
+      to: recipients.join(', '),
+      subject: `[Booking Alert] ${reservation.user_name} - ${courtLabel} (${reservation.reservation_date})`,
+      html: emailHtml
+    });
+    console.log(`[Email Alert] Admin booking email delivered to: ${recipients.join(', ')}`);
+  } catch (err) {
+    console.warn('[Email Alert] Failed to send admin booking email:', err.message);
+  }
+}
+
+async function notifyAdminsPaymentProofEmail(reservation, totalOrderAmount) {
+  const recipients = await getAdminAlertEmails();
+  if (!recipients || recipients.length === 0) return;
+
+  const totalAmount = totalOrderAmount !== undefined ? parseFloat(totalOrderAmount) : parseFloat(reservation.total_amount || 0);
+  const emailHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 12px;">
+      <div style="background: linear-gradient(135deg, #198754 0%, #157347 100%); color: white; padding: 18px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0; font-size: 20px;">The Playground Pickleball</h2>
+        <p style="margin: 5px 0 0 0; font-size: 14px; color: #d1e7dd; font-weight: bold;">🧾 GCash Payment Proof Uploaded</p>
+      </div>
+      <div style="padding: 20px; color: #1e293b;">
+        <p>A player has submitted their GCash payment receipt for verification:</p>
+        <div style="background-color: #f8fafc; border-left: 4px solid #198754; padding: 14px 18px; margin: 15px 0;">
+          <p style="margin: 0 0 6px 0;"><strong>Booking Ref:</strong> <span style="font-family: monospace; font-size: 15px; color: #0d6efd;">${reservation.reference_number}</span></p>
+          <p style="margin: 0 0 6px 0;"><strong>Player Name:</strong> ${reservation.user_name}</p>
+          <p style="margin: 0 0 6px 0;"><strong>GCash Ref Number:</strong> <span style="font-family: monospace; font-weight: bold;">${reservation.gcash_reference_no || 'Uploaded'}</span></p>
+          <p style="margin: 0;"><strong>Total Paid:</strong> ${formatCurrency(totalAmount)}</p>
+        </div>
+        <p style="margin-top: 15px;">
+          <a href="https://pickleplay-pro.onrender.com/admin/reservations" style="display: inline-block; background-color: #198754; color: #ffffff; padding: 10px 22px; text-decoration: none; border-radius: 20px; font-weight: bold; font-size: 13px;">Review &amp; Approve in Admin Dashboard &rarr;</a>
+        </p>
+      </div>
+      <div style="text-align: center; font-size: 11px; color: #94a3b8; padding-top: 15px; border-top: 1px solid #eee;">
+        Sent automatically to Admins (Ryan &amp; Karlo) &bull; The Playground Pickleball
+      </div>
+    </div>
+  `;
+
+  try {
+    const { transporter, cfg } = await createDynamicTransporter();
+    if (!transporter) return;
+
+    await transporter.sendMail({
+      from: `"${cfg.fromName} Alerts" <${cfg.user}>`,
+      to: recipients.join(', '),
+      subject: `[GCash Proof] ${reservation.user_name} - ${reservation.reference_number} (${formatCurrency(totalAmount)})`,
+      html: emailHtml
+    });
+    console.log(`[Email Alert] Admin GCash proof email delivered to: ${recipients.join(', ')}`);
+  } catch (err) {
+    console.warn('[Email Alert] Failed to send admin payment email:', err.message);
+  }
+}
+
 module.exports = {
   sendReservationConfirmation,
   sendEmailVerificationOTP,
   sendPasswordResetOTP,
+  notifyAdminsNewBookingEmail,
+  notifyAdminsPaymentProofEmail,
   resolveSmtpConfig
 };
