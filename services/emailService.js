@@ -7,7 +7,7 @@ async function resolveSmtpConfig() {
   try {
     const rows = await SystemSetting.findAll({
       where: {
-        key: ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM_NAME']
+        key: ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM_NAME', 'RESEND_API_KEY', 'RESEND_FROM', 'BREVO_API_KEY', 'BREVO_SENDER_EMAIL']
       }
     });
     rows.forEach(r => {
@@ -24,15 +24,20 @@ async function resolveSmtpConfig() {
   const user = dbSettings.SMTP_USER || process.env.SMTP_USER || '';
   const pass = dbSettings.SMTP_PASS || process.env.SMTP_PASS || '';
   const fromName = dbSettings.SMTP_FROM_NAME || 'The Playground Pickleball';
+  const resendApiKey = dbSettings.RESEND_API_KEY || process.env.RESEND_API_KEY || '';
+  const resendFrom = dbSettings.RESEND_FROM || process.env.RESEND_FROM || 'The Playground Pickleball <onboarding@resend.dev>';
+  const brevoApiKey = dbSettings.BREVO_API_KEY || process.env.BREVO_API_KEY || '';
+  const brevoSender = dbSettings.BREVO_SENDER_EMAIL || process.env.BREVO_SENDER_EMAIL || user || 'cpe4ryan@gmail.com';
 
-  const isMock = !user || !pass || user === 'mock_user@pickleplay.com' || pass === 'mock_password';
+  const isMock = !resendApiKey && !brevoApiKey && (!user || !pass || user === 'mock_user@pickleplay.com' || pass === 'mock_password');
 
-  return { host, port, user, pass, fromName, isMock };
+  return { host, port, user, pass, fromName, resendApiKey, resendFrom, brevoApiKey, brevoSender, isMock };
 }
 
 async function createDynamicTransporter() {
   const cfg = await resolveSmtpConfig();
-  if (cfg.isMock) {
+  const isSmtpMock = !cfg.user || !cfg.pass || cfg.user === 'mock_user@pickleplay.com' || cfg.pass === 'mock_password';
+  if (isSmtpMock) {
     return { transporter: null, cfg };
   }
 
@@ -51,6 +56,103 @@ async function createDynamicTransporter() {
   });
 
   return { transporter, cfg };
+}
+
+/**
+ * Universal email dispatcher:
+ * 1. Resend HTTPS API (Port 443 - Bypasses Render Free Tier outbound SMTP port restrictions)
+ * 2. Brevo HTTPS API (Port 443 - Alternate free HTTPS provider)
+ * 3. Standard SMTP / Gmail (Nodemailer - Used on local dev or paid Render tiers)
+ */
+async function dispatchEmail({ to, subject, html }) {
+  const cfg = await resolveSmtpConfig();
+  const toList = (Array.isArray(to) ? to : String(to).split(/[\s,]+/))
+    .map(e => e.trim())
+    .filter(Boolean);
+
+  if (toList.length === 0) {
+    return { success: false, reason: 'No recipients specified' };
+  }
+
+  // 1. Try Resend HTTPS API (Port 443)
+  if (cfg.resendApiKey) {
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${cfg.resendApiKey.trim()}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: cfg.resendFrom,
+          to: toList,
+          subject,
+          html
+        }),
+        signal: AbortSignal.timeout(10000)
+      });
+      const data = await res.json();
+      if (res.ok && data.id) {
+        console.log(`[Email Service Resend] Email delivered to ${toList.join(', ')} (ID: ${data.id})`);
+        return { success: true, mocked: false, provider: 'resend', messageId: data.id };
+      } else {
+        const errorMsg = data.message || JSON.stringify(data);
+        console.warn(`[Email Service Resend Error]: ${errorMsg}`);
+      }
+    } catch (err) {
+      console.warn(`[Email Service Resend] Request failed: ${err.message}`);
+    }
+  }
+
+  // 2. Try Brevo HTTPS API (Port 443)
+  if (cfg.brevoApiKey) {
+    try {
+      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': cfg.brevoApiKey.trim(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sender: { name: cfg.fromName, email: cfg.brevoSender },
+          to: toList.map(email => ({ email })),
+          subject,
+          htmlContent: html
+        }),
+        signal: AbortSignal.timeout(10000)
+      });
+      const data = await res.json();
+      if (res.ok && data.messageId) {
+        console.log(`[Email Service Brevo] Email delivered to ${toList.join(', ')} (ID: ${data.messageId})`);
+        return { success: true, mocked: false, provider: 'brevo', messageId: data.messageId };
+      } else {
+        const errorMsg = data.message || JSON.stringify(data);
+        console.warn(`[Email Service Brevo Error]: ${errorMsg}`);
+      }
+    } catch (err) {
+      console.warn(`[Email Service Brevo] Request failed: ${err.message}`);
+    }
+  }
+
+  // 3. Try Standard SMTP (Nodemailer)
+  const { transporter } = await createDynamicTransporter();
+  if (transporter) {
+    try {
+      const info = await transporter.sendMail({
+        from: `"${cfg.fromName}" <${cfg.user}>`,
+        to: toList.join(', '),
+        subject,
+        html
+      });
+      console.log(`[Email Service SMTP] Sent to ${toList.join(', ')}: ${info.messageId}`);
+      return { success: true, mocked: false, provider: 'smtp', messageId: info.messageId };
+    } catch (err) {
+      console.warn(`[Email Service SMTP Error]: ${err.message}`);
+      return { success: false, error: err.message };
+    }
+  }
+
+  return { success: false, reason: 'No active email provider configured' };
 }
 
 async function sendReservationConfirmation(reservation, court) {
@@ -85,24 +187,18 @@ async function sendReservationConfirmation(reservation, court) {
     </div>
   `;
 
-  try {
-    const { transporter, cfg } = await createDynamicTransporter();
-    if (!transporter) {
-      console.log(`[Email Service Mock] Email to ${reservation.user_email}: Confirmed booking ${reservation.reference_number}`);
-      return { success: true, mocked: true };
-    }
-    const info = await transporter.sendMail({
-      from: `"${cfg.fromName}" <${cfg.user}>`,
-      to: reservation.user_email,
-      subject: `Reservation Confirmed - ${reservation.reference_number} (The Playground Pickleball)`,
-      html: emailHtml
-    });
-    console.log(`[Email Service] Confirmation email sent to ${reservation.user_email}: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
-  } catch (err) {
-    console.log(`[Email Service Mock] Email to ${reservation.user_email}: Confirmed booking ${reservation.reference_number} (${err.message})`);
-    return { success: true, mocked: true };
+  const result = await dispatchEmail({
+    to: reservation.user_email,
+    subject: `Reservation Confirmed - ${reservation.reference_number} (The Playground Pickleball)`,
+    html: emailHtml
+  });
+
+  if (result.success && !result.mocked) {
+    return { success: true, messageId: result.messageId };
   }
+
+  console.log(`[Email Service Mock] Email to ${reservation.user_email}: Confirmed booking ${reservation.reference_number}${result.error ? ` (${result.error})` : ''}`);
+  return { success: true, mocked: true };
 }
 
 async function sendEmailVerificationOTP(email, fullName, otpCode) {
@@ -135,24 +231,18 @@ async function sendEmailVerificationOTP(email, fullName, otpCode) {
     </div>
   `;
 
-  try {
-    const { transporter, cfg } = await createDynamicTransporter();
-    if (!transporter) {
-      console.log(`[Email Service Mock] Verification OTP to ${email}: ${otpCode}`);
-      return { success: true, mocked: true, otpCode };
-    }
-    const info = await transporter.sendMail({
-      from: `"${cfg.fromName}" <${cfg.user}>`,
-      to: email,
-      subject: `${otpCode} is your verification code - The Playground Pickleball`,
-      html: emailHtml
-    });
-    console.log(`[Email Service] Verification OTP email sent to ${email}: ${info.messageId}`);
-    return { success: true, mocked: false, messageId: info.messageId };
-  } catch (err) {
-    console.log(`[Email Service Mock] Verification OTP to ${email}: ${otpCode} (SMTP fallback: ${err.message})`);
-    return { success: true, mocked: true, otpCode, error: err.message };
+  const result = await dispatchEmail({
+    to: email,
+    subject: `${otpCode} is your verification code - The Playground Pickleball`,
+    html: emailHtml
+  });
+
+  if (result.success && !result.mocked) {
+    return { success: true, mocked: false, messageId: result.messageId };
   }
+
+  console.log(`[Email Service Mock] Verification OTP to ${email}: ${otpCode}${result.error ? ` (${result.error})` : ''}`);
+  return { success: true, mocked: true, otpCode, error: result.error || result.reason };
 }
 
 async function sendPasswordResetOTP(email, fullName, otpCode) {
@@ -185,24 +275,18 @@ async function sendPasswordResetOTP(email, fullName, otpCode) {
     </div>
   `;
 
-  try {
-    const { transporter, cfg } = await createDynamicTransporter();
-    if (!transporter) {
-      console.log(`[Email Service Mock] Password Reset OTP to ${email}: ${otpCode}`);
-      return { success: true, mocked: true, otpCode };
-    }
-    const info = await transporter.sendMail({
-      from: `"${cfg.fromName}" <${cfg.user}>`,
-      to: email,
-      subject: `${otpCode} is your password recovery code - The Playground Pickleball`,
-      html: emailHtml
-    });
-    console.log(`[Email Service] Password Reset OTP email sent to ${email}: ${info.messageId}`);
-    return { success: true, mocked: false, messageId: info.messageId };
-  } catch (err) {
-    console.log(`[Email Service Mock] Password Reset OTP to ${email}: ${otpCode} (SMTP fallback: ${err.message})`);
-    return { success: true, mocked: true, otpCode, error: err.message };
+  const result = await dispatchEmail({
+    to: email,
+    subject: `${otpCode} is your password recovery code - The Playground Pickleball`,
+    html: emailHtml
+  });
+
+  if (result.success && !result.mocked) {
+    return { success: true, mocked: false, messageId: result.messageId };
   }
+
+  console.log(`[Email Service Mock] Password Reset OTP to ${email}: ${otpCode}${result.error ? ` (${result.error})` : ''}`);
+  return { success: true, mocked: true, otpCode, error: result.error || result.reason };
 }
 
 async function getAdminAlertEmails() {
@@ -261,20 +345,11 @@ async function notifyAdminsNewBookingEmail(reservation, extra = {}) {
     </div>
   `;
 
-  try {
-    const { transporter, cfg } = await createDynamicTransporter();
-    if (!transporter) return;
-
-    await transporter.sendMail({
-      from: `"${cfg.fromName} Alerts" <${cfg.user}>`,
-      to: recipients.join(', '),
-      subject: `[Booking Alert] ${reservation.user_name} - ${courtLabel} (${reservation.reservation_date})`,
-      html: emailHtml
-    });
-    console.log(`[Email Alert] Admin booking email delivered to: ${recipients.join(', ')}`);
-  } catch (err) {
-    console.warn('[Email Alert] Failed to send admin booking email:', err.message);
-  }
+  await dispatchEmail({
+    to: recipients,
+    subject: `[Booking Alert] ${reservation.user_name} - ${courtLabel} (${reservation.reservation_date})`,
+    html: emailHtml
+  });
 }
 
 async function notifyAdminsPaymentProofEmail(reservation, totalOrderAmount) {
@@ -306,20 +381,11 @@ async function notifyAdminsPaymentProofEmail(reservation, totalOrderAmount) {
     </div>
   `;
 
-  try {
-    const { transporter, cfg } = await createDynamicTransporter();
-    if (!transporter) return;
-
-    await transporter.sendMail({
-      from: `"${cfg.fromName} Alerts" <${cfg.user}>`,
-      to: recipients.join(', '),
-      subject: `[GCash Proof] ${reservation.user_name} - ${reservation.reference_number} (${formatCurrency(totalAmount)})`,
-      html: emailHtml
-    });
-    console.log(`[Email Alert] Admin GCash proof email delivered to: ${recipients.join(', ')}`);
-  } catch (err) {
-    console.warn('[Email Alert] Failed to send admin payment email:', err.message);
-  }
+  await dispatchEmail({
+    to: recipients,
+    subject: `[GCash Proof] ${reservation.user_name} - ${reservation.reference_number} (${formatCurrency(totalAmount)})`,
+    html: emailHtml
+  });
 }
 
 module.exports = {
