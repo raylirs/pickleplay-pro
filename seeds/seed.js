@@ -29,7 +29,11 @@ async function seedDatabase() {
       { name: 'email', type: 'VARCHAR(200)' },
       { name: 'phone', type: 'VARCHAR(50)' },
       { name: 'fb_psid', type: 'VARCHAR(100)' },
-      { name: 'binding_code', type: 'VARCHAR(20)' }
+      { name: 'binding_code', type: 'VARCHAR(20)' },
+      { name: 'email_verified', type: 'BOOLEAN DEFAULT FALSE' },
+      { name: 'otp_code', type: 'VARCHAR(20)' },
+      { name: 'otp_expires_at', type: 'TIMESTAMP' },
+      { name: 'otp_purpose', type: 'VARCHAR(50)' }
     ];
 
     for (const col of userColumns) {

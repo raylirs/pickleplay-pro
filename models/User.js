@@ -40,6 +40,22 @@ const User = sequelize.define('User', {
   role: {
     type: DataTypes.STRING(50),
     defaultValue: 'player'
+  },
+  email_verified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  otp_code: {
+    type: DataTypes.STRING(20),
+    allowNull: true
+  },
+  otp_expires_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  otp_purpose: {
+    type: DataTypes.STRING(50),
+    allowNull: true
   }
 }, {
   tableName: 'users',

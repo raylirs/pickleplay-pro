@@ -64,6 +64,10 @@ router.get('/account/login', authController.showPlayerLogin);
 router.post('/account/login', authController.playerLogin);
 router.get('/account/register', authController.showPlayerRegister);
 router.post('/account/register', authController.playerRegister);
+router.post('/account/verify-otp', authController.verifyEmailOtp);
+router.post('/account/resend-otp', authController.resendEmailOtp);
+router.post('/account/forgot-password', authController.forgotPasswordRequest);
+router.post('/account/reset-password', authController.resetPasswordWithOtp);
 router.get('/account/logout', authController.playerLogout);
 router.post('/account/logout', authController.playerLogout);
 

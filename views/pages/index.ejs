@@ -1124,9 +1124,11 @@
           <strong>Almost there!</strong> Please sign in or create an account to reserve your selected court slots.
         </div>
 
+        <div id="playerAuthSuccessBox" class="alert alert-success py-2 px-3 small rounded-3 mb-3 d-none"></div>
         <div id="playerAuthErrorBox" class="alert alert-danger py-2 px-3 small rounded-3 mb-3 d-none"></div>
+        <div id="playerAuthMockOtpBox" class="alert alert-info border-info py-2 px-3 small rounded-3 mb-3 d-none"></div>
 
-        <!-- Modal Login Form -->
+        <!-- 1. Modal Login Form -->
         <form id="modalPlayerLoginForm" onsubmit="handleModalPlayerLogin(event)">
           <div class="mb-3">
             <label class="form-label small fw-bold text-dark">Email or GCash Mobile Number <span class="text-danger">*</span></label>
@@ -1137,7 +1139,12 @@
           </div>
 
           <div class="mb-4">
-            <label class="form-label small fw-bold text-dark">Password <span class="text-danger">*</span></label>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label small fw-bold text-dark mb-0">Password <span class="text-danger">*</span></label>
+              <a href="javascript:void(0)" onclick="switchPlayerAuthModalMode('forgot')" class="small fw-semibold text-primary text-decoration-none" style="font-size: 12px;">
+                <i class="bi bi-key-fill me-1"></i>Forgot Password?
+              </a>
+            </div>
             <div class="input-group">
               <span class="input-group-text bg-light text-primary"><i class="bi bi-lock-fill"></i></span>
               <input type="password" id="modalLoginPassword" name="password" class="form-control" placeholder="Enter your password" required>
@@ -1154,7 +1161,7 @@
           </div>
         </form>
 
-        <!-- Modal Register Form -->
+        <!-- 2. Modal Register Form -->
         <form id="modalPlayerRegisterForm" class="d-none" onsubmit="handleModalPlayerRegister(event)">
           <div class="mb-2.5">
             <label class="form-label small fw-bold text-dark mb-1">Player Full Name <span class="text-danger">*</span></label>
@@ -1167,9 +1174,12 @@
               <input type="tel" id="modalRegPhone" name="phone" class="form-control rounded-3 font-monospace" placeholder="09171234567" required>
             </div>
             <div class="col-sm-6">
-              <label class="form-label small fw-bold text-dark mb-1">Email <span class="text-muted fw-normal">(Optional)</span></label>
-              <input type="email" id="modalRegEmail" name="email" class="form-control rounded-3" placeholder="player@email.com">
+              <label class="form-label small fw-bold text-dark mb-1">Email Address <span class="text-danger">*</span></label>
+              <input type="email" id="modalRegEmail" name="email" class="form-control rounded-3" placeholder="player@email.com" required>
             </div>
+          </div>
+          <div class="form-text mb-2" style="font-size: 11px;">
+            <i class="bi bi-envelope-check-fill text-primary me-1"></i>We'll send a 6-digit OTP to confirm your email so you can recover your password anytime.
           </div>
 
           <div class="row g-2 mb-4 mt-1">
@@ -1184,12 +1194,120 @@
           </div>
 
           <button type="submit" id="modalRegisterSubmitBtn" class="btn btn-book-now-gold w-100 py-2.5 fw-bold rounded-pill shadow-sm">
-            <i class="bi bi-person-check-fill me-1"></i> Create Account &amp; Continue
+            <i class="bi bi-envelope-check-fill me-1"></i> Send Email OTP &amp; Create Account
           </button>
 
           <div class="text-center mt-3 pt-2 border-top">
             <span class="small text-secondary">Already have an account?</span>
             <a href="javascript:void(0)" onclick="switchPlayerAuthModalMode('login')" class="small fw-bold text-primary text-decoration-none ms-1">Sign In &rarr;</a>
+          </div>
+        </form>
+
+        <!-- 3. Modal Email OTP Verification Form -->
+        <form id="modalPlayerVerifyOtpForm" class="d-none" onsubmit="handleModalVerifyEmailOtp(event)">
+          <input type="hidden" id="modalVerifyUserId" value="">
+          <div class="text-center mb-3">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary mb-2" style="width: 52px; height: 52px;">
+              <i class="bi bi-shield-check fs-3"></i>
+            </div>
+            <h6 class="fw-bold text-dark mb-1">Confirm Your Email Address</h6>
+            <p class="small text-secondary mb-0">Enter the 6-digit verification code sent to your email to confirm your account.</p>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark mb-1">Email Address <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-primary"><i class="bi bi-envelope-fill"></i></span>
+              <input type="email" id="modalVerifyEmailInput" class="form-control" placeholder="player@email.com" required>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label small fw-bold text-dark mb-1">6-Digit OTP Verification Code <span class="text-danger">*</span></label>
+            <input type="text" id="modalVerifyOtpCode" class="form-control form-control-lg text-center font-monospace fw-bold" style="letter-spacing: 6px; font-size: 1.35rem;" placeholder="000000" maxlength="6" pattern="\d{6}" inputmode="numeric" required>
+          </div>
+
+          <button type="submit" id="modalVerifyOtpSubmitBtn" class="btn btn-book-now-gold w-100 py-2.5 fw-bold rounded-pill shadow-sm">
+            <i class="bi bi-check2-circle me-1"></i> Verify Email &amp; Sign In
+          </button>
+
+          <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top small">
+            <a href="javascript:void(0)" onclick="handleModalResendOtp('VERIFY_EMAIL')" id="modalResendVerifyOtpBtn" class="fw-bold text-primary text-decoration-none">
+              <i class="bi bi-arrow-clockwise me-1"></i>Resend OTP Code
+            </a>
+            <a href="javascript:void(0)" onclick="switchPlayerAuthModalMode('login')" class="text-secondary text-decoration-none">
+              &larr; Back to Sign In
+            </a>
+          </div>
+        </form>
+
+        <!-- 4. Modal Forgot Password Step 1 (Request Recovery OTP) -->
+        <form id="modalPlayerForgotForm" class="d-none" onsubmit="handleModalForgotPasswordRequest(event)">
+          <div class="text-center mb-3">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-25 text-dark mb-2" style="width: 52px; height: 52px;">
+              <i class="bi bi-key-fill fs-3"></i>
+            </div>
+            <h6 class="fw-bold text-dark mb-1">Forgot Your Password?</h6>
+            <p class="small text-secondary mb-0">Enter your registered Email or GCash Mobile Number and we'll send a 6-digit recovery OTP to your confirmed email.</p>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label small fw-bold text-dark">Registered Email or GCash Mobile <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-primary"><i class="bi bi-envelope-at-fill"></i></span>
+              <input type="text" id="modalForgotIdentifier" class="form-control" placeholder="player@email.com or 09171234567" required>
+            </div>
+          </div>
+
+          <button type="submit" id="modalForgotSubmitBtn" class="btn btn-book-now-gold w-100 py-2.5 fw-bold rounded-pill shadow-sm">
+            <i class="bi bi-send-check-fill me-1"></i> Send Recovery OTP
+          </button>
+
+          <div class="text-center mt-3 pt-2 border-top">
+            <a href="javascript:void(0)" onclick="switchPlayerAuthModalMode('login')" class="small fw-bold text-secondary text-decoration-none">
+              &larr; Back to Sign In
+            </a>
+          </div>
+        </form>
+
+        <!-- 5. Modal Forgot Password Step 2 (Enter Recovery OTP + New Password) -->
+        <form id="modalPlayerResetForm" class="d-none" onsubmit="handleModalResetPasswordSubmit(event)">
+          <input type="hidden" id="modalResetEmailHidden" value="">
+          <div class="text-center mb-3">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success mb-2" style="width: 48px; height: 48px;">
+              <i class="bi bi-shield-lock-fill fs-4"></i>
+            </div>
+            <h6 class="fw-bold text-dark mb-1">Set a New Password</h6>
+            <p class="small text-secondary mb-0">Enter the 6-digit recovery code sent to <strong id="modalResetEmailDisplay" class="text-dark">your email</strong> and choose a new password.</p>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark mb-1">6-Digit Recovery OTP <span class="text-danger">*</span></label>
+            <input type="text" id="modalResetOtpCode" class="form-control text-center font-monospace fw-bold" style="letter-spacing: 6px; font-size: 1.25rem;" placeholder="000000" maxlength="6" pattern="\d{6}" inputmode="numeric" required>
+          </div>
+
+          <div class="row g-2 mb-4">
+            <div class="col-sm-6">
+              <label class="form-label small fw-bold text-dark mb-1">New Password <span class="text-danger">*</span></label>
+              <input type="password" id="modalResetNewPassword" class="form-control rounded-3" placeholder="Min. 6 chars" minlength="6" required>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label small fw-bold text-dark mb-1">Confirm New Password <span class="text-danger">*</span></label>
+              <input type="password" id="modalResetConfirmPassword" class="form-control rounded-3" placeholder="Repeat password" minlength="6" required>
+            </div>
+          </div>
+
+          <button type="submit" id="modalResetSubmitBtn" class="btn btn-book-now-gold w-100 py-2.5 fw-bold rounded-pill shadow-sm">
+            <i class="bi bi-check2-all me-1"></i> Reset Password &amp; Sign In
+          </button>
+
+          <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top small">
+            <a href="javascript:void(0)" onclick="handleModalResendOtp('RESET_PASSWORD')" class="fw-bold text-primary text-decoration-none">
+              <i class="bi bi-arrow-clockwise me-1"></i>Resend Recovery OTP
+            </a>
+            <a href="javascript:void(0)" onclick="switchPlayerAuthModalMode('login')" class="text-secondary text-decoration-none">
+              &larr; Back to Sign In
+            </a>
           </div>
         </form>
       </div>
@@ -2405,27 +2523,82 @@
     }
   }
 
+  function setAuthModalAlert(type, message) {
+    const ids = { error: 'playerAuthErrorBox', success: 'playerAuthSuccessBox', mock: 'playerAuthMockOtpBox' };
+    const el = document.getElementById(ids[type]);
+    if (!el) return;
+    if (message) {
+      el.innerHTML = message;
+      el.classList.remove('d-none');
+    } else {
+      el.classList.add('d-none');
+      el.innerHTML = '';
+    }
+  }
+
+  function clearAuthModalAlerts() {
+    setAuthModalAlert('error', null);
+    setAuthModalAlert('success', null);
+    setAuthModalAlert('mock', null);
+  }
+
+  // Shows the OTP on-screen ONLY when SMTP isn't configured yet (dev/testing mode)
+  function showMockOtpIfAny(data) {
+    if (data && data.mocked_otp) {
+      setAuthModalAlert('mock', `<i class="bi bi-info-circle-fill me-1"></i><strong>Test Mode:</strong> Email (SMTP) isn't configured yet, so here is your OTP: <span class="font-monospace fw-bold fs-6">${data.mocked_otp}</span>`);
+    }
+  }
+
   function switchPlayerAuthModalMode(mode) {
-    const loginForm = document.getElementById('modalPlayerLoginForm');
-    const regForm = document.getElementById('modalPlayerRegisterForm');
+    const forms = {
+      login: document.getElementById('modalPlayerLoginForm'),
+      register: document.getElementById('modalPlayerRegisterForm'),
+      verify: document.getElementById('modalPlayerVerifyOtpForm'),
+      forgot: document.getElementById('modalPlayerForgotForm'),
+      reset: document.getElementById('modalPlayerResetForm')
+    };
+    const titles = {
+      login: 'Sign In to Player Account',
+      register: 'Create Player Account',
+      verify: 'Verify Your Email',
+      forgot: 'Recover Your Password',
+      reset: 'Set a New Password'
+    };
     const tabLogin = document.getElementById('modalAuthTabLogin');
     const tabReg = document.getElementById('modalAuthTabRegister');
     const titleEl = document.getElementById('playerAuthModalTitle');
-    const errBox = document.getElementById('playerAuthErrorBox');
-    if (errBox) errBox.classList.add('d-none');
+    clearAuthModalAlerts();
 
-    if (mode === 'register') {
-      if (loginForm) loginForm.classList.add('d-none');
-      if (regForm) regForm.classList.remove('d-none');
-      if (tabReg) tabReg.className = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 bg-white text-primary border-bottom border-2 border-primary';
-      if (tabLogin) tabLogin.className = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 text-secondary';
-      if (titleEl) titleEl.innerText = 'Create Player Account';
+    if (!forms[mode]) mode = 'login';
+    Object.keys(forms).forEach(key => {
+      if (forms[key]) forms[key].classList.toggle('d-none', key !== mode);
+    });
+
+    const activeCls = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 bg-white text-primary border-bottom border-2 border-primary';
+    const inactiveCls = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 text-secondary';
+    if (tabReg) tabReg.className = mode === 'register' ? activeCls : inactiveCls;
+    if (tabLogin) tabLogin.className = (mode === 'login' || mode === 'forgot' || mode === 'reset') ? activeCls : inactiveCls;
+    if (titleEl) titleEl.innerText = titles[mode];
+  }
+
+  function goToVerifyOtpStep(data) {
+    switchPlayerAuthModalMode('verify');
+    const emailInput = document.getElementById('modalVerifyEmailInput');
+    const userIdInput = document.getElementById('modalVerifyUserId');
+    const otpInput = document.getElementById('modalVerifyOtpCode');
+    if (userIdInput) userIdInput.value = data.user_id || '';
+    if (emailInput) {
+      emailInput.value = data.email || '';
+      emailInput.readOnly = !!data.email;
+    }
+    if (otpInput) otpInput.value = '';
+
+    if (data.requires_email_input) {
+      setAuthModalAlert('success', 'Please enter your email address, then tap <strong>Resend OTP Code</strong> to receive your verification code.');
     } else {
-      if (regForm) regForm.classList.add('d-none');
-      if (loginForm) loginForm.classList.remove('d-none');
-      if (tabLogin) tabLogin.className = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 bg-white text-primary border-bottom border-2 border-primary';
-      if (tabReg) tabReg.className = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 text-secondary';
-      if (titleEl) titleEl.innerText = 'Sign In to Player Account';
+      setAuthModalAlert('success', data.message || 'We sent a 6-digit OTP to your email.');
+      showMockOtpIfAny(data);
+      if (otpInput) setTimeout(() => otpInput.focus(), 150);
     }
   }
 
@@ -2452,6 +2625,10 @@
         body: JSON.stringify({ identifier, password })
       });
       const data = await res.json();
+      if (data && data.requires_verification) {
+        goToVerifyOtpStep(data);
+        return;
+      }
       if (!res.ok || !data.success) {
         if (errBox) {
           errBox.innerText = (data && data.error) || 'Sign in failed. Please check your credentials.';
@@ -2508,6 +2685,11 @@
         return;
       }
 
+      if (data.requires_verification) {
+        goToVerifyOtpStep(data);
+        return;
+      }
+
       onPlayerAuthenticatedSuccess(data.user, data.message);
     } catch (err) {
       if (errBox) {
@@ -2517,8 +2699,143 @@
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-person-check-fill me-1"></i> Create Account &amp; Continue';
+        btn.innerHTML = '<i class="bi bi-envelope-check-fill me-1"></i> Send Email OTP &amp; Create Account';
       }
+    }
+  }
+
+  async function postAuthJson(url, payload) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    let data = {};
+    try { data = await res.json(); } catch (e) { /* non-JSON response */ }
+    return { ok: res.ok, data };
+  }
+
+  function setBtnLoading(btn, loading, loadingText, idleHtml) {
+    if (!btn) return;
+    btn.disabled = loading;
+    btn.innerHTML = loading ? `<span class="spinner-border spinner-border-sm me-2"></span>${loadingText}` : idleHtml;
+  }
+
+  async function handleModalVerifyEmailOtp(e) {
+    e.preventDefault();
+    const email = document.getElementById('modalVerifyEmailInput').value.trim();
+    const user_id = document.getElementById('modalVerifyUserId').value;
+    const otp_code = document.getElementById('modalVerifyOtpCode').value.trim();
+    const btn = document.getElementById('modalVerifyOtpSubmitBtn');
+    const idle = '<i class="bi bi-check2-circle me-1"></i> Verify Email &amp; Sign In';
+
+    setAuthModalAlert('error', null);
+    setBtnLoading(btn, true, 'Verifying...', idle);
+    try {
+      const { ok, data } = await postAuthJson('/account/verify-otp', { email, user_id, otp_code });
+      if (!ok || !data.success) {
+        setAuthModalAlert('error', (data && data.error) || 'Invalid OTP. Please try again.');
+        return;
+      }
+      clearAuthModalAlerts();
+      onPlayerAuthenticatedSuccess(data.user, data.message);
+    } catch (err) {
+      setAuthModalAlert('error', 'Network error. Please try again.');
+    } finally {
+      setBtnLoading(btn, false, '', idle);
+    }
+  }
+
+  async function handleModalResendOtp(purpose) {
+    const isReset = purpose === 'RESET_PASSWORD';
+    const email = isReset
+      ? document.getElementById('modalResetEmailHidden').value.trim()
+      : document.getElementById('modalVerifyEmailInput').value.trim();
+    const user_id = isReset ? '' : document.getElementById('modalVerifyUserId').value;
+
+    if (!email) {
+      setAuthModalAlert('error', 'Please enter your email address first.');
+      return;
+    }
+
+    setAuthModalAlert('error', null);
+    setAuthModalAlert('mock', null);
+    try {
+      const { ok, data } = await postAuthJson('/account/resend-otp', { email, user_id, purpose });
+      if (!ok || !data.success) {
+        setAuthModalAlert('error', (data && data.error) || 'Could not resend OTP. Please try again.');
+        return;
+      }
+      if (!isReset) {
+        const emailInput = document.getElementById('modalVerifyEmailInput');
+        if (emailInput) emailInput.readOnly = true;
+        if (data.user_id) document.getElementById('modalVerifyUserId').value = data.user_id;
+      }
+      setAuthModalAlert('success', data.message || 'A new OTP has been sent.');
+      showMockOtpIfAny(data);
+    } catch (err) {
+      setAuthModalAlert('error', 'Network error. Please try again.');
+    }
+  }
+
+  async function handleModalForgotPasswordRequest(e) {
+    e.preventDefault();
+    const identifier = document.getElementById('modalForgotIdentifier').value.trim();
+    const btn = document.getElementById('modalForgotSubmitBtn');
+    const idle = '<i class="bi bi-send-check-fill me-1"></i> Send Recovery OTP';
+
+    setAuthModalAlert('error', null);
+    setBtnLoading(btn, true, 'Sending code...', idle);
+    try {
+      const { ok, data } = await postAuthJson('/account/forgot-password', { identifier });
+      if (!ok || !data.success) {
+        setAuthModalAlert('error', (data && data.error) || 'Could not send recovery code.');
+        return;
+      }
+      switchPlayerAuthModalMode('reset');
+      document.getElementById('modalResetEmailHidden').value = data.email || '';
+      document.getElementById('modalResetEmailDisplay').innerText = data.masked_email || data.email || 'your email';
+      document.getElementById('modalResetOtpCode').value = '';
+      document.getElementById('modalResetNewPassword').value = '';
+      document.getElementById('modalResetConfirmPassword').value = '';
+      setAuthModalAlert('success', data.message || 'Recovery code sent.');
+      showMockOtpIfAny(data);
+      setTimeout(() => document.getElementById('modalResetOtpCode').focus(), 150);
+    } catch (err) {
+      setAuthModalAlert('error', 'Network error. Please try again.');
+    } finally {
+      setBtnLoading(btn, false, '', idle);
+    }
+  }
+
+  async function handleModalResetPasswordSubmit(e) {
+    e.preventDefault();
+    const email = document.getElementById('modalResetEmailHidden').value.trim();
+    const otp_code = document.getElementById('modalResetOtpCode').value.trim();
+    const new_password = document.getElementById('modalResetNewPassword').value;
+    const confirm_password = document.getElementById('modalResetConfirmPassword').value;
+    const btn = document.getElementById('modalResetSubmitBtn');
+    const idle = '<i class="bi bi-check2-all me-1"></i> Reset Password &amp; Sign In';
+
+    setAuthModalAlert('error', null);
+    if (new_password !== confirm_password) {
+      setAuthModalAlert('error', 'New passwords do not match.');
+      return;
+    }
+
+    setBtnLoading(btn, true, 'Updating password...', idle);
+    try {
+      const { ok, data } = await postAuthJson('/account/reset-password', { email, otp_code, new_password, confirm_password });
+      if (!ok || !data.success) {
+        setAuthModalAlert('error', (data && data.error) || 'Could not reset password.');
+        return;
+      }
+      clearAuthModalAlerts();
+      onPlayerAuthenticatedSuccess(data.user, data.message);
+    } catch (err) {
+      setAuthModalAlert('error', 'Network error. Please try again.');
+    } finally {
+      setBtnLoading(btn, false, '', idle);
     }
   }
 

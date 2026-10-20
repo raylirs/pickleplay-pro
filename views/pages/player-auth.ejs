@@ -32,7 +32,7 @@
 
           <div class="card-body p-4">
             <!-- LOGIN FORM -->
-            <form id="authPageLoginForm" action="/account/login" method="POST" class="<%= mode === 'register' ? 'd-none' : '' %>">
+            <form id="authPageLoginForm" action="/account/login" method="POST" class="<%= (mode && mode !== 'login') ? 'd-none' : '' %>">
               <div class="mb-3">
                 <label class="form-label small fw-bold text-dark">Email or GCash Mobile Number <span class="text-danger">*</span></label>
                 <div class="input-group">
@@ -42,7 +42,12 @@
               </div>
 
               <div class="mb-4">
-                <label class="form-label small fw-bold text-dark">Password <span class="text-danger">*</span></label>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label small fw-bold text-dark mb-0">Password <span class="text-danger">*</span></label>
+                  <a href="javascript:void(0)" onclick="switchAuthPageMode('forgot')" class="small fw-semibold text-primary text-decoration-none" style="font-size: 12px;">
+                    <i class="bi bi-key-fill me-1"></i>Forgot Password?
+                  </a>
+                </div>
                 <div class="input-group">
                   <span class="input-group-text bg-light text-primary"><i class="bi bi-lock-fill"></i></span>
                   <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
@@ -79,11 +84,12 @@
               </div>
 
               <div class="mb-3">
-                <label class="form-label small fw-bold text-dark">Email Address <span class="text-muted fw-normal">(Optional - can also be used for login)</span></label>
+                <label class="form-label small fw-bold text-dark">Email Address <span class="text-danger">*</span></label>
                 <div class="input-group">
                   <span class="input-group-text bg-light text-primary"><i class="bi bi-envelope-fill"></i></span>
-                  <input type="email" name="email" class="form-control" placeholder="player@email.com">
+                  <input type="email" name="email" class="form-control" placeholder="player@email.com" required>
                 </div>
+                <div class="form-text" style="font-size: 11px;">We'll send a 6-digit OTP to confirm your email so you can recover your password anytime.</div>
               </div>
 
               <div class="row g-2 mb-4">
@@ -98,12 +104,93 @@
               </div>
 
               <button type="submit" class="btn btn-book-now-gold w-100 py-2.5 fw-bold rounded-pill shadow-sm">
-                <i class="bi bi-person-check-fill me-1"></i> Create Player Account
+                <i class="bi bi-envelope-check-fill me-1"></i> Send Email OTP &amp; Create Account
               </button>
 
               <div class="text-center mt-3 pt-2 border-top">
                 <span class="small text-secondary">Already have an account?</span>
                 <a href="javascript:void(0)" onclick="switchAuthPageMode('login')" class="small fw-bold text-primary text-decoration-none ms-1">Sign in here &rarr;</a>
+              </div>
+            </form>
+
+            <% const _vEmail = (typeof verifyEmail !== 'undefined' && verifyEmail) ? verifyEmail : ''; %>
+
+            <!-- VERIFY EMAIL OTP FORM -->
+            <form id="authPageVerifyForm" action="/account/verify-otp" method="POST" class="<%= mode === 'verify' ? '' : 'd-none' %>">
+              <div class="text-center mb-3">
+                <i class="bi bi-shield-check text-primary fs-2"></i>
+                <h6 class="fw-bold text-dark mb-1">Confirm Your Email Address</h6>
+                <p class="small text-secondary mb-0">Enter the 6-digit code we sent to your email.</p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-dark">Email Address <span class="text-danger">*</span></label>
+                <input type="email" name="email" class="form-control" value="<%= _vEmail %>" placeholder="player@email.com" required>
+              </div>
+              <div class="mb-4">
+                <label class="form-label small fw-bold text-dark">6-Digit OTP Code <span class="text-danger">*</span></label>
+                <input type="text" name="otp_code" class="form-control form-control-lg text-center font-monospace fw-bold" style="letter-spacing: 6px;" placeholder="000000" maxlength="6" pattern="\d{6}" inputmode="numeric" required>
+              </div>
+              <button type="submit" class="btn btn-book-now-gold w-100 py-2.5 fw-bold rounded-pill shadow-sm">
+                <i class="bi bi-check2-circle me-1"></i> Verify Email &amp; Sign In
+              </button>
+              <div class="d-flex justify-content-between mt-3 pt-2 border-top small">
+                <button type="submit" formaction="/account/resend-otp" formnovalidate class="btn btn-link p-0 fw-bold text-primary text-decoration-none small">
+                  <i class="bi bi-arrow-clockwise me-1"></i>Resend OTP
+                </button>
+                <a href="javascript:void(0)" onclick="switchAuthPageMode('login')" class="text-secondary text-decoration-none">&larr; Back to Sign In</a>
+              </div>
+            </form>
+
+            <!-- FORGOT PASSWORD FORM -->
+            <form id="authPageForgotForm" action="/account/forgot-password" method="POST" class="<%= mode === 'forgot' ? '' : 'd-none' %>">
+              <div class="text-center mb-3">
+                <i class="bi bi-key-fill text-warning fs-2"></i>
+                <h6 class="fw-bold text-dark mb-1">Forgot Your Password?</h6>
+                <p class="small text-secondary mb-0">We'll send a 6-digit recovery code to your confirmed email.</p>
+              </div>
+              <div class="mb-4">
+                <label class="form-label small fw-bold text-dark">Registered Email or GCash Mobile <span class="text-danger">*</span></label>
+                <input type="text" name="identifier" class="form-control" placeholder="player@email.com or 09171234567" required>
+              </div>
+              <button type="submit" class="btn btn-book-now-gold w-100 py-2.5 fw-bold rounded-pill shadow-sm">
+                <i class="bi bi-send-check-fill me-1"></i> Send Recovery OTP
+              </button>
+              <div class="text-center mt-3 pt-2 border-top">
+                <a href="javascript:void(0)" onclick="switchAuthPageMode('login')" class="small fw-bold text-secondary text-decoration-none">&larr; Back to Sign In</a>
+              </div>
+            </form>
+
+            <!-- RESET PASSWORD FORM -->
+            <form id="authPageResetForm" action="/account/reset-password" method="POST" class="<%= mode === 'reset' ? '' : 'd-none' %>">
+              <input type="hidden" name="email" value="<%= _vEmail %>">
+              <input type="hidden" name="purpose" value="RESET_PASSWORD">
+              <div class="text-center mb-3">
+                <i class="bi bi-shield-lock-fill text-success fs-2"></i>
+                <h6 class="fw-bold text-dark mb-1">Set a New Password</h6>
+                <p class="small text-secondary mb-0">Enter the recovery code sent to your email and choose a new password.</p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-dark">6-Digit Recovery OTP <span class="text-danger">*</span></label>
+                <input type="text" name="otp_code" class="form-control text-center font-monospace fw-bold" style="letter-spacing: 6px;" placeholder="000000" maxlength="6" pattern="\d{6}" inputmode="numeric" required>
+              </div>
+              <div class="row g-2 mb-4">
+                <div class="col-sm-6">
+                  <label class="form-label small fw-bold text-dark">New Password <span class="text-danger">*</span></label>
+                  <input type="password" name="new_password" class="form-control" placeholder="Min. 6 characters" minlength="6" required>
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label small fw-bold text-dark">Confirm Password <span class="text-danger">*</span></label>
+                  <input type="password" name="confirm_password" class="form-control" placeholder="Re-enter password" minlength="6" required>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-book-now-gold w-100 py-2.5 fw-bold rounded-pill shadow-sm">
+                <i class="bi bi-check2-all me-1"></i> Reset Password &amp; Sign In
+              </button>
+              <div class="d-flex justify-content-between mt-3 pt-2 border-top small">
+                <button type="submit" formaction="/account/resend-otp" formnovalidate class="btn btn-link p-0 fw-bold text-primary text-decoration-none small">
+                  <i class="bi bi-arrow-clockwise me-1"></i>Resend Recovery OTP
+                </button>
+                <a href="javascript:void(0)" onclick="switchAuthPageMode('login')" class="text-secondary text-decoration-none">&larr; Back to Sign In</a>
               </div>
             </form>
           </div>
@@ -115,21 +202,23 @@
 
 <script>
   function switchAuthPageMode(mode) {
-    const loginForm = document.getElementById('authPageLoginForm');
-    const registerForm = document.getElementById('authPageRegisterForm');
+    const forms = {
+      login: document.getElementById('authPageLoginForm'),
+      register: document.getElementById('authPageRegisterForm'),
+      verify: document.getElementById('authPageVerifyForm'),
+      forgot: document.getElementById('authPageForgotForm'),
+      reset: document.getElementById('authPageResetForm')
+    };
+    if (!forms[mode]) mode = 'login';
+    Object.keys(forms).forEach(key => {
+      if (forms[key]) forms[key].classList.toggle('d-none', key !== mode);
+    });
+
     const tabLogin = document.getElementById('authPageTabLogin');
     const tabRegister = document.getElementById('authPageTabRegister');
-
-    if (mode === 'register') {
-      loginForm.classList.add('d-none');
-      registerForm.classList.remove('d-none');
-      tabRegister.className = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 bg-white text-primary border-bottom border-2 border-primary';
-      tabLogin.className = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 text-secondary';
-    } else {
-      registerForm.classList.add('d-none');
-      loginForm.classList.remove('d-none');
-      tabLogin.className = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 bg-white text-primary border-bottom border-2 border-primary';
-      tabRegister.className = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 text-secondary';
-    }
+    const activeCls = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 bg-white text-primary border-bottom border-2 border-primary';
+    const inactiveCls = 'flex-fill btn rounded-0 py-2.5 fw-bold small border-0 text-secondary';
+    tabRegister.className = mode === 'register' ? activeCls : inactiveCls;
+    tabLogin.className = mode === 'register' || mode === 'verify' ? inactiveCls : activeCls;
   }
 </script>
