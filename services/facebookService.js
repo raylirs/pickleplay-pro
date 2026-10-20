@@ -259,12 +259,13 @@ async function notifyAdminNewBooking(reservation, extra = {}) {
   const totalAmount = extra.totalAmount !== undefined ? parseFloat(extra.totalAmount) : parseFloat(reservation.total_amount || 0);
   const timeRange = reservation.end_time ? `${reservation.start_time} - ${reservation.end_time}` : reservation.start_time;
 
-  const text = `🔔 [THE PLAYGROUND] NEW BOOKING RECEIVED!\n\n` +
+  const text = `🔔 [THE PLAYGROUND] NEW BOOKING RECEIVED (AWAITING PAYMENT)\n\n` +
     `📋 Ref: ${reservation.reference_number}\n` +
     `👤 Player: ${reservation.user_name} (${reservation.user_contact})\n` +
     `🏟️ Court: ${courtLabel} | 📅 ${reservation.reservation_date}\n` +
     `⏰ Time: ${timeRange}\n` +
-    `💰 Total: ₱${totalAmount.toFixed(2)}`;
+    `💰 Total: ₱${totalAmount.toFixed(2)}\n\n` +
+    `⏳ Status: Player has a 15-minute hold to upload GCash payment proof. You will receive an approval alert once payment proof is submitted.`;
 
   const buttonPayload = {
     attachment: {
@@ -274,19 +275,9 @@ async function notifyAdminNewBooking(reservation, extra = {}) {
         text: text.slice(0, 640),
         buttons: [
           {
-            type: 'postback',
-            title: 'Approve',
-            payload: `APPROVE_${reservation.reference_number}`
-          },
-          {
-            type: 'postback',
-            title: 'Decline',
-            payload: `CANCEL_${reservation.reference_number}`
-          },
-          {
             type: 'web_url',
             url: 'https://pickleplay-pro.onrender.com/admin/reservations',
-            title: 'View Booking'
+            title: 'View in Admin'
           }
         ]
       }

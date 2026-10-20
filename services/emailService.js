@@ -327,10 +327,11 @@ async function notifyAdminsNewBookingEmail(reservation, extra = {}) {
           <p style="margin: 0 0 6px 0;"><strong>Court:</strong> ${courtLabel}</p>
           <p style="margin: 0 0 6px 0;"><strong>Date:</strong> ${reservation.reservation_date}</p>
           <p style="margin: 0 0 6px 0;"><strong>Time:</strong> ${timeRange}</p>
-          <p style="margin: 0;"><strong>Total Amount:</strong> ${formatCurrency(totalAmount)}</p>
+          <p style="margin: 0 0 6px 0;"><strong>Total Amount:</strong> ${formatCurrency(totalAmount)}</p>
+          <p style="margin: 0;"><strong>Status:</strong> <span style="background-color: #fff3cd; color: #856404; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;">⏳ Awaiting GCash Payment (15-min hold)</span></p>
         </div>
         <p style="margin-top: 15px;">
-          <a href="https://pickleplay-pro.onrender.com/admin/reservations" style="display: inline-block; background-color: #0B2545; color: #ffffff; padding: 10px 22px; text-decoration: none; border-radius: 20px; font-weight: bold; font-size: 13px;">Open Admin Dashboard &rarr;</a>
+          <a href="https://pickleplay-pro.onrender.com/admin/reservations" style="display: inline-block; background-color: #0B2545; color: #ffffff; padding: 10px 22px; text-decoration: none; border-radius: 20px; font-weight: bold; font-size: 13px;">View in Admin Dashboard &rarr;</a>
         </p>
       </div>
       <div style="text-align: center; font-size: 11px; color: #94a3b8; padding-top: 15px; border-top: 1px solid #eee;">
