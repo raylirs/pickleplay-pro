@@ -7,7 +7,7 @@ async function resolveSmtpConfig() {
   try {
     const rows = await SystemSetting.findAll({
       where: {
-        key: ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM_NAME']
+        key: ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM_NAME', 'BREVO_API_KEY', 'BREVO_SENDER_EMAIL']
       }
     });
     rows.forEach(r => {
@@ -24,10 +24,12 @@ async function resolveSmtpConfig() {
   const user = dbSettings.SMTP_USER || process.env.SMTP_USER || '';
   const pass = dbSettings.SMTP_PASS || process.env.SMTP_PASS || '';
   const fromName = dbSettings.SMTP_FROM_NAME || 'The Playground Pickleball';
+  const brevoApiKey = dbSettings.BREVO_API_KEY || process.env.BREVO_API_KEY || '';
+  const brevoSender = dbSettings.BREVO_SENDER_EMAIL || process.env.BREVO_SENDER_EMAIL || user || 'cpe4ryan@gmail.com';
 
-  const isMock = !user || !pass || user === 'mock_user@pickleplay.com' || pass === 'mock_password';
+  const isMock = !brevoApiKey && (!user || !pass || user === 'mock_user@pickleplay.com' || pass === 'mock_password');
 
-  return { host, port, user, pass, fromName, isMock };
+  return { host, port, user, pass, fromName, brevoApiKey, brevoSender, isMock };
 }
 
 let cachedTransporter = null;
@@ -80,8 +82,13 @@ async function createDynamicTransporter() {
   return { transporter: cachedTransporter, cfg };
 }
 
+/**
+ * Universal email dispatcher:
+ * 1. Brevo HTTPS API (Port 443 - Bypasses Render Free Tier outbound SMTP port restrictions, delivers to ANY email address)
+ * 2. Standard SMTP / Gmail (Nodemailer - Used on local dev or paid Render tiers)
+ */
 async function dispatchEmail({ to, subject, html }) {
-  const { transporter, cfg } = await createDynamicTransporter();
+  const cfg = await resolveSmtpConfig();
   const toList = (Array.isArray(to) ? to : String(to).split(/[\s,]+/))
     .map(e => e.trim())
     .filter(Boolean);
@@ -90,24 +97,56 @@ async function dispatchEmail({ to, subject, html }) {
     return { success: false, reason: 'No recipients specified' };
   }
 
-  if (!transporter) {
-    console.log(`[Email Service Mock] (No credentials) Email to ${toList.join(', ')}: "${subject}"`);
-    return { success: false, isMock: true, reason: 'SMTP credentials not configured' };
+  // 1. Try Brevo HTTPS API (Port 443 - Never blocked on Render Free)
+  if (cfg.brevoApiKey) {
+    try {
+      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': cfg.brevoApiKey.trim(),
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          sender: { name: cfg.fromName, email: cfg.brevoSender },
+          to: toList.map(email => ({ email })),
+          subject,
+          htmlContent: html
+        }),
+        signal: AbortSignal.timeout(10000)
+      });
+      const data = await res.json();
+      if (res.ok && data.messageId) {
+        console.log(`[Email Service Brevo] Successfully delivered to ${toList.join(', ')} (Message ID: ${data.messageId})`);
+        return { success: true, mocked: false, provider: 'brevo', messageId: data.messageId };
+      } else {
+        const errorMsg = data.message || JSON.stringify(data);
+        console.warn(`[Email Service Brevo Error]: ${errorMsg}`);
+      }
+    } catch (err) {
+      console.warn(`[Email Service Brevo Error]: ${err.message}`);
+    }
   }
 
-  try {
-    const info = await transporter.sendMail({
-      from: `"${cfg.fromName}" <${cfg.user}>`,
-      to: toList.join(', '),
-      subject,
-      html
-    });
-    console.log(`[Email Service Gmail] Successfully delivered to ${toList.join(', ')} (Message ID: ${info.messageId})`);
-    return { success: true, mocked: false, messageId: info.messageId };
-  } catch (err) {
-    console.warn(`[Email Service Gmail Error] Delivery failed to ${toList.join(', ')}: ${err.message}`);
-    return { success: false, error: err.message };
+  // 2. Try Standard SMTP / Gmail (Nodemailer)
+  const { transporter } = await createDynamicTransporter();
+  if (transporter) {
+    try {
+      const info = await transporter.sendMail({
+        from: `"${cfg.fromName}" <${cfg.user}>`,
+        to: toList.join(', '),
+        subject,
+        html
+      });
+      console.log(`[Email Service Gmail] Successfully delivered to ${toList.join(', ')} (Message ID: ${info.messageId})`);
+      return { success: true, mocked: false, provider: 'smtp', messageId: info.messageId };
+    } catch (err) {
+      console.warn(`[Email Service Gmail Error] Delivery failed to ${toList.join(', ')}: ${err.message}`);
+      return { success: false, error: err.message };
+    }
   }
+
+  return { success: false, reason: 'No active email provider configured' };
 }
 
 async function sendReservationConfirmation(reservation, court) {
