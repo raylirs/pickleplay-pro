@@ -1,5 +1,5 @@
 /**
- * Global Image Pan & Zoom Lightbox Viewer for 3KS Playground
+ * Global Image Pan & Zoom Lightbox Viewer for The Playground Pickleball
  */
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Create Modal DOM if not present
