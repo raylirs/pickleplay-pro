@@ -2676,12 +2676,16 @@
         },
         body: JSON.stringify({ full_name, phone, email, password, confirm_password })
       });
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        data = { error: 'Server response error. Please try again.' };
+      }
+
       if (!res.ok || !data.success) {
-        if (errBox) {
-          errBox.innerText = (data && data.error) || 'Could not create account. Please verify your details.';
-          errBox.classList.remove('d-none');
-        }
+        const errorText = (data && data.error) || 'Could not create account. Please verify your details.';
+        setAuthModalAlert('error', errorText);
         return;
       }
 
@@ -2692,10 +2696,8 @@
 
       onPlayerAuthenticatedSuccess(data.user, data.message);
     } catch (err) {
-      if (errBox) {
-        errBox.innerText = 'Network error. Please try again.';
-        errBox.classList.remove('d-none');
-      }
+      console.error('[Register Error]:', err);
+      setAuthModalAlert('error', 'Network error or server connection failed. Please try again.');
     } finally {
       if (btn) {
         btn.disabled = false;

@@ -36,14 +36,18 @@ async function createDynamicTransporter() {
     return { transporter: null, cfg };
   }
 
+  const isPort465 = cfg.port === 465;
   const transporter = nodemailer.createTransport({
     host: cfg.host,
     port: cfg.port,
-    secure: cfg.port === 465,
+    secure: isPort465,
     auth: {
       user: cfg.user,
       pass: cfg.pass
-    }
+    },
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 10000
   });
 
   return { transporter, cfg };
