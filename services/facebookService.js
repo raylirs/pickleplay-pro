@@ -9,6 +9,25 @@ const pendingMessengerQueue = new Map(); // psid -> Array<{ payload, queuedAt }>
 // Track last known user interaction timestamp per PSID
 const lastUserInteractionMap = new Map(); // psid -> timestamp (ms)
 const keepAliveSentMap = new Map(); // psid -> timestamp (ms)
+// Outgoing message deduplication map to prevent sending identical alerts within 15 seconds
+const recentSentMessengerMap = new Map(); // `${cleanPsid}_${hash}` -> timestamp (ms)
+// Admin action deduplication map to prevent race conditions between Webhook & Sync worker
+const recentAdminActionsMap = new Map(); // `${senderId}_${actionKey}` -> timestamp (ms)
+
+function getPayloadHash(payload) {
+  if (!payload) return '';
+  if (typeof payload === 'string') return payload.trim();
+  try {
+    if (payload.attachment && payload.attachment.payload) {
+      const p = payload.attachment.payload;
+      if (p.text) return `text:${p.text.trim()}`;
+      if (p.url) return `url:${p.url.trim()}`;
+    }
+    return JSON.stringify(payload);
+  } catch (e) {
+    return String(payload);
+  }
+}
 
 function enqueuePendingMessage(psid, payload) {
   const cleanPsid = String(psid).trim();
@@ -16,6 +35,11 @@ function enqueuePendingMessage(psid, payload) {
     pendingMessengerQueue.set(cleanPsid, []);
   }
   const list = pendingMessengerQueue.get(cleanPsid);
+  // Deduplicate queue: check if same payload is already queued for this recipient
+  const hash = getPayloadHash(payload);
+  if (list.some(item => getPayloadHash(item.payload) === hash)) {
+    return;
+  }
   // Keep max 15 recent alerts per recipient
   if (list.length >= 15) {
     list.shift();
@@ -133,6 +157,27 @@ async function sendMessengerNotify(psid, payload, options = {}) {
 
   try {
     const cleanPsid = String(psid).trim();
+    const payloadHash = getPayloadHash(payload);
+    const dedupKey = `${cleanPsid}_${payloadHash}`;
+
+    // Suppress duplicate identical notifications to the same recipient within 15 seconds
+    if (!options.bypassDedup && payloadHash) {
+      const lastSentTs = recentSentMessengerMap.get(dedupKey);
+      if (lastSentTs && Date.now() - lastSentTs < 15000) {
+        console.log(`[FB Service] Suppressed redundant duplicate alert to PSID ${cleanPsid} (sent ${((Date.now() - lastSentTs) / 1000).toFixed(1)}s ago).`);
+        return { success: true, deduplicated: true };
+      }
+      recentSentMessengerMap.set(dedupKey, Date.now());
+
+      // Periodic garbage collection of dedup cache
+      if (recentSentMessengerMap.size > 200) {
+        const threshold = Date.now() - 60000;
+        for (const [k, ts] of recentSentMessengerMap.entries()) {
+          if (ts < threshold) recentSentMessengerMap.delete(k);
+        }
+      }
+    }
+
     const url = `https://graph.facebook.com/${FB_VERSION}/me/messages?access_token=${token}`;
     let messageBody = typeof payload === 'string' ? { text: payload } : payload;
 
@@ -454,6 +499,9 @@ async function notifyPlayerNewBooking(reservation, extra = {}) {
   const targetPsid = await resolvePlayerPsid(reservation);
   if (!targetPsid) return;
 
+  const adminPsids = await getAllAdminPsids();
+  if (adminPsids.includes(targetPsid)) return;
+
   const courtLabel = extra.courtSummary || (reservation.court ? reservation.court.display_name : `Court ${reservation.court_id}`);
   const totalAmount = extra.totalAmount !== undefined ? parseFloat(extra.totalAmount) : parseFloat(reservation.total_amount || 0);
   const timeRange = reservation.end_time ? `${reservation.start_time} - ${reservation.end_time}` : reservation.start_time;
@@ -477,6 +525,9 @@ async function notifyPlayerPaymentSubmitted(reservation, totalOrderAmount) {
   const targetPsid = await resolvePlayerPsid(reservation);
   if (!targetPsid) return;
 
+  const adminPsids = await getAllAdminPsids();
+  if (adminPsids.includes(targetPsid)) return;
+
   const amountVal = totalOrderAmount !== undefined ? parseFloat(totalOrderAmount) : parseFloat(reservation.total_amount || 0);
   const msg = `🧾 [THE PLAYGROUND] GCASH PROOF RECEIVED!\n\n` +
     `Hello ${reservation.user_name}! We received your GCash payment proof for Booking #${reservation.reference_number}.\n\n` +
@@ -494,6 +545,9 @@ async function notifyPlayerPaymentSubmitted(reservation, totalOrderAmount) {
 async function notifyPlayerBookingConfirmed(reservation) {
   const targetPsid = await resolvePlayerPsid(reservation);
   if (!targetPsid) return;
+
+  const adminPsids = await getAllAdminPsids();
+  if (adminPsids.includes(targetPsid)) return;
 
   const msg = `🎉 [THE PLAYGROUND] YOUR BOOKING IS CONFIRMED!\n\n` +
     `Hello ${reservation.user_name}! Your court reservation has been verified and confirmed by Admin.\n\n` +
@@ -586,10 +640,24 @@ async function processAdminAction(senderId, rawText, contextRef = null) {
   const isDefaultAdmin = senderId === '27030144379994794' || senderId === '38090624017219189';
   if (!adminPsids.includes(senderId) && !isDefaultAdmin) return false;
 
+  const upper = (rawText || '').trim().toUpperCase();
+  const cleanSender = String(senderId).trim();
+  const actionKey = `${cleanSender}_${upper}_${contextRef || ''}`;
+  const lastActionTs = recentAdminActionsMap.get(actionKey);
+  if (lastActionTs && Date.now() - lastActionTs < 8000) {
+    console.log(`[FB Service] Suppressed duplicate admin action: ${actionKey}`);
+    return true;
+  }
+  recentAdminActionsMap.set(actionKey, Date.now());
+  if (recentAdminActionsMap.size > 100) {
+    const threshold = Date.now() - 30000;
+    for (const [k, ts] of recentAdminActionsMap.entries()) {
+      if (ts < threshold) recentAdminActionsMap.delete(k);
+    }
+  }
+
   recordUserInteraction(senderId, Date.now());
   const flushedCount = await flushPendingMessages(senderId);
-
-  const upper = (rawText || '').trim().toUpperCase();
 
   // Check if Admin tapped Keep-Alive or sent an activation keyword
   if (

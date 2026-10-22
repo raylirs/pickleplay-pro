@@ -138,7 +138,18 @@ const paymentController = {
         return res.redirect('/');
       }
 
-      if (!gcash_reference_no || !gcash_reference_no.trim()) {
+      if (reservation.status === 'CONFIRMED') {
+        req.flash('info', 'This reservation is already confirmed!');
+        return res.redirect(`/reservations/${reservation.reference_number}`);
+      }
+
+      const gcashRefClean = gcash_reference_no ? gcash_reference_no.trim() : '';
+      if (reservation.status === 'AWAITING_CONFIRMATION' && reservation.gcash_reference_no === gcashRefClean) {
+        req.flash('success', 'GCash payment proof already submitted and currently being verified by admin.');
+        return res.redirect(`/reservations/${reservation.reference_number}`);
+      }
+
+      if (!gcashRefClean) {
         req.flash('error', 'GCash Reference Number is required.');
         return res.redirect(`/payment/gcash-checkout?ref=${ref}`);
       }
@@ -149,7 +160,6 @@ const paymentController = {
       }
 
       const screenshotPath = `/uploads/courts/${req.file.filename}`;
-      const gcashRefClean = gcash_reference_no.trim();
 
       // Find and update all sibling court reservations under this master order
       const masterRef = ref.split('-')[0];
