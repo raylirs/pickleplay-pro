@@ -1391,5 +1391,90 @@ h1, h2, h3, h4, .font-display {
   cursor: not-allowed;
 }
 
+/* =========================================================
+   LUXURY PLAYER MEMBERSHIP PASS CARD
+   ========================================================= */
+.player-membership-card {
+  background: linear-gradient(145deg, #07172C 0%, #0B2545 60%, #13335e 100%);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(7, 23, 44, 0.2), 0 0 18px rgba(212, 175, 55, 0.12);
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+
+.player-pass-glow {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.25) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.player-pass-watermark {
+  position: absolute;
+  right: -10px;
+  bottom: -20px;
+  font-size: 110px;
+  color: rgba(255, 255, 255, 0.03);
+  pointer-events: none;
+  line-height: 1;
+}
+
+.player-pass-brand-badge {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #D4AF37;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+}
+
+.player-pass-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+  color: #07172C;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #F5E8BE;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.35);
+  flex-shrink: 0;
+}
+
+.player-pass-name {
+  font-size: 1.25rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.player-pass-meta-item {
+  font-size: 11.5px;
+  color: #CBD5E1;
+  display: inline-flex;
+  align-items: center;
+}
+
+@media (max-width: 575.98px) {
+  .player-pass-name {
+    font-size: 1.15rem;
+  }
+  .player-pass-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 17px;
+  }
+}
+
 
 

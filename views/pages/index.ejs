@@ -709,56 +709,69 @@
     <!-- Authenticated Player Dashboard -->
     <div id="myBookingsUserDashboard" class="<%= (typeof user !== 'undefined' && user) ? '' : 'd-none' %>">
       <!-- Player Profile & Account Messenger Alerts Header Card -->
-      <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white mb-4">
-        <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-3">
-          <div class="d-flex align-items-center gap-3">
-            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold fs-4 flex-shrink-0 shadow-sm" style="width: 52px; height: 52px; background: linear-gradient(135deg, #07172C 0%, #0B2545 100%); border: 2px solid var(--gold-400); color: #F5E8BE;">
-              <i class="bi bi-person-check-fill text-warning"></i>
+      <!-- Luxury Player Membership Pass Card -->
+      <div class="player-membership-card mb-4 position-relative overflow-hidden">
+        <!-- Ambient Gold Glow Accent Background -->
+        <div class="player-pass-glow"></div>
+        <div class="player-pass-watermark"><i class="bi bi-shield-shaded"></i></div>
+
+        <div class="player-pass-content p-3 p-md-4 position-relative z-1">
+          <!-- Card Header Strip -->
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <span class="player-pass-brand-badge">
+              <i class="bi bi-patch-check-fill text-warning me-1"></i>THE PLAYGROUND &middot; MEMBER
+            </span>
+            <span id="dashboardMessengerBadge" class="badge <%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'bg-success-subtle text-success border border-success' : 'bg-secondary bg-opacity-25 text-white-50 border border-secondary border-opacity-50' %> rounded-pill px-2.5 py-1 small fw-semibold">
+              <i class="bi bi-messenger me-1"></i><%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'Messenger Active' : 'Messenger Not Linked' %>
+            </span>
+          </div>
+
+          <!-- Main Player Identity Row -->
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <!-- Monogram Avatar -->
+            <div class="player-pass-avatar" id="dashboardPlayerAvatar">
+              <% 
+                const pName = (typeof user !== 'undefined' && user) ? (user.full_name || user.username) : 'Player';
+                const pParts = pName.trim().split(/\s+/).filter(Boolean);
+                const initials = pParts.length > 1 ? (pParts[0][0] + pParts[pParts.length - 1][0]).toUpperCase() : pName.slice(0, 2).toUpperCase();
+              %>
+              <%= initials %>
             </div>
-            <div>
-              <div class="d-flex align-items-center gap-2 flex-wrap">
-                <h4 class="fw-extrabold text-dark font-display mb-0" id="dashboardPlayerName" style="letter-spacing: -0.01em;">
-                  <%= (typeof user !== 'undefined' && user) ? (user.full_name || user.username) : 'Player' %>
-                </h4>
-                <span class="badge bg-success-subtle text-success rounded-pill px-2.5 py-1 small fw-bold">Verified Player</span>
-                <span id="dashboardMessengerBadge" class="badge <%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'bg-primary-subtle text-primary' : 'bg-light text-secondary border' %> rounded-pill px-2.5 py-1 small fw-semibold">
-                  <i class="bi bi-messenger me-1"></i><%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'Messenger Connected' : 'Messenger Not Linked' %>
-                </span>
-              </div>
-              <div class="text-secondary small mt-1 d-flex flex-wrap gap-2 gap-md-3">
-                <span id="dashboardPlayerPhone">
-                  <i class="bi bi-phone-fill text-primary me-1"></i><%= (typeof user !== 'undefined' && user && user.phone) ? user.phone : '—' %>
+
+            <div class="min-w-0 flex-grow-1">
+              <h4 class="fw-extrabold text-white font-display mb-1 player-pass-name" id="dashboardPlayerName">
+                <%= pName %>
+              </h4>
+              <div class="player-pass-meta d-flex flex-wrap align-items-center gap-2 gap-sm-3">
+                <span id="dashboardPlayerPhone" class="player-pass-meta-item">
+                  <i class="bi bi-phone text-warning me-1"></i><%= (typeof user !== 'undefined' && user && user.phone) ? user.phone : '—' %>
                 </span>
                 <% if (typeof user !== 'undefined' && user && user.email) { %>
-                  <span id="dashboardPlayerEmail">
-                    <i class="bi bi-envelope-fill text-secondary me-1"></i><%= user.email %>
+                  <span id="dashboardPlayerEmail" class="player-pass-meta-item">
+                    <i class="bi bi-envelope text-info me-1"></i><%= user.email %>
                   </span>
                 <% } else { %>
-                  <span id="dashboardPlayerEmail" class="d-none"></span>
+                  <span id="dashboardPlayerEmail" class="player-pass-meta-item d-none"></span>
                 <% } %>
               </div>
             </div>
           </div>
-          <div class="w-100 w-lg-auto d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 flex-wrap">
-            <div class="d-flex align-items-center gap-2 flex-grow-1">
-              <button type="button" class="btn btn-book-now-gold btn-sm rounded-pill px-3 py-2 fw-bold flex-grow-1 shadow-xs" onclick="switchVenueTab('book')">
-                <i class="bi bi-plus-circle-fill me-1"></i>Book a Court
-              </button>
-              <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2 fw-semibold shadow-xs" onclick="refreshMyBookings()">
-                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
-              </button>
-            </div>
-            <div class="d-flex align-items-center gap-2 flex-grow-1">
-              <button type="button" id="dashboardMessengerBtn" class="btn <%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'btn-outline-primary' : 'btn-primary' %> btn-sm rounded-pill px-3 py-2 fw-bold d-inline-flex align-items-center justify-content-center gap-1.5 shadow-xs flex-grow-1" data-bs-toggle="modal" data-bs-target="#messengerModal">
-                <i class="bi bi-messenger"></i>
-                <span id="dashboardMessengerBtnText"><%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'Messenger Live' : 'Connect Messenger' %></span>
-              </button>
-              <button type="button" id="dashboardChatBtn" class="btn btn-dark btn-sm rounded-pill px-3 py-2 fw-bold d-inline-flex align-items-center justify-content-center gap-1.5 shadow-xs" onclick="openAccountChatModal()">
-                <i class="bi bi-chat-dots-fill text-warning"></i>
-                <span>Chat</span>
-                <span id="dashboardChatBadge" class="badge bg-danger text-white rounded-pill px-1.5 py-0.5 d-none" style="font-size: 10px;">0</span>
-              </button>
-            </div>
+
+          <!-- Card Action Buttons Strip (Sleek, Unified, High-End) -->
+          <div class="player-pass-actions pt-3 border-top border-light border-opacity-10 d-flex align-items-center gap-2 flex-wrap">
+            <button type="button" class="btn btn-book-now-gold btn-sm rounded-pill px-3.5 py-2 fw-bold d-inline-flex align-items-center justify-content-center gap-1.5 flex-grow-1 shadow-sm" onclick="switchVenueTab('book')">
+              <i class="bi bi-plus-circle-fill"></i>
+              <span>Book Court Slot</span>
+            </button>
+
+            <button type="button" id="dashboardMessengerBtn" class="btn <%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'btn-outline-light' : 'btn-primary' %> btn-sm rounded-pill px-3.5 py-2 fw-bold d-inline-flex align-items-center justify-content-center gap-1.5 shadow-sm flex-grow-1" data-bs-toggle="modal" data-bs-target="#messengerModal">
+              <i class="bi bi-messenger"></i>
+              <span id="dashboardMessengerBtnText"><%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'Messenger Active' : 'Connect Messenger' %></span>
+            </button>
+
+            <button type="button" class="btn btn-outline-light btn-sm rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" onclick="refreshMyBookings()" title="Refresh Bookings" style="width: 36px; height: 36px;">
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -2941,11 +2954,16 @@
     const dName = document.getElementById('dashboardPlayerName');
     const dPhone = document.getElementById('dashboardPlayerPhone');
     const dEmail = document.getElementById('dashboardPlayerEmail');
+    const dAvatar = document.getElementById('dashboardPlayerAvatar');
     if (dName) dName.innerText = displayName;
-    if (dPhone) dPhone.innerHTML = `<i class="bi bi-phone-fill text-primary me-1"></i>${userObj.phone || '—'}`;
+    if (dAvatar) {
+      const parts = displayName.trim().split(/\s+/).filter(Boolean);
+      dAvatar.innerText = parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : displayName.slice(0, 2).toUpperCase();
+    }
+    if (dPhone) dPhone.innerHTML = `<i class="bi bi-phone text-warning me-1"></i>${userObj.phone || '—'}`;
     if (dEmail) {
       if (userObj.email) {
-        dEmail.innerHTML = `<i class="bi bi-envelope-fill text-secondary me-1"></i>${userObj.email}`;
+        dEmail.innerHTML = `<i class="bi bi-envelope text-info me-1"></i>${userObj.email}`;
         dEmail.classList.remove('d-none');
       } else {
         dEmail.classList.add('d-none');
@@ -2958,14 +2976,14 @@
     const dMessengerBtn = document.getElementById('dashboardMessengerBtn');
     const dMessengerBtnText = document.getElementById('dashboardMessengerBtnText');
     if (dMessengerBadge) {
-      dMessengerBadge.className = `badge ${isMessengerConnected ? 'bg-primary-subtle text-primary' : 'bg-light text-secondary border'} rounded-pill px-2.5 py-1 small fw-semibold`;
-      dMessengerBadge.innerHTML = `<i class="bi bi-messenger me-1"></i>${isMessengerConnected ? 'Messenger Connected' : 'Messenger Not Linked'}`;
+      dMessengerBadge.className = `badge ${isMessengerConnected ? 'bg-success-subtle text-success border border-success' : 'bg-secondary bg-opacity-25 text-white-50 border border-secondary border-opacity-50'} rounded-pill px-2.5 py-1 small fw-semibold`;
+      dMessengerBadge.innerHTML = `<i class="bi bi-messenger me-1"></i>${isMessengerConnected ? 'Messenger Active' : 'Messenger Not Linked'}`;
     }
     if (dMessengerBtn) {
-      dMessengerBtn.className = `btn ${isMessengerConnected ? 'btn-outline-primary' : 'btn-primary'} btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-xs`;
+      dMessengerBtn.className = `btn ${isMessengerConnected ? 'btn-outline-light' : 'btn-primary'} btn-sm rounded-pill px-3.5 py-2 fw-bold d-inline-flex align-items-center justify-content-center gap-1.5 shadow-sm flex-grow-1`;
     }
     if (dMessengerBtnText) {
-      dMessengerBtnText.innerText = isMessengerConnected ? 'Messenger Alerts (Active)' : 'Connect Messenger Alerts';
+      dMessengerBtnText.innerText = isMessengerConnected ? 'Messenger Active' : 'Connect Messenger';
     }
 
     const modalCodeEl = document.getElementById('messengerModalBindingCode');
