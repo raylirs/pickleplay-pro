@@ -836,22 +836,56 @@ h1, h2, h3, h4, .font-display {
     -webkit-overflow-scrolling: touch;
   }
 
+  .venue-header-banner {
+    padding-top: 14px !important;
+    padding-bottom: 10px !important;
+  }
+
   .venue-avatar-wrap {
-    width: 105px;
-    height: 70px;
-    border-radius: 10px;
+    width: 58px !important;
+    height: 58px !important;
+    border-radius: 12px !important;
+    border: 1.5px solid var(--gold-400) !important;
+    box-shadow: 0 4px 12px rgba(11, 37, 69, 0.08) !important;
+    padding: 2px !important;
+    flex-shrink: 0;
+  }
+
+  .venue-header-banner h1 {
+    font-size: 1.25rem !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.01em;
+  }
+
+  .venue-header-banner p {
+    font-size: 11.5px !important;
   }
 
   .stat-pill-group {
-    width: 100%;
+    width: 100% !important;
+    border-radius: 12px !important;
+    margin-top: 6px !important;
+    box-shadow: 0 2px 8px rgba(11, 37, 69, 0.04) !important;
+    border: 1px solid rgba(11, 37, 69, 0.08) !important;
   }
 
   .stat-pill-cell {
-    padding: 8px 10px;
+    padding: 6px 6px !important;
+    text-align: center;
+  }
+
+  .stat-pill-label {
+    font-size: 8px !important;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: #64748B;
   }
 
   .stat-pill-value {
-    font-size: 13px;
+    font-size: 12px !important;
+    font-weight: 800;
+    color: var(--navy-800);
   }
 
   .matrix-date-toolbar {
@@ -880,25 +914,6 @@ h1, h2, h3, h4, .font-display {
 
   .matrix-slot-cell {
     height: 48px;
-  }
-
-  /* Quick stats on mobile */
-  .stat-pill-group {
-    width: 100%;
-    border-radius: 12px;
-  }
-
-  .stat-pill-cell {
-    padding: 6px 8px;
-  }
-
-  .stat-pill-label {
-    font-size: 9px;
-    letter-spacing: 0;
-  }
-
-  .stat-pill-value {
-    font-size: 12.5px;
   }
 
   /* Matrix Legend Scrollability on Mobile (Single Line) */
@@ -1275,46 +1290,59 @@ h1, h2, h3, h4, .font-display {
 
 @media (max-width: 767.98px) {
   .month-calendar-header {
-    padding: 12px 14px;
+    padding: 10px 12px;
+  }
+  .month-calendar-header h4 {
+    font-size: 1.15rem !important;
   }
   .month-calendar-weekdays {
-    padding: 8px 4px;
+    padding: 6px 4px;
     font-size: 10px;
-    letter-spacing: 0.02em;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #0B2545;
+    background: #F1F5F9;
   }
   .month-calendar-grid {
     gap: 4px;
-    padding: 8px 6px;
+    padding: 6px 6px 10px 6px;
   }
   .calendar-day-cell {
-    min-height: 54px;
-    padding: 5px 3px;
-    border-radius: 10px;
+    min-height: 42px;
+    padding: 4px 2px;
+    border-radius: 8px;
     align-items: center;
     justify-content: center;
     text-align: center;
-    gap: 2px;
+    gap: 1px;
   }
   .calendar-day-top {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 1px;
   }
   .calendar-day-number {
-    font-size: 14px;
+    font-size: 13.5px;
+    font-weight: 800;
   }
   .calendar-day-badge {
     font-size: 7px;
-    padding: 1.5px 4px;
+    padding: 1px 4px;
   }
   .calendar-day-cta-desktop {
     display: none !important;
   }
   .calendar-day-cta-mobile {
     display: inline-block;
-    font-size: 8.5px;
-    line-height: 1.1;
+    font-size: 8px;
+    line-height: 1;
+    color: #0284C7;
+    font-weight: 700;
+  }
+  /* Bottom padding so mobile app bar never overlaps content */
+  .venue-tab-pane {
+    padding-bottom: 95px !important;
   }
 }
 

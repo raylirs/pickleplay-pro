@@ -53,7 +53,8 @@
             <i class="bi bi-clock-fill text-success"></i> Operating Hours
           </div>
           <div class="stat-pill-value">
-            8AM – 12 Midnight
+            <span class="d-none d-sm-inline">8AM – 12 Midnight</span>
+            <span class="d-inline d-sm-none">8AM – 12MN</span>
           </div>
         </div>
       </div>
@@ -128,11 +129,20 @@
     }
     @media (max-width: 767.98px) {
       .venue-action-group {
-        justify-content: space-between;
+        width: 100%;
+        justify-content: stretch;
+      }
+      #headerAccountControls {
+        width: 100%;
+        display: flex;
+        gap: 8px;
       }
       .dynamic-action-pill {
         flex: 1 1 0;
-        padding: 0 clamp(6px, 1.8vw, 12px);
+        height: 38px;
+        font-size: 13px;
+        padding: 0 14px;
+        justify-content: center;
       }
     }
   </style>
@@ -206,12 +216,12 @@
           <% } %>
         </div>
 
-        <button type="button" onclick="switchVenueTab('photos')" class="btn btn-light border dynamic-action-pill d-inline-flex d-md-none text-dark" title="Facility Photos">
+        <button type="button" onclick="switchVenueTab('photos')" class="btn btn-light border dynamic-action-pill d-none d-md-inline-flex text-dark" title="Facility Photos">
           <i class="bi bi-images text-primary"></i>
           <span class="dynamic-pill-label">Photos</span>
         </button>
 
-        <button type="button" onclick="triggerPwaInstall()" class="btn btn-outline-primary dynamic-action-pill" title="Install App">
+        <button type="button" onclick="triggerPwaInstall()" class="btn btn-outline-primary dynamic-action-pill d-none d-md-inline-flex" title="Install App">
           <i class="bi bi-phone-fill"></i>
           <span class="dynamic-pill-label">Install App</span>
         </button>
@@ -441,16 +451,16 @@
       }
     </style>
     <div id="bookingMonthCalendarCard" class="month-calendar-card mb-3">
-      <div class="month-calendar-header d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-2">
-        <div>
-          <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold mb-1" style="font-size: 10.5px; letter-spacing: 0.04em;">
-            <i class="bi bi-calendar-Month me-1"></i>STEP 1 OF 2 · SELECT A PLAY DATE
+      <div class="month-calendar-header d-flex align-items-center justify-content-between gap-2">
+        <div class="min-w-0">
+          <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold mb-1 d-none d-sm-inline-block" style="font-size: 10.5px; letter-spacing: 0.04em;">
+            <i class="bi bi-calendar-month me-1"></i>STEP 1 OF 2 · SELECT A PLAY DATE
           </span>
           <h4 class="fw-extrabold font-display text-white mb-0" id="calendarMonthYearTitle">Loading Month...</h4>
-          <span class="text-white-50 small" style="font-size: 12px;">Tap any available date below to view court time slots</span>
+          <span class="text-white-50 small d-none d-sm-block" style="font-size: 12px;">Tap any available date below to view court time slots</span>
         </div>
 
-        <div class="d-flex align-items-center gap-1.5 flex-wrap">
+        <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
           <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-2.5 py-1 fw-bold" id="btnPrevMonth" onclick="changeCalendarMonth(-1)" title="Previous Month">
             <i class="bi bi-chevron-left"></i>
           </button>
@@ -461,7 +471,7 @@
             <i class="bi bi-chevron-right"></i>
           </button>
           <button type="button" id="btnReturnToTimeSlots" class="btn btn-sm btn-light text-dark rounded-pill px-3 py-1 fw-bold ms-1 d-none" onclick="toggleBookingCalendarView(false)">
-            <i class="bi bi-clock-fill text-primary me-1"></i>View Time Slots &rarr;
+            <i class="bi bi-clock-fill text-primary me-1"></i>View Slots &rarr;
           </button>
         </div>
       </div>
@@ -1690,8 +1700,8 @@
       }
 
       const ctaLabel = isPast
-        ? '<span class="calendar-day-cta-desktop">Past</span><span class="calendar-day-cta-mobile">Past</span>'
-        : `<span class="calendar-day-cta-desktop">Select Time <i class="bi bi-arrow-right-short"></i></span><span class="calendar-day-cta-mobile">${isToday ? '' : 'Open'}</span>`;
+        ? ''
+        : `<span class="calendar-day-cta-desktop">Select Time <i class="bi bi-arrow-right-short"></i></span><span class="calendar-day-cta-mobile">${isToday ? 'Today' : 'Open'}</span>`;
 
       const clickAttr = isPast ? '' : `onclick="selectCalendarDay('${dateStr}')"`;
 
