@@ -76,6 +76,48 @@ async function getSetting(key) {
 }
 
 /**
+ * Set setting value helper
+ */
+async function setSetting(key, value) {
+  try {
+    const [setting] = await SystemSetting.findOrCreate({
+      where: { key },
+      defaults: { key, value: String(value) }
+    });
+    setting.value = String(value);
+    await setting.save();
+    return setting.value;
+  } catch (e) {
+    return null;
+  }
+}
+
+const adminPendingProofMap = new Map();
+
+async function setAdminPendingProof(psid, ref) {
+  if (!psid) return;
+  const cleanPsid = String(psid).trim();
+  adminPendingProofMap.set(cleanPsid, String(ref).trim());
+  await setSetting(`fb_admin_pending_${cleanPsid}`, String(ref).trim());
+}
+
+async function getAdminPendingProof(psid) {
+  if (!psid) return null;
+  const cleanPsid = String(psid).trim();
+  if (adminPendingProofMap.has(cleanPsid)) {
+    return adminPendingProofMap.get(cleanPsid);
+  }
+  return await getSetting(`fb_admin_pending_${cleanPsid}`);
+}
+
+async function clearAdminPendingProof(psid) {
+  if (!psid) return;
+  const cleanPsid = String(psid).trim();
+  adminPendingProofMap.delete(cleanPsid);
+  await setSetting(`fb_admin_pending_${cleanPsid}`, '');
+}
+
+/**
  * Send Facebook Messenger Notification
  */
 async function sendMessengerNotify(psid, payload, options = {}) {
@@ -339,11 +381,13 @@ async function notifyAdminPaymentProof(reservation) {
   } catch (e) {}
 
   // 2. Send transaction details and 1-Click Action Buttons
+  const shortRef = reservation.reference_number.slice(-8);
   const text = `💳 [THE PLAYGROUND] GCASH PROOF SUBMITTED!\n\n` +
     `📋 Ref: ${reservation.reference_number}\n` +
     `👤 Player: ${reservation.user_name}\n` +
     `🧾 GCash Ref: ${reservation.gcash_reference_no || 'Attached Screenshot'}\n` +
-    `💰 Amount: ₱${totalOrderAmount.toFixed(2)}`;
+    `💰 Amount: ₱${totalOrderAmount.toFixed(2)}\n\n` +
+    `👉 Tap Approve below or reply "APPROVE ${reservation.reference_number}"`;
 
   const buttonPayload = {
     attachment: {
@@ -354,17 +398,17 @@ async function notifyAdminPaymentProof(reservation) {
         buttons: [
           {
             type: 'postback',
-            title: 'Approve',
+            title: `Approve #${shortRef}`.slice(0, 20),
             payload: `APPROVE_${reservation.reference_number}`
           },
           {
             type: 'postback',
-            title: 'Decline',
+            title: `Decline #${shortRef}`.slice(0, 20),
             payload: `CANCEL_${reservation.reference_number}`
           },
           {
             type: 'web_url',
-            url: `${baseUrl}/admin/reservations`,
+            url: `${baseUrl}/admin/reservations?ref=${reservation.reference_number}`,
             title: 'View Booking'
           }
         ]
@@ -373,6 +417,7 @@ async function notifyAdminPaymentProof(reservation) {
   };
 
   for (const psid of adminPsids) {
+    await setAdminPendingProof(psid, reservation.reference_number);
     await sendMessengerNotify(psid, buttonPayload);
   }
 }
@@ -593,6 +638,13 @@ async function processAdminAction(senderId, rawText, contextRef = null) {
     refMatch = String(contextRef).trim().toUpperCase();
   }
 
+  if (!refMatch) {
+    const trackedRef = await getAdminPendingProof(senderId);
+    if (trackedRef) {
+      refMatch = String(trackedRef).trim().toUpperCase();
+    }
+  }
+
   const { getCourtAvailability } = require('./availabilityService');
 
   let reservation = null;
@@ -610,18 +662,24 @@ async function processAdminAction(senderId, rawText, contextRef = null) {
       order: [['id', 'DESC']]
     });
   } else {
-    // Fallback to the latest reservation awaiting confirmation/payment
-    reservation = await Reservation.findOne({
-      where: {
-        status: { [Op.in]: ['AWAITING_CONFIRMATION', 'AWAITING_PAYMENT', 'PENDING'] }
-      },
+    // Only search for bookings with GCash proof uploaded awaiting confirmation
+    const pendingProofs = await Reservation.findAll({
+      where: { status: 'AWAITING_CONFIRMATION' },
       include: [{ model: Court, as: 'court' }],
-      order: [['updated_at', 'DESC'], ['id', 'DESC']]
+      order: [['updated_at', 'ASC'], ['id', 'ASC']]
     });
+
+    if (pendingProofs.length === 1) {
+      reservation = pendingProofs[0];
+    } else if (pendingProofs.length > 1) {
+      const summaryList = pendingProofs.map(p => `• #${p.reference_number} (${p.user_name} - ₱${parseFloat(p.total_amount || 0).toFixed(2)})`).join('\n');
+      await sendMessengerNotify(senderId, `⚠️ Multiple bookings are awaiting payment confirmation. Please specify the reference number:\n\n${summaryList}\n\n👉 Reply:\n${isApprove ? 'APPROVE' : 'DECLINE'} <Ref> (e.g. ${isApprove ? 'APPROVE' : 'DECLINE'} ${pendingProofs[0].reference_number})`);
+      return true;
+    }
   }
 
   if (!reservation) {
-    await sendMessengerNotify(senderId, `⚠️ Reservation ${refMatch ? '"' + refMatch + '" ' : ''}not found or no pending bookings to process.`);
+    await sendMessengerNotify(senderId, `⚠️ No booking matching "${refMatch || 'pending'}" found awaiting payment review.`);
     return true;
   }
 
@@ -657,15 +715,33 @@ async function processAdminAction(senderId, rawText, contextRef = null) {
       } catch (e) {}
     }
 
-    // Send confirmed pass to player if bound
+    // Clear tracked pending alert for this admin
+    await clearAdminPendingProof(senderId);
+
+    // Send confirmed pass to player if bound on Messenger
     await notifyPlayerBookingConfirmed(reservation);
 
+    // Send email confirmation to player
+    try {
+      const { sendReservationConfirmation } = require('./emailService');
+      await sendReservationConfirmation(reservation, reservation.court);
+    } catch (e) {}
+
+    // Post to player in-app chat
     try {
       const { postBookingSystemMessage } = require('./chatService');
       await postBookingSystemMessage(reservation, 'BOOKING_CONFIRMED');
     } catch (e) {}
 
-    await sendMessengerNotify(senderId, `🎉 [1-CLICK APPROVED] Reservation #${masterRef} for ${reservation.user_name} is now CONFIRMED!\n\nPlayer has been sent their confirmed digital pass on Messenger & In-App Chat.`);
+    // Notify BOTH Ryan & Karlo with the exact approved player details
+    const adminPsids = await getAllAdminPsids();
+    for (const psid of adminPsids) {
+      if (psid === senderId) {
+        await sendMessengerNotify(psid, `🎉 [1-CLICK APPROVED] Reservation #${masterRef} for ${reservation.user_name} is now CONFIRMED!\n\nPlayer has been sent their confirmed digital pass on Messenger & In-App Chat.`);
+      } else {
+        await sendMessengerNotify(psid, `ℹ️ [CO-ADMIN UPDATE] Reservation #${masterRef} for ${reservation.user_name} was just APPROVED by Co-Admin.`);
+      }
+    }
     return true;
   }
 
@@ -686,6 +762,9 @@ async function processAdminAction(senderId, rawText, contextRef = null) {
       } catch (e) {}
     }
 
+    // Clear tracked pending alert for this admin
+    await clearAdminPendingProof(senderId);
+
     try {
       const { postBookingSystemMessage } = require('./chatService');
       await postBookingSystemMessage(reservation, 'BOOKING_CANCELLED');
@@ -693,7 +772,15 @@ async function processAdminAction(senderId, rawText, contextRef = null) {
 
     await notifyPlayerBookingCancelled(reservation);
 
-    await sendMessengerNotify(senderId, `❌ [1-CLICK CANCELLED] Reservation #${masterRef} has been cancelled and slots released.`);
+    // Notify BOTH Ryan & Karlo with the exact cancelled player details
+    const adminPsids = await getAllAdminPsids();
+    for (const psid of adminPsids) {
+      if (psid === senderId) {
+        await sendMessengerNotify(psid, `❌ [1-CLICK CANCELLED] Reservation #${masterRef} for ${reservation.user_name} has been cancelled and slots released.`);
+      } else {
+        await sendMessengerNotify(psid, `ℹ️ [CO-ADMIN UPDATE] Reservation #${masterRef} for ${reservation.user_name} was DECLINED by Co-Admin.`);
+      }
+    }
     return true;
   }
 

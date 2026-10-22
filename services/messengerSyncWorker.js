@@ -56,9 +56,13 @@ async function checkAndSyncMessengerInbox() {
             latestPageMsgIndex = i;
           }
           if (!latestPageRefContext && m.message) {
-            const refMatch = m.message.match(/Ref:\s*([A-Z0-9-]+)/i) || m.message.match(/#([A-Z0-9-]+)/i);
-            if (refMatch && refMatch[1]) {
-              latestPageRefContext = refMatch[1].trim();
+            // Ignore bot's own success / completion replies to prevent matching old reservations
+            const isCompletionReply = /APPROVED|CONFIRMED|CANCELLED|DECLINED|ALERTS ACTIVE|STATUS|PASS/i.test(m.message);
+            if (!isCompletionReply) {
+              const refMatch = m.message.match(/Ref:\s*([A-Za-z0-9-]+)/i);
+              if (refMatch && refMatch[1]) {
+                latestPageRefContext = refMatch[1].trim();
+              }
             }
           }
         }
