@@ -104,9 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (slot.status === 'AWAITING_CONFIRMATION') {
         statusClass = 'processing';
         statusLabel = 'Verifying';
-      } else if (slot.status === 'MAINTENANCE') {
+      } else if (slot.status === 'MAINTENANCE' || slot.status === 'BLOCKED') {
         statusClass = 'booked';
-        statusLabel = 'Closed';
+        statusLabel = 'Blocked';
       }
 
       if (isSelected) {

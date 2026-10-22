@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const { CourtCategory, Court, Reservation, AuditLog, User, SystemSetting, sequelize } = require('../models');
+const { CourtCategory, Court, Reservation, AuditLog, User, SystemSetting, CourtBlock, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const { getCourtAvailability } = require('../services/availabilityService');
 const { getIO } = require('../config/socket');
@@ -1055,6 +1055,150 @@ const adminController = {
         req.flash('success', `Unlinked Messenger for reservation ${reservation.reference_number}.`);
       }
       res.redirect(req.headers.referer || '/admin/facebook/subscribers');
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async showCourtBlocks(req, res, next) {
+    try {
+      const today = formatDate(new Date());
+      const courts = await Court.findAll({
+        where: { is_active: true },
+        order: [['court_number', 'ASC'], ['id', 'ASC']]
+      });
+
+      const blocks = await CourtBlock.findAll({
+        include: [
+          { model: Court, as: 'court' },
+          { model: User, as: 'creator' }
+        ],
+        order: [['date', 'DESC'], ['start_time', 'ASC']]
+      });
+
+      const todayBlocks = blocks.filter(b => b.date === today);
+      const allDayBlocks = blocks.filter(b => b.is_all_day);
+
+      res.render('admin/blocks', {
+        title: 'Block Court Slots & Days - The Playground Admin',
+        layout: 'layouts/admin',
+        user: req.session.user,
+        courts,
+        blocks,
+        today,
+        todayCount: todayBlocks.length,
+        allDayCount: allDayBlocks.length,
+        totalCount: blocks.length,
+        formatDate,
+        formatTime12
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async createCourtBlock(req, res, next) {
+    try {
+      const {
+        court_id,
+        date,
+        time_mode,
+        start_time,
+        end_time,
+        reason,
+        notes
+      } = req.body;
+
+      if (!date) {
+        req.flash('error', 'Please select a date to block.');
+        return res.redirect('/admin/blocks');
+      }
+
+      const isAllCourts = court_id === 'all' || !court_id;
+      const isAllDay = time_mode === 'all_day';
+      const actualStartTime = isAllDay ? '08:00' : (start_time || '08:00');
+      const actualEndTime = isAllDay ? '24:00' : (end_time || '24:00');
+
+      if (!isAllDay && actualStartTime >= actualEndTime) {
+        req.flash('error', 'Start time must be before end time.');
+        return res.redirect('/admin/blocks');
+      }
+
+      // Generate slots list
+      const { generateTimeSlots } = require('../utils/dateTimeUtils');
+      const generatedSlots = generateTimeSlots(actualStartTime, actualEndTime, 60);
+      const slotsJson = JSON.stringify(generatedSlots.map(s => s.startTime));
+
+      await CourtBlock.create({
+        court_id: isAllCourts ? null : parseInt(court_id, 10),
+        all_courts: isAllCourts,
+        date: date.trim(),
+        start_time: actualStartTime,
+        end_time: actualEndTime,
+        slots_json: slotsJson,
+        is_all_day: isAllDay,
+        reason: (reason && reason.trim()) || 'Court Maintenance / Reserved',
+        notes: notes ? notes.trim() : null,
+        created_by: req.session.user ? req.session.user.id : null
+      });
+
+      // Log audit
+      await logAudit(
+        req.session.user ? req.session.user.id : null,
+        'CREATE_COURT_BLOCK',
+        `Blocked ${isAllCourts ? 'ALL COURTS' : 'Court #' + court_id} on ${date} (${isAllDay ? 'All Day' : actualStartTime + '-' + actualEndTime}) - Reason: ${reason}`
+      );
+
+      // Real-time broadcast to all connected players
+      try {
+        const io = getIO();
+        io.emit('court_availability_updated', {
+          date: date.trim(),
+          courtId: isAllCourts ? null : parseInt(court_id, 10)
+        });
+        io.emit('court_blocks_updated', { date: date.trim() });
+      } catch (e) {}
+
+      req.flash('success', `Successfully blocked ${isAllCourts ? 'all courts' : 'court'} on ${date}.`);
+      res.redirect('/admin/blocks');
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async deleteCourtBlock(req, res, next) {
+    try {
+      const id = req.params.id;
+      const block = await CourtBlock.findByPk(id);
+      if (!block) {
+        req.flash('error', 'Block record not found.');
+        return res.redirect('/admin/blocks');
+      }
+
+      const blockedDate = block.date;
+      const courtId = block.court_id;
+      const blockReason = block.reason;
+
+      await block.destroy();
+
+      await logAudit(
+        req.session.user ? req.session.user.id : null,
+        'DELETE_COURT_BLOCK',
+        `Unblocked slots on ${blockedDate} (Previous reason: ${blockReason})`
+      );
+
+      // Broadcast update to open player screens
+      try {
+        const io = getIO();
+        io.emit('court_availability_updated', {
+          date: blockedDate,
+          courtId
+        });
+        io.emit('court_blocks_updated', { date: blockedDate });
+      } catch (e) {}
+
+      req.flash('success', `Unblocked successfully. Those court slots on ${blockedDate} are now open for player bookings.`);
+      res.redirect('/admin/blocks');
     } catch (err) {
       next(err);
     }

@@ -1,5 +1,5 @@
 const { CourtCategory, Court, Reservation } = require('../models');
-const { getCourtAvailability } = require('../services/availabilityService');
+const { getCourtAvailability, getFacilityClosedDates } = require('../services/availabilityService');
 const { formatDate } = require('../utils/dateTimeUtils');
 
 const courtController = {
@@ -92,8 +92,22 @@ const courtController = {
         };
       });
 
-      const courtsData = await Promise.all(availabilityPromises);
-      res.json({ success: true, date, courts: courtsData });
+      const [courtsData, closedDates] = await Promise.all([
+        Promise.all(availabilityPromises),
+        getFacilityClosedDates()
+      ]);
+
+      const isDayClosed = Boolean(closedDates[date]);
+      const closedReason = closedDates[date] || null;
+
+      res.json({
+        success: true,
+        date,
+        isDayClosed,
+        closedReason,
+        closedDates,
+        courts: courtsData
+      });
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });
     }

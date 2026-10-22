@@ -1,9 +1,10 @@
-const { Reservation, Court } = require('../models');
+const { Reservation, Court, CourtBlock } = require('../models');
 const { Op } = require('sequelize');
 const { generateTimeSlots } = require('../utils/dateTimeUtils');
 
 /**
- * Get all available and booked time slots for a given court and date
+ * Get all available and booked time slots for a given court and date,
+ * checking both existing reservations and Admin slot/day blocks.
  */
 async function getCourtAvailability(courtId, date, currentUser = null) {
   const court = await Court.findByPk(courtId);
@@ -11,9 +12,9 @@ async function getCourtAvailability(courtId, date, currentUser = null) {
     throw new Error('Court not found');
   }
 
-  // Active reservations that block slots:
-  // CONFIRMED, AWAITING_CONFIRMATION, or AWAITING_PAYMENT / PENDING that haven't expired
   const now = new Date();
+
+  // 1. Fetch active reservations that occupy slots
   const existingReservations = await Reservation.findAll({
     where: {
       court_id: courtId,
@@ -29,10 +30,36 @@ async function getCourtAvailability(courtId, date, currentUser = null) {
     }
   });
 
+  // 2. Fetch Admin court blocks for this court or all courts on this date
+  const courtBlocks = await CourtBlock.findAll({
+    where: {
+      date: date,
+      [Op.or]: [
+        { court_id: courtId },
+        { court_id: null },
+        { all_courts: true }
+      ]
+    }
+  });
+
   const allSlots = generateTimeSlots('08:00', '24:00', 60);
 
   const slotsWithStatus = allSlots.map((slot) => {
-    // Check if slot matches any active reservation (either via slots_json or continuous start_time/end_time)
+    // Check if slot matches any Admin block
+    const conflictingBlock = courtBlocks.find((block) => {
+      if (block.is_all_day) return true;
+      if (block.slots_json) {
+        try {
+          const bookedArr = JSON.parse(block.slots_json);
+          if (Array.isArray(bookedArr) && bookedArr.includes(slot.startTime)) {
+            return true;
+          }
+        } catch (e) {}
+      }
+      return slot.startTime < block.end_time && slot.endTime > block.start_time;
+    });
+
+    // Check if slot matches any active reservation
     const conflictingRes = existingReservations.find((res) => {
       if (res.slots_json) {
         try {
@@ -55,15 +82,35 @@ async function getCourtAvailability(courtId, date, currentUser = null) {
       )
     );
 
+    let isAvailable = true;
+    let slotStatus = 'AVAILABLE';
+    let blockReason = null;
+    let blockId = null;
+
+    if (!court.is_active) {
+      isAvailable = false;
+      slotStatus = 'MAINTENANCE';
+    } else if (conflictingBlock) {
+      isAvailable = false;
+      slotStatus = 'BLOCKED';
+      blockReason = conflictingBlock.reason || 'Court Maintenance / Reserved';
+      blockId = conflictingBlock.id;
+    } else if (conflictingRes) {
+      isAvailable = false;
+      slotStatus = conflictingRes.status;
+    }
+
     return {
       startTime: slot.startTime,
       endTime: slot.endTime,
       label: slot.label,
       startLabel: slot.startLabel,
       endLabel: slot.endLabel,
-      isAvailable: !conflictingRes && court.is_active,
+      isAvailable,
       courtActive: court.is_active,
-      status: !court.is_active ? 'MAINTENANCE' : (conflictingRes ? conflictingRes.status : 'AVAILABLE'),
+      status: slotStatus,
+      blockReason,
+      blockId,
       isMyBooking: isOwner,
       reservationId: isOwner ? conflictingRes.id : null,
       referenceNumber: isOwner ? conflictingRes.reference_number : null
@@ -110,8 +157,45 @@ async function isSlotRangeAvailable(courtId, date, startTime, endTime, excludeRe
   return rangeSlots.every(s => s.isAvailable);
 }
 
+/**
+ * Get all dates that have full facility closures (all courts blocked all day)
+ */
+async function getFacilityClosedDates(startDate, endDate) {
+  try {
+    const whereClause = {
+      is_all_day: true,
+      [Op.or]: [
+        { court_id: null },
+        { all_courts: true }
+      ]
+    };
+
+    if (startDate && endDate) {
+      whereClause.date = {
+        [Op.between]: [startDate, endDate]
+      };
+    }
+
+    const blocks = await CourtBlock.findAll({
+      where: whereClause,
+      attributes: ['date', 'reason']
+    });
+
+    const closedMap = {};
+    blocks.forEach(b => {
+      closedMap[b.date] = b.reason;
+    });
+
+    return closedMap;
+  } catch (err) {
+    console.error('Error fetching closed dates:', err);
+    return {};
+  }
+}
+
 module.exports = {
   getCourtAvailability,
   areSlotsAvailable,
-  isSlotRangeAvailable
+  isSlotRangeAvailable,
+  getFacilityClosedDates
 };

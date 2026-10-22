@@ -29,6 +29,11 @@ router.get('/reservations/:id', requireAuth, adminController.showReservationDeta
 router.post('/reservations/:id/cancel', requireAuth, adminController.cancelReservation);
 router.post('/reservations/:id/confirm', requireAuth, adminController.confirmReservation);
 
+// Court & Slot Blocking Management
+router.get('/blocks', requireAuth, adminController.showCourtBlocks);
+router.post('/blocks', requireAuth, adminController.createCourtBlock);
+router.post('/blocks/:id/delete', requireAuth, adminController.deleteCourtBlock);
+
 // QR Code & Payment Settings
 router.get('/settings', requireAuth, adminController.showSettings);
 router.post('/settings', requireAuth, upload.single('qr_image'), adminController.updateSettings);

@@ -547,6 +547,19 @@
             <div class="legend-swatch legend-taken"></div>
             <span>Booked</span>
           </div>
+          <div class="matrix-legend-item" title="Blocked by Facility Admin">
+            <div class="legend-swatch legend-blocked"></div>
+            <span>Blocked</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Facility Closed Alert Banner (Appears when all courts are blocked all day) -->
+      <div id="dayClosedBanner" class="alert alert-danger d-none align-items-center gap-2 rounded-4 mb-3 border-danger-subtle shadow-sm px-3.5 py-2.5">
+        <i class="bi bi-slash-circle-fill fs-5 text-danger flex-shrink-0"></i>
+        <div class="flex-grow-1">
+          <strong id="dayClosedTitle" class="d-block text-danger">Facility Closed for This Date</strong>
+          <span class="small text-danger-emphasis" id="dayClosedReason">All courts are reserved or under facility maintenance.</span>
         </div>
       </div>
 
@@ -1657,6 +1670,7 @@
   let calendarViewYear = todayBaseDate.getFullYear();
   let calendarViewMonth = todayBaseDate.getMonth(); // 0-indexed
   let hasSelectedDayOnce = false;
+  let facilityClosedDatesMap = {};
 
   function formatYmdLocal(year, monthZeroIndexed, dayNum) {
     const m = String(monthZeroIndexed + 1).padStart(2, '0');
@@ -1703,27 +1717,44 @@
       const isPast = dateStr < todayStr;
       const isToday = dateStr === todayStr;
       const isSelected = hasSelectedDayOnce && dateStr === currentDate;
+      const isFacilityClosed = Boolean(facilityClosedDatesMap[dateStr]);
+      const closedReason = facilityClosedDatesMap[dateStr] || 'Facility Closed';
 
       let cellClasses = 'calendar-day-cell';
+      if (isFacilityClosed) cellClasses += ' is-disabled is-closed-day';
       if (isPast) cellClasses += ' is-disabled';
       if (isToday) cellClasses += ' is-today';
       if (isSelected) cellClasses += ' is-selected';
 
       let badgeHtml = '';
-      if (isToday) {
+      if (isFacilityClosed) {
+        badgeHtml = `<span class="calendar-day-badge bg-danger text-white">CLOSED</span>`;
+      } else if (isToday) {
         badgeHtml = `<span class="calendar-day-badge ${isSelected ? 'bg-warning text-dark' : 'bg-warning-subtle text-dark border border-warning'}">TODAY</span>`;
       } else if (isSelected) {
         badgeHtml = `<span class="calendar-day-badge bg-warning text-dark">PICKED</span>`;
       }
 
-      const ctaLabel = isPast
-        ? ''
-        : `<span class="calendar-day-cta-desktop">Select Time <i class="bi bi-arrow-right-short"></i></span><span class="calendar-day-cta-mobile">${isToday ? 'Today' : 'Open'}</span>`;
+      let ctaLabel = '';
+      if (isFacilityClosed) {
+        ctaLabel = `<span class="calendar-day-cta-desktop text-danger fw-bold"><i class="bi bi-slash-circle me-1"></i>${closedReason}</span><span class="calendar-day-cta-mobile text-danger fw-bold">Closed</span>`;
+      } else if (isPast) {
+        ctaLabel = '';
+      } else {
+        ctaLabel = `<span class="calendar-day-cta-desktop">Select Time <i class="bi bi-arrow-right-short"></i></span><span class="calendar-day-cta-mobile">${isToday ? 'Today' : 'Open'}</span>`;
+      }
 
-      const clickAttr = isPast ? '' : `onclick="selectCalendarDay('${dateStr}')"`;
+      let clickAttr = '';
+      if (isFacilityClosed) {
+        clickAttr = `onclick="showLiveToast('🔒 Facility is closed on this date (${closedReason}).')"`;
+      } else if (isPast) {
+        clickAttr = '';
+      } else {
+        clickAttr = `onclick="selectCalendarDay('${dateStr}')"`;
+      }
 
       cellsHtml += `
-        <div class="${cellClasses}" ${clickAttr} role="button" tabindex="${isPast ? '-1' : '0'}" aria-label="Select ${dateStr}">
+        <div class="${cellClasses}" ${clickAttr} role="button" tabindex="${(isPast || isFacilityClosed) ? '-1' : '0'}" aria-label="Select ${dateStr}">
           <div class="calendar-day-top">
             <span class="calendar-day-number">${day}</span>
             ${badgeHtml}
@@ -1875,7 +1906,11 @@
 
       if (data.success && data.courts) {
         matrixCourtsData = data.courts;
-        renderMatrixTable(data.courts);
+        if (data.closedDates) {
+          facilityClosedDatesMap = Object.assign(facilityClosedDatesMap || {}, data.closedDates);
+          renderMonthCalendar();
+        }
+        renderMatrixTable(data.courts, data.isDayClosed, data.closedReason);
       }
     } catch (err) {
       console.error('Matrix error:', err);
@@ -1888,7 +1923,22 @@
   }
 
   // Render Table Grid
-  function renderMatrixTable(courts) {
+  function renderMatrixTable(courts, isDayClosed = false, closedReason = null) {
+    const dayBanner = document.getElementById('dayClosedBanner');
+    const dayTitle = document.getElementById('dayClosedTitle');
+    const dayReason = document.getElementById('dayClosedReason');
+    if (dayBanner) {
+      if (isDayClosed) {
+        dayBanner.classList.remove('d-none');
+        dayBanner.classList.add('d-flex');
+        if (dayTitle) dayTitle.innerText = `Facility Closed on ${currentDate}`;
+        if (dayReason) dayReason.innerText = closedReason || 'All courts are reserved or under facility maintenance today.';
+      } else {
+        dayBanner.classList.add('d-none');
+        dayBanner.classList.remove('d-flex');
+      }
+    }
+
     const tbody = document.getElementById('matrixTableBody');
     tbody.innerHTML = '';
 
@@ -1933,7 +1983,9 @@
 
         let stateClass = 'state-available';
         if (!courtSlot.isAvailable) {
-          if (courtSlot.status === 'AWAITING_PAYMENT' || courtSlot.status === 'PENDING') {
+          if (courtSlot.status === 'BLOCKED' || courtSlot.status === 'MAINTENANCE') {
+            stateClass = 'state-blocked';
+          } else if (courtSlot.status === 'AWAITING_PAYMENT' || courtSlot.status === 'PENDING') {
             stateClass = 'state-processing';
           } else if (courtSlot.status === 'AWAITING_CONFIRMATION') {
             stateClass = 'state-verifying';
@@ -1963,15 +2015,30 @@
         td.dataset.endLabel = slot.endLabel;
         td.id = `cell-${court.id}-${slot.startTime.replace(':', '')}`;
 
-        td.innerHTML = `
-          <div class="slot-inner">
-            <span>₱${court.pricePerHour}</span>
-          </div>
-        `;
+        if (stateClass === 'state-blocked') {
+          td.innerHTML = `
+            <div class="slot-inner">
+              <span class="small fw-bold"><i class="bi bi-slash-circle me-1 text-danger"></i>Blocked</span>
+            </div>
+          `;
+        } else {
+          td.innerHTML = `
+            <div class="slot-inner">
+              <span>₱${court.pricePerHour}</span>
+            </div>
+          `;
+        }
 
-        // Click handler: Only the player who created the transaction can click Awaiting Pay / Verifying to continue!
+        // Click handlers
         if (courtSlot.isAvailable) {
           td.addEventListener('click', () => handleSlotClick(court, slot));
+        } else if (courtSlot.status === 'BLOCKED' || courtSlot.status === 'MAINTENANCE') {
+          td.style.cursor = 'not-allowed';
+          const rText = courtSlot.blockReason ? ` (${courtSlot.blockReason})` : '';
+          td.title = `Unavailable: Slot blocked by facility admin${rText}`;
+          td.addEventListener('click', () => {
+            showLiveToast(`🔒 This court slot is unavailable${rText}.`);
+          });
         } else if (courtSlot.status === 'AWAITING_PAYMENT' || courtSlot.status === 'PENDING') {
           if (isMine) {
             td.style.cursor = 'pointer';
@@ -1996,6 +2063,12 @@
               showLiveToast('🔒 This slot belongs to another player and is currently under admin verification.');
             });
           }
+        } else {
+          td.style.cursor = 'not-allowed';
+          td.title = 'Reserved / Booked';
+          td.addEventListener('click', () => {
+            showLiveToast('🔒 This court slot is already booked.');
+          });
         }
 
         tr.appendChild(td);

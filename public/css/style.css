@@ -343,6 +343,11 @@ h1, h2, h3, h4, .font-display {
   border: 1.5px solid #3B82F6;
 }
 
+.legend-blocked {
+  background: #F1F5F9;
+  border: 1.5px solid #CBD5E1;
+}
+
 /* Matrix Table Viewport */
 .schedule-matrix-wrapper {
   overflow-x: auto;
@@ -579,6 +584,38 @@ h1, h2, h3, h4, .font-display {
 .matrix-slot-cell.state-verifying:hover .slot-inner {
   border-color: #1D4ED8;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+/* 6. BLOCKED / FACILITY MAINTENANCE */
+.matrix-slot-cell.state-blocked {
+  cursor: not-allowed;
+}
+
+.matrix-slot-cell.state-blocked .slot-inner {
+  background: #F1F5F9;
+  border: 1.5px solid #CBD5E1;
+  color: #64748B;
+  opacity: 0.95;
+}
+
+.matrix-slot-cell.state-blocked .slot-inner span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: #DC2626;
+}
+
+/* Facility Closed Day Highlight in Calendar */
+.calendar-day-cell.is-closed-day {
+  background: #FEF2F2 !important;
+  border-color: #FECACA !important;
+  opacity: 0.95;
+}
+
+.calendar-day-cell.is-closed-day .calendar-day-number {
+  color: #DC2626 !important;
 }
 
 /* =========================================================

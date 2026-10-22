@@ -24,6 +24,9 @@
           <a class="nav-link" href="/admin/reservations"><i class="bi bi-calendar-event me-1"></i>Reservations</a>
         </li>
         <li class="nav-item">
+          <a class="nav-link" href="/admin/blocks"><i class="bi bi-slash-circle me-1 text-danger"></i>Block Slots</a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link text-warning fw-semibold" href="/admin/chat"><i class="bi bi-chat-dots-fill me-1 text-warning"></i>Player Chat</a>
         </li>
         <li class="nav-item">
@@ -48,6 +51,7 @@
             <i class="bi bi-person-circle me-1"></i><%= user ? user.username : 'Admin' %>
           </button>
           <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li><a class="dropdown-item" href="/admin/blocks"><i class="bi bi-slash-circle me-2 text-danger"></i>Block Slots &amp; Days</a></li>
             <li><a class="dropdown-item" href="/admin/facebook/subscribers"><i class="bi bi-people-fill me-2 text-primary"></i>Bound Messenger Users</a></li>
             <li><a class="dropdown-item" href="/admin/facebook"><i class="bi bi-gear-wide-connected me-2 text-primary"></i>Facebook Settings</a></li>
             <li><a class="dropdown-item" href="/admin/settings"><i class="bi bi-gear me-2"></i>Payment Settings</a></li>
