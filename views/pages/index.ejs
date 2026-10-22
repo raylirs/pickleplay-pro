@@ -192,7 +192,7 @@
           <% if (typeof user !== 'undefined' && user) { %>
             <button type="button" class="btn btn-dark dynamic-action-pill" onclick="switchVenueTab('my-bookings')" title="<%= user.full_name || user.username %> (My Bookings)">
               <i class="bi bi-person-check-fill text-warning"></i>
-              <span class="dynamic-pill-label dynamic-pill-user"><%= user.full_name || user.username %></span>
+              <span class="dynamic-pill-label dynamic-pill-user"><%= (user.full_name || user.username).split(' ')[0] %></span>
             </button>
             <% if (user.role === 'admin' || user.role === 'staff') { %>
               <a href="/admin" class="btn btn-outline-dark dynamic-action-pill" title="Admin Panel">
@@ -712,12 +712,12 @@
       <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white mb-4">
         <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-3">
           <div class="d-flex align-items-center gap-3">
-            <div class="badge bg-primary text-warning rounded-circle d-flex align-items-center justify-content-center fw-bold fs-4 flex-shrink-0 shadow-sm" style="width: 54px; height: 54px;">
-              <i class="bi bi-person-check-fill"></i>
+            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold fs-4 flex-shrink-0 shadow-sm" style="width: 52px; height: 52px; background: linear-gradient(135deg, #07172C 0%, #0B2545 100%); border: 2px solid var(--gold-400); color: #F5E8BE;">
+              <i class="bi bi-person-check-fill text-warning"></i>
             </div>
             <div>
               <div class="d-flex align-items-center gap-2 flex-wrap">
-                <h4 class="fw-bold text-dark font-display mb-0" id="dashboardPlayerName">
+                <h4 class="fw-extrabold text-dark font-display mb-0" id="dashboardPlayerName" style="letter-spacing: -0.01em;">
                   <%= (typeof user !== 'undefined' && user) ? (user.full_name || user.username) : 'Player' %>
                 </h4>
                 <span class="badge bg-success-subtle text-success rounded-pill px-2.5 py-1 small fw-bold">Verified Player</span>
@@ -725,7 +725,7 @@
                   <i class="bi bi-messenger me-1"></i><%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'Messenger Connected' : 'Messenger Not Linked' %>
                 </span>
               </div>
-              <div class="text-secondary small mt-1 d-flex flex-wrap gap-3">
+              <div class="text-secondary small mt-1 d-flex flex-wrap gap-2 gap-md-3">
                 <span id="dashboardPlayerPhone">
                   <i class="bi bi-phone-fill text-primary me-1"></i><%= (typeof user !== 'undefined' && user && user.phone) ? user.phone : '—' %>
                 </span>
@@ -739,22 +739,26 @@
               </div>
             </div>
           </div>
-          <div class="d-flex align-items-center gap-2 flex-wrap">
-            <button type="button" id="dashboardChatBtn" class="btn btn-dark btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-xs" onclick="openAccountChatModal()">
-              <i class="bi bi-chat-dots-fill text-warning"></i>
-              <span>In-App Chat &amp; Pass Inbox</span>
-              <span id="dashboardChatBadge" class="badge bg-danger text-white rounded-pill px-1.5 py-0.5 d-none" style="font-size: 10px;">0</span>
-            </button>
-            <button type="button" id="dashboardMessengerBtn" class="btn <%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'btn-outline-primary' : 'btn-primary' %> btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-xs" data-bs-toggle="modal" data-bs-target="#messengerModal">
-              <i class="bi bi-messenger"></i>
-              <span id="dashboardMessengerBtnText"><%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'Messenger Alerts (Active)' : 'Connect Messenger Alerts' %></span>
-            </button>
-            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1.5 fw-semibold" onclick="refreshMyBookings()">
-              <i class="bi bi-arrow-clockwise me-1"></i>Refresh
-            </button>
-            <button type="button" class="btn btn-book-now-gold btn-sm rounded-pill px-3 py-1.5 fw-bold" onclick="switchVenueTab('book')">
-              <i class="bi bi-plus-circle-fill me-1"></i>Book a Court
-            </button>
+          <div class="w-100 w-lg-auto d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 flex-wrap">
+            <div class="d-flex align-items-center gap-2 flex-grow-1">
+              <button type="button" class="btn btn-book-now-gold btn-sm rounded-pill px-3 py-2 fw-bold flex-grow-1 shadow-xs" onclick="switchVenueTab('book')">
+                <i class="bi bi-plus-circle-fill me-1"></i>Book a Court
+              </button>
+              <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2 fw-semibold shadow-xs" onclick="refreshMyBookings()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+              </button>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-grow-1">
+              <button type="button" id="dashboardMessengerBtn" class="btn <%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'btn-outline-primary' : 'btn-primary' %> btn-sm rounded-pill px-3 py-2 fw-bold d-inline-flex align-items-center justify-content-center gap-1.5 shadow-xs flex-grow-1" data-bs-toggle="modal" data-bs-target="#messengerModal">
+                <i class="bi bi-messenger"></i>
+                <span id="dashboardMessengerBtnText"><%= (typeof user !== 'undefined' && user && user.fb_psid) ? 'Messenger Live' : 'Connect Messenger' %></span>
+              </button>
+              <button type="button" id="dashboardChatBtn" class="btn btn-dark btn-sm rounded-pill px-3 py-2 fw-bold d-inline-flex align-items-center justify-content-center gap-1.5 shadow-xs" onclick="openAccountChatModal()">
+                <i class="bi bi-chat-dots-fill text-warning"></i>
+                <span>Chat</span>
+                <span id="dashboardChatBadge" class="badge bg-danger text-white rounded-pill px-1.5 py-0.5 d-none" style="font-size: 10px;">0</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -2910,7 +2914,7 @@
       headerControls.innerHTML = `
         <button type="button" class="btn btn-dark dynamic-action-pill" onclick="switchVenueTab('my-bookings')" title="${displayName} (My Bookings)">
           <i class="bi bi-person-check-fill text-warning"></i>
-          <span class="dynamic-pill-label dynamic-pill-user">${displayName}</span>
+          <span class="dynamic-pill-label dynamic-pill-user">${(displayName || 'Player').split(' ')[0]}</span>
         </button>
         ${adminBtn}
         <a href="/account/logout" class="btn btn-outline-danger dynamic-action-pill" title="Sign Out">
