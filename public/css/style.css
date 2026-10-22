@@ -323,14 +323,14 @@ h1, h2, h3, h4, .font-display {
 }
 
 .legend-selected {
-  background: var(--court-blue);
-  border: 1.5px solid var(--navy-800);
-  box-shadow: 0 0 6px var(--court-blue-glow);
+  background: #D4AF37;
+  border: 1.5px solid #936B07;
+  box-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
 }
 
 .legend-taken {
-  background: #E2E8F0;
-  border: 1.5px solid #CBD5E1;
+  background: #0B2545;
+  border: 1.5px solid #07172C;
 }
 
 .legend-pending {
@@ -485,18 +485,19 @@ h1, h2, h3, h4, .font-display {
 
 /* 2. SELECTED */
 .matrix-slot-cell.state-selected .slot-inner {
-  background: linear-gradient(135deg, #0B2545 0%, #0369A1 100%);
-  border: 1.5px solid var(--gold-400);
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(11, 37, 69, 0.35);
+  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+  border: 1.5px solid #F5E8BE;
+  color: #07172C;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.45);
   transform: scale(0.98);
 }
 
 .matrix-slot-cell.state-selected .slot-inner::after {
   content: "✓ Selected";
   font-size: 10px;
-  color: var(--lime-neon);
-  font-weight: 800;
+  color: #07172C;
+  font-weight: 900;
 }
 
 /* 3. BOOKED / TAKEN */
@@ -505,16 +506,17 @@ h1, h2, h3, h4, .font-display {
 }
 
 .matrix-slot-cell.state-booked .slot-inner {
-  background: #F1F5F9;
-  border: 1px solid #E2E8F0;
-  color: #94A3B8;
-  opacity: 0.8;
+  background: linear-gradient(135deg, #07172C 0%, #0B2545 100%);
+  border: 1px solid #13335e;
+  color: #E2E8F0;
+  opacity: 0.95;
 }
 
 .matrix-slot-cell.state-booked .slot-inner::after {
   content: "Taken";
   font-size: 10px;
-  color: #94A3B8;
+  color: #93C5FD;
+  font-weight: 700;
 }
 
 /* 4. PROCESSING / AWAITING PAYMENT */
@@ -1315,5 +1317,51 @@ h1, h2, h3, h4, .font-display {
     line-height: 1.1;
   }
 }
+
+/* =========================================================
+   RESERVATION PAGE COMPACT SLOT BUTTONS
+   ========================================================= */
+.slot-btn {
+  padding: 8px 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.slot-btn.available {
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+}
+.slot-btn.available:hover {
+  background: #E0F2FE;
+  border-color: #0284C7;
+  color: #0369A1;
+}
+.slot-btn.selected {
+  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%) !important;
+  border: 1.5px solid #F5E8BE !important;
+  color: #07172C !important;
+  font-weight: 800 !important;
+  box-shadow: 0 3px 10px rgba(212, 175, 55, 0.4);
+}
+.slot-btn.booked {
+  background: linear-gradient(135deg, #07172C 0%, #0B2545 100%) !important;
+  border: 1px solid #13335e !important;
+  color: #E2E8F0 !important;
+  cursor: not-allowed;
+  opacity: 0.95;
+}
+.slot-btn.booked .opacity-75 {
+  color: #93C5FD !important;
+  font-weight: 700;
+}
+.slot-btn.processing {
+  background: #FEF3C7;
+  border: 1.5px dashed #F59E0B;
+  color: #B45309;
+  cursor: not-allowed;
+}
+
 
 
