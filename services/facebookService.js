@@ -336,13 +336,44 @@ async function getAllAdminPsids() {
 }
 
 /**
+ * Helper to resolve friendly display name for court(s) across single or sibling bookings
+ */
+async function resolveBookingCourtSummary(reservation, extraSummary = '') {
+  if (extraSummary) return extraSummary;
+  if (reservation.court && reservation.court.display_name) return reservation.court.display_name;
+
+  try {
+    const masterRef = (reservation.reference_number || '').split('-')[0];
+    const siblings = await Reservation.findAll({
+      where: {
+        reference_number: {
+          [Op.or]: [masterRef, { [Op.like]: `${masterRef}-%` }]
+        }
+      },
+      include: [{ model: Court, as: 'court' }]
+    });
+    if (siblings && siblings.length > 0) {
+      const names = [...new Set(siblings.map(s => s.court ? s.court.display_name : `Court ${s.court_id}`))];
+      return names.join(', ');
+    }
+  } catch (e) {}
+
+  try {
+    const courtObj = await Court.findByPk(reservation.court_id);
+    if (courtObj && courtObj.display_name) return courtObj.display_name;
+  } catch (e) {}
+
+  return `Court ${reservation.court_id}`;
+}
+
+/**
  * Notify Admin when a new booking is submitted (with 1-Click Interactive Buttons)
  */
 async function notifyAdminNewBooking(reservation, extra = {}) {
   const adminPsids = await getAllAdminPsids();
   if (!adminPsids || adminPsids.length === 0) return;
 
-  const courtLabel = extra.courtSummary || (reservation.court ? reservation.court.display_name : `Court ${reservation.court_id}`);
+  const courtLabel = await resolveBookingCourtSummary(reservation, extra.courtSummary);
   const totalAmount = extra.totalAmount !== undefined ? parseFloat(extra.totalAmount) : parseFloat(reservation.total_amount || 0);
   const timeRange = reservation.end_time ? `${reservation.start_time} - ${reservation.end_time}` : reservation.start_time;
 
@@ -411,6 +442,7 @@ async function notifyAdminPaymentProof(reservation) {
 
   // Compute total order amount across sibling courts if multi-court
   let totalOrderAmount = parseFloat(reservation.total_amount || 0);
+  let courtLabel = await resolveBookingCourtSummary(reservation);
   try {
     const masterRef = (reservation.reference_number || '').split('-')[0];
     const siblings = await Reservation.findAll({
@@ -430,6 +462,7 @@ async function notifyAdminPaymentProof(reservation) {
   const text = `💳 [THE PLAYGROUND] GCASH PROOF SUBMITTED!\n\n` +
     `📋 Ref: ${reservation.reference_number}\n` +
     `👤 Player: ${reservation.user_name}\n` +
+    `🏟️ Court: ${courtLabel}\n` +
     `🧾 GCash Ref: ${reservation.gcash_reference_no || 'Attached Screenshot'}\n` +
     `💰 Amount: ₱${totalOrderAmount.toFixed(2)}\n\n` +
     `👉 Tap Approve below or reply "APPROVE ${reservation.reference_number}"`;
@@ -502,7 +535,7 @@ async function notifyPlayerNewBooking(reservation, extra = {}) {
   const adminPsids = await getAllAdminPsids();
   if (adminPsids.includes(targetPsid)) return;
 
-  const courtLabel = extra.courtSummary || (reservation.court ? reservation.court.display_name : `Court ${reservation.court_id}`);
+  const courtLabel = await resolveBookingCourtSummary(reservation, extra.courtSummary);
   const totalAmount = extra.totalAmount !== undefined ? parseFloat(extra.totalAmount) : parseFloat(reservation.total_amount || 0);
   const timeRange = reservation.end_time ? `${reservation.start_time} - ${reservation.end_time}` : reservation.start_time;
 
@@ -549,10 +582,12 @@ async function notifyPlayerBookingConfirmed(reservation) {
   const adminPsids = await getAllAdminPsids();
   if (adminPsids.includes(targetPsid)) return;
 
+  const courtLabel = await resolveBookingCourtSummary(reservation);
+
   const msg = `🎉 [THE PLAYGROUND] YOUR BOOKING IS CONFIRMED!\n\n` +
     `Hello ${reservation.user_name}! Your court reservation has been verified and confirmed by Admin.\n\n` +
     `📋 Booking Ref: ${reservation.reference_number}\n` +
-    `🏟️ Court: Court ${reservation.court_id}\n` +
+    `🏟️ Court: ${courtLabel}\n` +
     `📅 Date: ${reservation.reservation_date}\n` +
     `⏰ Time: ${reservation.start_time}\n` +
     `💰 Amount Paid: ₱${parseFloat(reservation.total_amount).toFixed(2)}\n\n` +
@@ -798,7 +833,12 @@ async function processAdminAction(senderId, rawText, contextRef = null) {
     // Post to player in-app chat
     try {
       const { postBookingSystemMessage } = require('./chatService');
-      await postBookingSystemMessage(reservation, 'BOOKING_CONFIRMED');
+      const siblingCourtNames = [...new Set(allSiblings.map(s => s.court ? s.court.display_name : `Court ${s.court_id}`))].join(', ');
+      const totalOrderAmount = allSiblings.reduce((sum, s) => sum + parseFloat(s.total_amount || 0), 0);
+      await postBookingSystemMessage(reservation, 'BOOKING_CONFIRMED', {
+        courtSummary: siblingCourtNames,
+        totalAmount: totalOrderAmount
+      });
     } catch (e) {}
 
     // Notify BOTH Ryan & Karlo with the exact approved player details

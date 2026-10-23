@@ -238,13 +238,14 @@ const reservationController = {
         if (primaryReservation) {
           const daysCount = allDatesSet.size;
           const courtsCount = allCourtsSet.size;
+          const courtsList = Array.from(allCourtsSet);
           let courtSummary = '';
           if (daysCount > 1) {
-            courtSummary = `${daysCount} Days · ${courtsCount} Court${courtsCount > 1 ? 's' : ''}`;
+            courtSummary = `${daysCount} Days · ${courtsCount} Court${courtsCount > 1 ? 's' : ''} (${courtsList.join(', ')})`;
           } else if (courtsCount > 1) {
-            courtSummary = `${courtsCount} Courts`;
+            courtSummary = courtsList.join(', ');
           } else {
-            courtSummary = primaryReservation.court ? primaryReservation.court.display_name : `Court ${primaryReservation.court_id}`;
+            courtSummary = courtsList[0] || (primaryReservation.court ? primaryReservation.court.display_name : `Court ${primaryReservation.court_id}`);
           }
 
           try {

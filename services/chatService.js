@@ -52,8 +52,36 @@ async function postBookingSystemMessage(reservation, eventType, extraSummary = {
     const userId = await resolveReservationUserId(reservation);
     if (!userId) return null;
 
-    const ref = reservation.reference_number;
-    const courtName = extraSummary.courtSummary || (reservation.court ? reservation.court.display_name : `Court ${reservation.court_id}`);
+    let courtName = extraSummary.courtSummary;
+    if (!courtName) {
+      if (reservation.court && reservation.court.display_name) {
+        courtName = reservation.court.display_name;
+      } else {
+        try {
+          const masterRef = (reservation.reference_number || '').split('-')[0];
+          const siblings = await Reservation.findAll({
+            where: {
+              reference_number: {
+                [Op.or]: [masterRef, { [Op.like]: `${masterRef}-%` }]
+              }
+            },
+            include: [{ model: Court, as: 'court' }]
+          });
+          if (siblings && siblings.length > 0) {
+            const names = [...new Set(siblings.map(s => s.court ? s.court.display_name : `Court ${s.court_id}`))];
+            courtName = names.join(', ');
+          }
+        } catch (e) {}
+        if (!courtName) {
+          try {
+            const courtObj = await Court.findByPk(reservation.court_id);
+            courtName = courtObj ? courtObj.display_name : `Court ${reservation.court_id}`;
+          } catch(e) {}
+        }
+      }
+    }
+    if (!courtName) courtName = `Court ${reservation.court_id}`;
+
     const dateStr = reservation.reservation_date;
     const timeStr = `${formatTime12(reservation.start_time)} – ${formatTime12(reservation.end_time)}`;
     const totalAmt = extraSummary.totalAmount !== undefined

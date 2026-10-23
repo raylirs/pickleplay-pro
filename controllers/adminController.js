@@ -592,7 +592,12 @@ const adminController = {
       // Post automated Booking Confirmed Card to Player In-App Account Chat
       try {
         const { postBookingSystemMessage } = require('../services/chatService');
-        postBookingSystemMessage(reservation, 'BOOKING_CONFIRMED').catch(e => console.warn('[Chat Notify Error]:', e.message));
+        const siblingCourtNames = [...new Set(allSiblings.map(s => s.court ? s.court.display_name : `Court ${s.court_id}`))].join(', ');
+        const totalOrderAmount = allSiblings.reduce((sum, s) => sum + parseFloat(s.total_amount || 0), 0);
+        postBookingSystemMessage(reservation, 'BOOKING_CONFIRMED', {
+          courtSummary: siblingCourtNames,
+          totalAmount: totalOrderAmount
+        }).catch(e => console.warn('[Chat Notify Error]:', e.message));
       } catch (e) {}
 
       req.flash('success', `Reservation order ${masterRef} confirmed manually.`);

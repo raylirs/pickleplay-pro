@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const { formatCurrency, formatTime12 } = require('../utils/dateTimeUtils');
-const { SystemSetting } = require('../models');
+const { Op } = require('sequelize');
+const { SystemSetting, Court, Reservation } = require('../models');
 
 async function resolveSmtpConfig() {
   let dbSettings = {};
@@ -307,7 +308,35 @@ async function notifyAdminsNewBookingEmail(reservation, extra = {}) {
   const recipients = await getAdminAlertEmails();
   if (!recipients || recipients.length === 0) return;
 
-  const courtLabel = extra.courtSummary || (reservation.court ? reservation.court.display_name : `Court ${reservation.court_id}`);
+  let courtLabel = extra.courtSummary;
+  if (!courtLabel) {
+    if (reservation.court && reservation.court.display_name) {
+      courtLabel = reservation.court.display_name;
+    } else {
+      try {
+        const masterRef = (reservation.reference_number || '').split('-')[0];
+        const siblings = await Reservation.findAll({
+          where: {
+            reference_number: {
+              [Op.or]: [masterRef, { [Op.like]: `${masterRef}-%` }]
+            }
+          },
+          include: [{ model: Court, as: 'court' }]
+        });
+        if (siblings && siblings.length > 0) {
+          const names = [...new Set(siblings.map(s => s.court ? s.court.display_name : `Court ${s.court_id}`))];
+          courtLabel = names.join(', ');
+        }
+      } catch (e) {}
+      if (!courtLabel) {
+        try {
+          const courtObj = await Court.findByPk(reservation.court_id);
+          courtLabel = courtObj ? courtObj.display_name : `Court ${reservation.court_id}`;
+        } catch(e) {}
+      }
+    }
+  }
+  if (!courtLabel) courtLabel = `Court ${reservation.court_id}`;
   const totalAmount = extra.totalAmount !== undefined ? parseFloat(extra.totalAmount) : parseFloat(reservation.total_amount || 0);
   const timeRange = reservation.end_time ? `${reservation.start_time} - ${reservation.end_time}` : reservation.start_time;
 
