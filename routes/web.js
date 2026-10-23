@@ -90,7 +90,7 @@ router.get('/courts', courtController.getPublicCourts);
 router.get('/courts/:id', courtController.getCourtDetail);
 
 // Public reservation pages (strict player login required to book)
-router.get('/reservations', requirePlayerAuth, reservationController.showReservationPage);
+router.get('/reservations', (req, res) => res.redirect('/#book'));
 router.post('/reservations', requirePlayerAuth, reservationLimiter, reservationController.createReservation);
 router.get('/reservations/lookup', reservationController.showLookupPage);
 router.get('/reservations/:reference', reservationController.getReservationByReference);

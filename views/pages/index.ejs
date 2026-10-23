@@ -1804,7 +1804,6 @@
     if (returnBtn) returnBtn.classList.remove('d-none');
 
     if (dateChanged) {
-      clearSelectedSlots();
       fetchMatrixAvailability(currentDate);
     }
 
@@ -1995,7 +1994,7 @@
         }
 
         // Check if currently selected (only if still available)
-        const isSelected = courtSlot.isAvailable && selectedSlotItems.some(item => item.courtId === court.id && item.startTime === slot.startTime);
+        const isSelected = courtSlot.isAvailable && selectedSlotItems.some(item => item.courtId === court.id && item.startTime === slot.startTime && item.date === currentDate);
         if (isSelected) {
           stateClass = 'state-selected';
         }
@@ -2166,7 +2165,7 @@
     }
 
     const existingIndex = selectedSlotItems.findIndex(
-      item => item.courtId === court.id && item.startTime === slot.startTime
+      item => item.courtId === court.id && item.startTime === slot.startTime && item.date === currentDate
     );
 
     if (existingIndex > -1) {
@@ -2174,9 +2173,13 @@
       selectedSlotItems.splice(existingIndex, 1);
     } else {
       // Toggle ON
+      const dObj = new Date(currentDate + 'T00:00:00');
+      const dLabel = dObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
       selectedSlotItems.push({
         courtId: court.id,
         courtName: court.name,
+        date: currentDate,
+        dateFormatted: dLabel,
         startTime: slot.startTime,
         endTime: slot.endTime,
         startLabel: slot.startLabel,
@@ -2185,8 +2188,9 @@
       });
     }
 
-    // Sort by court then start time
+    // Sort by date, court, then start time
     selectedSlotItems.sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
       if (a.courtId !== b.courtId) return a.courtId - b.courtId;
       return a.startTime.localeCompare(b.startTime);
     });
@@ -2201,11 +2205,11 @@
       const cId = parseInt(cell.dataset.courtId, 10);
       const sTime = cell.dataset.startTime;
 
-      if (cell.classList.contains('state-booked') || cell.classList.contains('state-processing') || cell.classList.contains('state-verifying')) {
+      if (cell.classList.contains('state-booked') || cell.classList.contains('state-processing') || cell.classList.contains('state-verifying') || cell.classList.contains('state-blocked')) {
         return;
       }
 
-      const isSelected = selectedSlotItems.some(item => item.courtId === cId && item.startTime === sTime);
+      const isSelected = selectedSlotItems.some(item => item.courtId === cId && item.startTime === sTime && item.date === currentDate);
       if (isSelected) {
         cell.className = 'matrix-slot-cell state-selected';
       } else {
@@ -2284,9 +2288,11 @@
     const totalCount = selectedSlotItems.length;
     const totalPrice = selectedSlotItems.reduce((sum, item) => sum + item.rate, 0);
     const uniqueCourts = [...new Set(selectedSlotItems.map(item => item.courtName))];
+    const uniqueDates = [...new Set(selectedSlotItems.map(item => item.date))];
 
     if (subtitleEl) {
-      subtitleEl.innerText = `${totalCount} slot${totalCount > 1 ? 's' : ''} across ${uniqueCourts.length} court${uniqueCourts.length > 1 ? 's' : ''}`;
+      const daysText = uniqueDates.length > 1 ? `${uniqueDates.length} days & ` : '';
+      subtitleEl.innerText = `${totalCount} slot${totalCount > 1 ? 's' : ''} across ${daysText}${uniqueCourts.length} court${uniqueCourts.length > 1 ? 's' : ''}`;
     }
     if (countEl) {
       countEl.innerText = `${totalCount} slot${totalCount > 1 ? 's' : ''} selected`;
@@ -2295,37 +2301,64 @@
       priceSummaryEl.innerText = `Total: ₱${totalPrice.toFixed(2)}`;
     }
 
-    let rowsHtml = '';
+    // Group items by date
+    const dateMap = {};
     selectedSlotItems.forEach(item => {
-      rowsHtml += `
-        <div class="drawer-slot-card d-flex align-items-center justify-content-between p-2 px-2.5 rounded-3 border border-secondary border-opacity-25" style="background: rgba(255, 255, 255, 0.05);">
-          <div class="d-flex align-items-center gap-2 flex-grow-1 min-w-0">
-            <span class="badge bg-warning text-dark rounded-pill px-2 py-1 fw-bold flex-shrink-0" style="font-size: 11px;">
-              ${item.courtName}
+      const dKey = item.date || currentDate;
+      if (!dateMap[dKey]) dateMap[dKey] = [];
+      dateMap[dKey].push(item);
+    });
+
+    let rowsHtml = '';
+    const sortedDates = Object.keys(dateMap).sort();
+
+    sortedDates.forEach((dKey) => {
+      const items = dateMap[dKey];
+      const dFormatted = items[0].dateFormatted || dKey;
+
+      if (sortedDates.length > 1) {
+        rowsHtml += `
+          <div class="d-flex align-items-center gap-2 mt-2 mb-1 px-1">
+            <span class="badge bg-primary bg-opacity-75 text-white rounded-pill px-2.5 py-1 small fw-bold">
+              <i class="bi bi-calendar-event me-1"></i>${dFormatted}
             </span>
-            <div class="text-truncate">
-              <span class="text-white fw-semibold small d-inline-flex align-items-center gap-1 text-truncate" style="font-size: 12px;">
-                <i class="bi bi-clock-history text-warning"></i> ${item.startLabel} – ${item.endLabel}
+            <span class="text-white-50 small" style="font-size: 11px;">(${items.length} slot${items.length > 1 ? 's' : ''})</span>
+          </div>
+        `;
+      }
+
+      items.forEach(item => {
+        rowsHtml += `
+          <div class="drawer-slot-card d-flex align-items-center justify-content-between p-2 px-2.5 rounded-3 border border-secondary border-opacity-25" style="background: rgba(255, 255, 255, 0.05);">
+            <div class="d-flex align-items-center gap-2 flex-grow-1 min-w-0">
+              <span class="badge bg-warning text-dark rounded-pill px-2 py-1 fw-bold flex-shrink-0" style="font-size: 11px;">
+                ${item.courtName}
               </span>
+              <div class="text-truncate">
+                <span class="text-white fw-semibold small d-inline-flex align-items-center gap-1 text-truncate" style="font-size: 12px;">
+                  <i class="bi bi-clock-history text-warning"></i> ${item.startLabel} – ${item.endLabel}
+                </span>
+                ${sortedDates.length === 1 ? '' : `<span class="text-white-50 d-block" style="font-size: 10px;">${item.dateFormatted || item.date}</span>`}
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-shrink-0 ms-2">
+              <span class="fw-bold font-monospace text-warning small" style="font-size: 12px;">
+                ₱${item.rate.toFixed(2)}
+              </span>
+              <button type="button" class="drawer-remove-btn" onclick="removeSingleSlot(${item.courtId}, '${item.startTime}', '${item.date}')" title="Remove this slot">
+                <i class="bi bi-trash3-fill"></i>
+              </button>
             </div>
           </div>
-          <div class="d-flex align-items-center gap-2 flex-shrink-0 ms-2">
-            <span class="fw-bold font-monospace text-warning small" style="font-size: 12px;">
-              ₱${item.rate.toFixed(2)}
-            </span>
-            <button type="button" class="drawer-remove-btn" onclick="removeSingleSlot(${item.courtId}, '${item.startTime}')" title="Remove this slot">
-              <i class="bi bi-trash3-fill"></i>
-            </button>
-          </div>
-        </div>
-      `;
+        `;
+      });
     });
 
     container.innerHTML = rowsHtml;
   }
 
-  function removeSingleSlot(courtId, startTime) {
-    const idx = selectedSlotItems.findIndex(item => item.courtId === courtId && item.startTime === startTime);
+  function removeSingleSlot(courtId, startTime, date) {
+    const idx = selectedSlotItems.findIndex(item => item.courtId === courtId && item.startTime === startTime && (!date || item.date === date));
     if (idx > -1) {
       selectedSlotItems.splice(idx, 1);
       updateMatrixVisualSelection();
@@ -2349,11 +2382,15 @@
     const totalCount = selectedSlotItems.length;
     const totalPrice = selectedSlotItems.reduce((sum, item) => sum + item.rate, 0);
 
-    // Group by unique courts
+    // Group by unique courts & dates
     const uniqueCourts = [...new Set(selectedSlotItems.map(item => item.courtName))];
-    let badgeText = '';
+    const uniqueDates = [...new Set(selectedSlotItems.map(item => item.date))];
     const isMobile = window.innerWidth < 576;
-    if (uniqueCourts.length === 1) {
+
+    let badgeText = '';
+    if (uniqueDates.length > 1) {
+      badgeText = `${uniqueDates.length} Days · ${uniqueCourts.length} Court${uniqueCourts.length > 1 ? 's' : ''}`;
+    } else if (uniqueCourts.length === 1) {
       badgeText = uniqueCourts[0];
     } else if (uniqueCourts.length <= 2 && !isMobile) {
       badgeText = `${uniqueCourts.length} Courts (${uniqueCourts.join(', ')})`;
@@ -2381,7 +2418,13 @@
     const mBadge = document.getElementById('mobileRailCourtBadge');
     const mSlots = document.getElementById('mobileRailSlotsText');
     const mPrice = document.getElementById('mobileRailTotalPrice');
-    if (mBadge) mBadge.innerText = `${uniqueCourts.length} Court${uniqueCourts.length > 1 ? 's' : ''}`;
+    if (mBadge) {
+      if (uniqueDates.length > 1) {
+        mBadge.innerText = `${uniqueDates.length}D · ${uniqueCourts.length}C`;
+      } else {
+        mBadge.innerText = `${uniqueCourts.length} Court${uniqueCourts.length > 1 ? 's' : ''}`;
+      }
+    }
     if (mSlots) mSlots.innerText = `${totalCount} Slot${totalCount > 1 ? 's' : ''}`;
     if (mPrice) mPrice.innerText = `₱${totalPrice.toFixed(2)}`;
 
@@ -2413,45 +2456,66 @@
     const totalCount = selectedSlotItems.length;
     const totalPrice = selectedSlotItems.reduce((sum, item) => sum + item.rate, 0);
 
-    // Group items by court
-    const courtMap = {};
+    // Group items by date, then court
+    const dateMap = {};
     selectedSlotItems.forEach(item => {
-      if (!courtMap[item.courtName]) courtMap[item.courtName] = [];
-      courtMap[item.courtName].push(item);
+      const dKey = item.date || currentDate;
+      if (!dateMap[dKey]) dateMap[dKey] = {};
+      if (!dateMap[dKey][item.courtName]) dateMap[dKey][item.courtName] = [];
+      dateMap[dKey][item.courtName].push(item);
     });
 
-    const courtNames = Object.keys(courtMap);
+    const uniqueDates = Object.keys(dateMap).sort();
+    const uniqueCourts = [...new Set(selectedSlotItems.map(item => item.courtName))];
     let slotsDetailHtml = '';
 
-    courtNames.forEach((cName, idx) => {
-      const items = courtMap[cName];
-      const courtTotal = items.reduce((sum, i) => sum + i.rate, 0);
-
-      // Sort items chronologically
-      items.sort((a, b) => a.startTime.localeCompare(b.startTime));
-
-      // Build clean time slot badge pills
-      const slotPills = items.map(item => `
-        <span class="badge bg-white text-dark border px-2.5 py-1.5 rounded-3 fw-semibold d-inline-flex align-items-center gap-1 shadow-xs" style="font-size: 11px; border-color: #cbd5e1 !important;">
-          <i class="bi bi-clock-history text-primary" style="font-size: 10px;"></i>
-          ${item.startLabel} – ${item.endLabel}
-        </span>
-      `).join('');
+    uniqueDates.forEach((dKey, dIdx) => {
+      const courtMap = dateMap[dKey];
+      const courtNames = Object.keys(courtMap);
+      const dObj = new Date(dKey + 'T00:00:00');
+      const dLabel = dObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 
       slotsDetailHtml += `
-        <div class="${idx > 0 ? 'mt-3 pt-3 border-top' : ''}">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <div class="d-flex align-items-center gap-2">
-              <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 fw-bold" style="font-size: 11.5px;">${cName}</span>
-              <span class="text-secondary small fw-medium">${items.length} hr${items.length > 1 ? 's' : ''}</span>
-            </div>
-            <span class="fw-bold text-dark font-monospace small">₱${courtTotal.toFixed(2)}</span>
+        <div class="p-3 rounded-4 mb-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+          <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom">
+            <span class="fw-bold text-dark small d-inline-flex align-items-center gap-1.5">
+              <i class="bi bi-calendar3 text-primary"></i> ${dLabel}
+            </span>
+            <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 11px;">
+              ${courtNames.length} court${courtNames.length > 1 ? 's' : ''}
+            </span>
           </div>
-          <div class="d-flex flex-wrap gap-1">
-            ${slotPills}
-          </div>
-        </div>
       `;
+
+      courtNames.forEach((cName, cIdx) => {
+        const items = courtMap[cName];
+        const courtTotal = items.reduce((sum, i) => sum + i.rate, 0);
+        items.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+        const slotPills = items.map(item => `
+          <span class="badge bg-white text-dark border px-2.5 py-1.5 rounded-3 fw-semibold d-inline-flex align-items-center gap-1 shadow-xs" style="font-size: 11px; border-color: #cbd5e1 !important;">
+            <i class="bi bi-clock-history text-primary" style="font-size: 10px;"></i>
+            ${item.startLabel} – ${item.endLabel}
+          </span>
+        `).join('');
+
+        slotsDetailHtml += `
+          <div class="${cIdx > 0 ? 'mt-2 pt-2 border-top border-light' : ''}">
+            <div class="d-flex justify-content-between align-items-center mb-1.5">
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-warning text-dark rounded-pill px-2.5 py-0.5 fw-bold" style="font-size: 11px;">${cName}</span>
+                <span class="text-secondary small fw-medium" style="font-size: 11.5px;">${items.length} hr${items.length > 1 ? 's' : ''}</span>
+              </div>
+              <span class="fw-bold text-dark font-monospace small">₱${courtTotal.toFixed(2)}</span>
+            </div>
+            <div class="d-flex flex-wrap gap-1">
+              ${slotPills}
+            </div>
+          </div>
+        `;
+      });
+
+      slotsDetailHtml += `</div>`;
     });
 
     // Populate Modal Summary
@@ -2459,23 +2523,38 @@
     if (hoursEl) hoursEl.innerText = `${totalCount} Slot${totalCount > 1 ? 's' : ''}`;
 
     const dateEl = document.getElementById('modalSummaryDate');
-    const displayDateEl = document.getElementById('dateDisplayText');
-    if (dateEl && displayDateEl) dateEl.innerText = displayDateEl.innerText;
+    if (dateEl) {
+      if (uniqueDates.length === 1) {
+        const dObj = new Date(uniqueDates[0] + 'T00:00:00');
+        dateEl.innerText = dObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+      } else {
+        dateEl.innerText = `${uniqueDates.length} Dates Combined`;
+      }
+    }
 
     const slotsEl = document.getElementById('modalSummarySlots');
     if (slotsEl) slotsEl.innerHTML = slotsDetailHtml;
 
     const breakdownEl = document.getElementById('modalSummaryBreakdown');
     if (breakdownEl) {
-      if (courtNames.length > 1) {
-        breakdownEl.innerText = `${totalCount} hours total across ${courtNames.length} courts`;
+      if (uniqueDates.length > 1) {
+        breakdownEl.innerText = `${totalCount} hours total across ${uniqueDates.length} dates and ${uniqueCourts.length} courts`;
+      } else if (uniqueCourts.length > 1) {
+        breakdownEl.innerText = `${totalCount} hours total across ${uniqueCourts.length} courts`;
       } else {
-        breakdownEl.innerText = `${totalCount} hour${totalCount > 1 ? 's' : ''} on ${courtNames[0]}`;
+        breakdownEl.innerText = `${totalCount} hour${totalCount > 1 ? 's' : ''} on ${uniqueCourts[0]}`;
       }
     }
 
     const totalEl = document.getElementById('modalSummaryTotal');
     if (totalEl) totalEl.innerText = `₱${totalPrice.toFixed(2)}`;
+
+    // Populate Hidden Form Fields
+    document.getElementById('formCourtId').value = selectedSlotItems[0].courtId;
+    document.getElementById('formDate').value = selectedSlotItems[0].date || currentDate;
+    document.getElementById('formStartTime').value = selectedSlotItems[0].startTime;
+    document.getElementById('formTotalHours').value = totalCount;
+    document.getElementById('formSelectedSlots').value = JSON.stringify(selectedSlotItems);
 
     // Ensure player profile fields and Signed-In Account Badge are populated
     const nameInput = document.getElementById('checkoutUserName');
@@ -2510,16 +2589,10 @@
       }
     }
 
-    // Populate Hidden Form Fields
-    document.getElementById('formCourtId').value = selectedSlotItems[0].courtId;
-    document.getElementById('formDate').value = currentDate;
-    document.getElementById('formStartTime').value = selectedSlotItems[0].startTime;
-    document.getElementById('formTotalHours').value = totalCount;
-    document.getElementById('formSelectedSlots').value = JSON.stringify(selectedSlotItems);
-
     const modalEl = document.getElementById('checkoutModal');
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
+  }
   }
 
   // Seamless AJAX Reservation Submit (Prevents page-reload login redirects & preserves selected slots)
@@ -3203,12 +3276,18 @@
         statusBadge = `<span class="badge bg-danger text-white rounded-pill px-3 py-1 fw-semibold">${b.status}</span>`;
       }
 
-      const dateFormatted = new Date(b.reservation_date + 'T00:00:00').toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
+      const isMultiDate = b.dates && b.dates.length > 1;
+      let dateDisplay = '';
+      if (isMultiDate) {
+        dateDisplay = `${b.dates.length} Dates (${b.dates.join(', ')})`;
+      } else {
+        dateDisplay = new Date(b.reservation_date + 'T00:00:00').toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      }
 
       const bookedOnFormatted = b.created_at
         ? new Date(b.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
@@ -3219,7 +3298,8 @@
         const endLbl = formatSlotTimeLabel(c.end_time);
         return `
           <div class="d-flex align-items-center justify-content-between py-1.5 px-2.5 rounded-3 bg-light border mb-1">
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              ${c.date && isMultiDate ? `<span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-0.5" style="font-size: 10.5px;"><i class="bi bi-calendar-event me-1"></i>${c.date}</span>` : ''}
               <span class="badge bg-warning text-dark rounded-pill px-2 py-1 fw-bold" style="font-size: 11px;">${c.court_name}</span>
               <span class="small fw-semibold text-dark">${startLbl} – ${endLbl}</span>
               <span class="text-muted small">(${c.hours} hr${c.hours > 1 ? 's' : ''})</span>
@@ -3276,7 +3356,7 @@
             <div>
               <div class="d-flex align-items-center gap-2 flex-wrap">
                 <span class="badge bg-dark text-warning font-monospace px-2.5 py-1.5 rounded-3 fs-6">${b.reference_number}</span>
-                <span class="fw-bold text-dark"><i class="bi bi-calendar3 text-primary me-1"></i>Play Date: ${dateFormatted}</span>
+                <span class="fw-bold text-dark"><i class="bi bi-calendar3 text-primary me-1"></i>Play Date${isMultiDate ? 's' : ''}: ${dateDisplay}</span>
               </div>
               ${bookedOnFormatted ? `<div class="text-muted mt-1" style="font-size: 11.5px;"><i class="bi bi-clock-history me-1"></i>Booked on ${bookedOnFormatted}</div>` : ''}
             </div>

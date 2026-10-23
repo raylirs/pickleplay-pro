@@ -98,21 +98,31 @@ const reservationController = {
         }
       }
 
-      // Check if multi-court object structure: [{ courtId, startTime }, ...]
+      // Check if multi-court/multi-day object structure: [{ courtId, date, startTime }, ...]
       const isObjectSlots = Array.isArray(rawSlots) && rawSlots.length > 0 && typeof rawSlots[0] === 'object' && rawSlots[0].startTime;
 
       if (isObjectSlots) {
-        // Group by courtId
-        const byCourt = {};
+        // Group by (date + courtId)
+        const groups = {};
         rawSlots.forEach(item => {
-          const cId = item.courtId || court_id;
-          if (!byCourt[cId]) byCourt[cId] = [];
-          byCourt[cId].push(item.startTime);
+          const cId = parseInt(item.courtId || court_id, 10);
+          const rDate = item.date || reservation_date;
+          const groupKey = `${rDate}_${cId}`;
+          if (!groups[groupKey]) {
+            groups[groupKey] = {
+              courtId: cId,
+              date: rDate,
+              slots: []
+            };
+          }
+          if (!groups[groupKey].slots.includes(item.startTime)) {
+            groups[groupKey].slots.push(item.startTime);
+          }
         });
 
-        const courtIdKeys = Object.keys(byCourt);
+        const groupKeys = Object.keys(groups);
 
-        if (!user_name || !user_contact || !reservation_date || courtIdKeys.length === 0) {
+        if (!user_name || !user_contact || groupKeys.length === 0) {
           const errorMsg = 'Please select at least one time slot and fill in all required fields.';
           if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
             return res.status(400).json({ success: false, error: errorMsg });
@@ -139,13 +149,13 @@ const reservationController = {
           return res.redirect('/');
         }
 
-        // Validate availability on each court
-        for (const cId of courtIdKeys) {
-          const cSlots = byCourt[cId];
-          const isAvail = await areSlotsAvailable(cId, reservation_date, cSlots);
+        // Validate availability on each court & date pair
+        for (const gKey of groupKeys) {
+          const grp = groups[gKey];
+          const isAvail = await areSlotsAvailable(grp.courtId, grp.date, grp.slots);
           if (!isAvail) {
-            const courtObj = await Court.findByPk(cId);
-            const errorMsg = `Sorry, one or more selected slots on ${courtObj ? courtObj.display_name : 'court'} are no longer available. Please choose other available times.`;
+            const courtObj = await Court.findByPk(grp.courtId);
+            const errorMsg = `Sorry, one or more selected slots on ${courtObj ? courtObj.display_name : 'court'} for ${grp.date} are no longer available. Please choose other available times.`;
             if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
               return res.status(409).json({ success: false, error: errorMsg });
             }
@@ -162,11 +172,13 @@ const reservationController = {
 
         let primaryReservation = null;
         let totalBookingAmount = 0;
+        const allDatesSet = new Set();
+        const allCourtsSet = new Set();
 
-        for (let i = 0; i < courtIdKeys.length; i++) {
-          const cId = courtIdKeys[i];
-          const cSlots = byCourt[cId].sort();
-          const court = await Court.findByPk(cId, { include: [{ model: CourtCategory, as: 'category' }] });
+        for (let i = 0; i < groupKeys.length; i++) {
+          const grp = groups[groupKeys[i]];
+          const cSlots = grp.slots.sort();
+          const court = await Court.findByPk(grp.courtId, { include: [{ model: CourtCategory, as: 'category' }] });
           const hours = cSlots.length;
           const firstSlot = cSlots[0];
           const lastSlot = cSlots[cSlots.length - 1];
@@ -174,17 +186,17 @@ const reservationController = {
           const pricePerHour = parseFloat(court && court.category ? court.category.price_per_hour : 350);
           const totalAmount = pricePerHour * hours;
           totalBookingAmount += totalAmount;
-
-          const refNum = masterReference;
+          allDatesSet.add(grp.date);
+          allCourtsSet.add(court.display_name);
 
           const resv = await Reservation.create({
-            reference_number: refNum,
+            reference_number: masterReference,
             court_id: court.id,
             user_id: req.session && req.session.user ? req.session.user.id : null,
             user_name: (user_name || (req.session?.user?.full_name) || '').trim(),
             user_contact: (user_contact || (req.session?.user?.phone) || '').trim(),
             user_email: (user_email || (req.session?.user?.email) || '') ? (user_email || req.session?.user?.email).trim().toLowerCase() : null,
-            reservation_date,
+            reservation_date: grp.date,
             start_time: firstSlot,
             end_time: endTime,
             slots_json: JSON.stringify(cSlots),
@@ -203,19 +215,19 @@ const reservationController = {
           }
 
           await logAudit('RESERVATION_CREATED', {
-            referenceNumber: refNum,
+            referenceNumber: masterReference,
             court: court.display_name,
-            date: reservation_date,
+            date: grp.date,
             time: `${firstSlot} - ${endTime}`,
             amount: totalAmount
           });
 
           try {
             const io = getIO();
-            const availabilityData = await getCourtAvailability(court.id, reservation_date);
+            const availabilityData = await getCourtAvailability(court.id, grp.date);
             io.emit('court_availability_updated', {
               courtId: court.id,
-              date: reservation_date,
+              date: grp.date,
               slots: availabilityData.slots
             });
           } catch (sockErr) {}
@@ -224,7 +236,17 @@ const reservationController = {
         // Each court preserves its individual accurate court total_amount (no double-counting)
 
         if (primaryReservation) {
-          const courtSummary = courtIdKeys.length > 1 ? `${courtIdKeys.length} Courts` : `Court ${primaryReservation.court_id}`;
+          const daysCount = allDatesSet.size;
+          const courtsCount = allCourtsSet.size;
+          let courtSummary = '';
+          if (daysCount > 1) {
+            courtSummary = `${daysCount} Days · ${courtsCount} Court${courtsCount > 1 ? 's' : ''}`;
+          } else if (courtsCount > 1) {
+            courtSummary = `${courtsCount} Courts`;
+          } else {
+            courtSummary = primaryReservation.court ? primaryReservation.court.display_name : `Court ${primaryReservation.court_id}`;
+          }
+
           try {
             const { postBookingSystemMessage } = require('../services/chatService');
             postBookingSystemMessage(primaryReservation, 'BOOKING_CREATED', {
@@ -527,6 +549,7 @@ const reservationController = {
         groupedMap.set(masterRef, {
           reference_number: masterRef,
           reservation_date: r.reservation_date,
+          dates: [r.reservation_date],
           status: r.status,
           expires_at: r.expires_at,
           created_at: r.created_at,
@@ -542,6 +565,7 @@ const reservationController = {
           courts: [
             {
               court_name: r.court ? r.court.display_name : `Court ${r.court_id}`,
+              date: r.reservation_date,
               start_time: r.start_time,
               end_time: r.end_time,
               hours: parseInt(r.total_hours || 1, 10),
@@ -554,6 +578,9 @@ const reservationController = {
         const entry = groupedMap.get(masterRef);
         entry.total_amount += parseFloat(r.total_amount || 0);
         entry.total_hours += parseInt(r.total_hours || 1, 10);
+        if (!entry.dates.includes(r.reservation_date)) {
+          entry.dates.push(r.reservation_date);
+        }
         if (!entry.gcash_reference_no && r.gcash_reference_no) entry.gcash_reference_no = r.gcash_reference_no;
         if (!entry.payment_screenshot && r.payment_screenshot) entry.payment_screenshot = r.payment_screenshot;
         if (!entry.payment_transaction_id && r.payment_transaction_id) entry.payment_transaction_id = r.payment_transaction_id;
@@ -565,6 +592,7 @@ const reservationController = {
         }
         entry.courts.push({
           court_name: r.court ? r.court.display_name : `Court ${r.court_id}`,
+          date: r.reservation_date,
           start_time: r.start_time,
           end_time: r.end_time,
           hours: parseInt(r.total_hours || 1, 10),

@@ -91,11 +91,16 @@
 
         <!-- Booking Details Grid -->
         <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Court & Schedule Details</h5>
+        <% 
+          const passDates = (typeof siblingReservations !== 'undefined' && siblingReservations.length > 0)
+            ? [...new Set(siblingReservations.map(s => s.reservation_date))]
+            : [reservation.reservation_date];
+        %>
         <div class="row g-3 mb-4">
           <div class="col-6">
             <span class="small text-secondary d-block">Court(s) Assigned</span>
             <% if (typeof siblingReservations !== 'undefined' && siblingReservations.length > 1) { %>
-              <strong class="text-primary"><%= siblingReservations.length %> Courts (<%= siblingReservations.map(s => s.court ? s.court.display_name : 'Court').join(', ') %>)</strong>
+              <strong class="text-primary"><%= siblingReservations.length %> Courts (<%= [...new Set(siblingReservations.map(s => s.court ? s.court.display_name : 'Court'))].join(', ') %>)</strong>
             <% } else { %>
               <strong class="text-dark"><%= reservation.court ? reservation.court.display_name : 'Pickleball Court' %></strong>
             <% } %>
@@ -105,25 +110,57 @@
             <strong class="text-dark">The Playground Pickleball</strong>
           </div>
           <div class="col-6">
-            <span class="small text-secondary d-block">Date</span>
-            <strong class="text-dark"><%= reservation.reservation_date %></strong>
+            <span class="small text-secondary d-block">Date(s)</span>
+            <% if (passDates.length > 1) { %>
+              <strong class="text-primary"><%= passDates.length %> Dates (<%= passDates.join(', ') %>)</strong>
+            <% } else { %>
+              <strong class="text-dark"><%= reservation.reservation_date %></strong>
+            <% } %>
           </div>
           <div class="col-6">
-            <span class="small text-secondary d-block">Time Slot / Duration</span>
+            <span class="small text-secondary d-block">Total Duration</span>
             <% 
-              let slotDisplay = `${formatTime12(reservation.start_time)} - ${formatTime12(reservation.end_time)}`;
-              if (reservation.slots_json) {
-                try {
-                  const arr = JSON.parse(reservation.slots_json);
-                  if (Array.isArray(arr) && arr.length > 0) {
-                    slotDisplay = arr.map(t => formatTime12(t)).join(', ');
-                  }
-                } catch (e) {}
-              }
+              const totalPassHours = (typeof siblingReservations !== 'undefined' && siblingReservations.length > 0)
+                ? siblingReservations.reduce((acc, s) => acc + parseInt(s.total_hours || 1, 10), 0)
+                : reservation.total_hours;
             %>
-            <strong class="text-dark"><%= slotDisplay %> (<%= reservation.total_hours %> hr<%= reservation.total_hours > 1 ? 's' : '' %>)</strong>
+            <strong class="text-dark"><%= totalPassHours %> Hour<%= totalPassHours > 1 ? 's' : '' %> Total</strong>
           </div>
         </div>
+
+        <% if (typeof siblingReservations !== 'undefined' && siblingReservations.length > 1) { %>
+          <div class="p-3 rounded-4 bg-light border mb-4">
+            <span class="fw-bold text-dark small d-block mb-2">Itemized Schedule by Date &amp; Court:</span>
+            <div class="d-flex flex-column gap-2">
+              <% siblingReservations.forEach(function(sib) { %>
+                <div class="p-2 px-3 rounded-3 bg-white border d-flex align-items-center justify-content-between flex-wrap gap-2">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 11px;">
+                      <%= sib.reservation_date %>
+                    </span>
+                    <span class="badge bg-warning text-dark rounded-pill px-2 py-0.5 fw-bold" style="font-size: 11px;">
+                      <%= sib.court ? sib.court.display_name : 'Court' %>
+                    </span>
+                    <span class="small text-dark fw-semibold">
+                      <% 
+                        let sibSlots = [];
+                        if (sib.slots_json) {
+                          try {
+                            const arr = JSON.parse(sib.slots_json);
+                            if (Array.isArray(arr)) sibSlots = arr;
+                          } catch(e) {}
+                        }
+                        if (sibSlots.length === 0) sibSlots = [sib.start_time];
+                      %>
+                      <%= sibSlots.map(t => formatTime12(t)).join(', ') %>
+                    </span>
+                  </div>
+                  <span class="small font-monospace fw-bold text-dark"><%= formatCurrency(sib.total_amount) %></span>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        <% } %>
 
         <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Player Information</h5>
         <div class="row g-3 mb-4">
