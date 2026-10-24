@@ -493,8 +493,8 @@
           <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-2.5 py-1 fw-bold" id="btnNextMonth" onclick="changeCalendarMonth(1)" title="Next Month">
             <i class="bi bi-chevron-right"></i>
           </button>
-          <button type="button" id="btnReturnToTimeSlots" class="btn btn-sm btn-light text-dark rounded-pill px-3 py-1 fw-bold ms-1 d-none" onclick="toggleBookingCalendarView(false)">
-            <i class="bi bi-clock-fill text-primary me-1"></i>View Slots &rarr;
+          <button type="button" id="btnReturnToTimeSlots" class="btn btn-sm btn-light text-dark rounded-pill px-3 py-1 fw-bold ms-1" onclick="scrollToTimeSlots()" title="Scroll down to court schedule">
+            <i class="bi bi-clock-fill text-primary me-1"></i>Court Slots &darr;
           </button>
         </div>
       </div>
@@ -538,16 +538,16 @@
     </div>
 
     <!-- =========================================================
-         STEP 2: COURT & TIME SCHEDULE MATRIX (Toggled when a Day is Selected)
+         STEP 2: COURT & TIME SCHEDULE MATRIX
     ========================================================= -->
-    <div id="bookingTimeMatrixCard" class="matrix-card d-none">
+    <div id="bookingTimeMatrixCard" class="matrix-card mt-3">
       <!-- Matrix Toolbar: Date Navigation & Quick Actions -->
       <div class="matrix-date-toolbar d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
         <!-- Date Navigator Buttons (Far Left) -->
         <div class="d-flex align-items-center gap-2 flex-wrap">
-          <button type="button" class="btn btn-dark btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-xs" onclick="toggleBookingCalendarView(true)" title="Open Month Calendar to Choose Another Date">
+          <button type="button" class="btn btn-dark btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-xs" onclick="scrollToCalendar()" title="Jump up to Month Calendar">
             <i class="bi bi-calendar3 text-warning"></i>
-            <span>Calendar</span>
+            <span>Calendar &uarr;</span>
           </button>
 
           <button type="button" class="matrix-date-btn" id="btnPrevDate" title="Previous Day">
@@ -1726,6 +1726,10 @@
     return `${year}-${m}-${d}`;
   }
 
+  function escapeJs(str) {
+    return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  }
+
   async function fetchCalendarMonthStatus(year, month, forceRefresh = false) {
     const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
     if (!forceRefresh && calendarMonthStatusCache[monthKey]) {
@@ -1902,35 +1906,34 @@
     updateDateDisplay(currentDate);
     renderMonthCalendar();
 
-    const returnBtn = document.getElementById('btnReturnToTimeSlots');
-    if (returnBtn) returnBtn.classList.remove('d-none');
+    // Always fetch & update court availability matrix for the selected date!
+    fetchMatrixAvailability(currentDate);
 
-    if (dateChanged) {
-      fetchMatrixAvailability(currentDate);
+    // Make sure court matrix card is visible and smooth-scroll to it
+    scrollToTimeSlots();
+  }
+
+  function scrollToCalendar() {
+    const calCard = document.getElementById('bookingMonthCalendarCard');
+    if (calCard) {
+      calCard.classList.remove('d-none');
+      calCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  }
 
-    // Toggle from Step 1 (Month Calendar) to Step 2 (Time Slot Matrix)
-    toggleBookingCalendarView(false);
+  function scrollToTimeSlots() {
+    const matrixCard = document.getElementById('bookingTimeMatrixCard');
+    if (matrixCard) {
+      matrixCard.classList.remove('d-none');
+      matrixCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   function toggleBookingCalendarView(showCalendar) {
-    const calCard = document.getElementById('bookingMonthCalendarCard');
-    const matrixCard = document.getElementById('bookingTimeMatrixCard');
-    const rail = document.getElementById('bookingActionBar');
-    if (!calCard || !matrixCard) return;
-
     if (showCalendar) {
-      renderMonthCalendar();
-      fetchCalendarMonthStatus(calendarViewYear, calendarViewMonth);
-      calCard.classList.remove('d-none');
-      matrixCard.classList.add('d-none');
-      if (rail) rail.classList.remove('is-visible');
+      scrollToCalendar();
     } else {
-      calCard.classList.add('d-none');
-      matrixCard.classList.remove('d-none');
-      if (rail && selectedSlotItems && selectedSlotItems.length > 0) {
-        rail.classList.add('is-visible');
-      }
+      scrollToTimeSlots();
     }
   }
 
@@ -1945,9 +1948,10 @@
     updateDateDisplay(currentDate);
     renderMonthCalendar();
     fetchCalendarMonthStatus(calendarViewYear, calendarViewMonth);
+    fetchMatrixAvailability(currentDate);
 
     displayBtn.addEventListener('click', () => {
-      toggleBookingCalendarView(true);
+      scrollToCalendar();
     });
 
     nativePicker.addEventListener('change', (e) => {
