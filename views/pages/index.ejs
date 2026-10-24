@@ -430,7 +430,10 @@
       }
       @media (max-width: 767.98px) {
         .month-calendar-header {
-          padding: 12px 14px;
+          padding: 10px 12px;
+        }
+        #calendarMonthYearTitle {
+          font-size: 16px;
         }
         .month-calendar-weekdays {
           padding: 8px 4px;
@@ -483,18 +486,18 @@
           <span class="text-white-50 small d-none d-sm-block" style="font-size: 12px;">Tap any available date below to view court time slots</span>
         </div>
 
-        <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
-          <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-2.5 py-1 fw-bold" id="btnPrevMonth" onclick="changeCalendarMonth(-1)" title="Previous Month">
+        <div class="d-flex align-items-center gap-1 gap-sm-1.5 flex-shrink-0">
+          <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-2 px-sm-2.5 py-1 fw-bold" id="btnPrevMonth" onclick="changeCalendarMonth(-1)" title="Previous Month">
             <i class="bi bi-chevron-left"></i>
           </button>
-          <button type="button" class="btn btn-sm btn-warning text-dark rounded-pill px-3 py-1 fw-bold" onclick="jumpCalendarToToday()">
+          <button type="button" class="btn btn-sm btn-warning text-dark rounded-pill px-2.5 px-sm-3 py-1 fw-bold" onclick="jumpCalendarToToday()">
             Today
           </button>
-          <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-2.5 py-1 fw-bold" id="btnNextMonth" onclick="changeCalendarMonth(1)" title="Next Month">
+          <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-2 px-sm-2.5 py-1 fw-bold" id="btnNextMonth" onclick="changeCalendarMonth(1)" title="Next Month">
             <i class="bi bi-chevron-right"></i>
           </button>
-          <button type="button" id="btnReturnToTimeSlots" class="btn btn-sm btn-light text-dark rounded-pill px-3 py-1 fw-bold ms-1" onclick="scrollToTimeSlots()" title="Scroll down to court schedule">
-            <i class="bi bi-clock-fill text-primary me-1"></i>Court Slots &darr;
+          <button type="button" id="btnReturnToTimeSlots" class="btn btn-sm btn-light text-dark rounded-pill px-2 px-sm-3 py-1 fw-bold" onclick="scrollToTimeSlots()" title="Scroll down to court schedule">
+            <i class="bi bi-clock-fill text-primary me-1"></i><span class="d-none d-sm-inline">Court </span>Slots &darr;
           </button>
         </div>
       </div>
