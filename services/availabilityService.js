@@ -42,7 +42,7 @@ async function getCourtAvailability(courtId, date, currentUser = null) {
     }
   });
 
-  const allSlots = generateTimeSlots('08:00', '24:00', 60);
+  const allSlots = generateTimeSlots('06:00', '24:00', 60);
 
   const slotsWithStatus = allSlots.map((slot) => {
     // Check if slot matches any Admin block

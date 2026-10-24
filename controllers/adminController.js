@@ -1129,7 +1129,7 @@ const adminController = {
 
       const isAllCourts = court_id === 'all' || !court_id;
       const isAllDay = time_mode === 'all_day';
-      const actualStartTime = isAllDay ? '08:00' : (start_time || '08:00');
+      const actualStartTime = isAllDay ? '06:00' : (start_time || '06:00');
       const actualEndTime = isAllDay ? '24:00' : (end_time || '24:00');
 
       if (!isAllDay && actualStartTime >= actualEndTime) {

@@ -25,7 +25,7 @@ const reservationController = {
       const selectedCourtId = req.query.court_id || (courts.length > 0 ? courts[0].id : null);
       const today = formatDate(new Date());
       const selectedDate = req.query.date || today;
-      const initialSlot = req.query.slot || '08:00';
+      const initialSlot = req.query.slot || '06:00';
 
       res.render('pages/reservation', {
         title: 'Book a Court - The Playground Pickleball',

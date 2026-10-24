@@ -33,7 +33,7 @@ function formatTime12(time24) {
 }
 
 function generateTimeSlots(start, end, intervalMinutes) {
-  if (!start) start = '08:00';
+  if (!start) start = '06:00';
   if (!end) end = '24:00';
   if (!intervalMinutes) intervalMinutes = 60;
 

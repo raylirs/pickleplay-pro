@@ -181,7 +181,7 @@
                 <td>
                   <% if (b.is_all_day) { %>
                     <span class="badge bg-danger text-white rounded-pill px-2.5 py-1 fw-bold">
-                      <i class="bi bi-sun-fill me-1"></i>Entire Day (8AM - 12MN)
+                      <i class="bi bi-sun-fill me-1"></i>Entire Day (6AM - 12MN)
                     </span>
                   <% } else { %>
                     <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 fw-bold font-monospace">
@@ -293,7 +293,7 @@
                 <input type="radio" class="btn-check" name="time_mode" id="modeAllDay" value="all_day" checked onchange="toggleBlockTimeRange(false)">
                 <label class="btn btn-outline-danger w-100 py-2 rounded-3 text-start small fw-bold d-flex align-items-center gap-2" for="modeAllDay">
                   <i class="bi bi-sun-fill text-warning"></i>
-                  <span>Entire Day<br><span class="text-muted fw-normal" style="font-size: 10px;">8:00 AM - 12:00 MN</span></span>
+                  <span>Entire Day<br><span class="text-muted fw-normal" style="font-size: 10px;">6:00 AM - 12:00 MN</span></span>
                 </label>
               </div>
               <div class="col-6">
@@ -312,7 +312,7 @@
               <div class="col-6">
                 <label class="form-label small fw-semibold text-dark mb-1">Start Time</label>
                 <select name="start_time" id="blockStartTime" class="form-select form-select-sm rounded-3">
-                  <% for(let h = 8; h <= 23; h++) { const hh = String(h).padStart(2, '0') + ':00'; %>
+                  <% for(let h = 6; h <= 23; h++) { const hh = String(h).padStart(2, '0') + ':00'; %>
                     <option value="<%= hh %>"><%= formatTime12(hh) %></option>
                   <% } %>
                 </select>
@@ -320,7 +320,7 @@
               <div class="col-6">
                 <label class="form-label small fw-semibold text-dark mb-1">End Time</label>
                 <select name="end_time" id="blockEndTime" class="form-select form-select-sm rounded-3">
-                  <% for(let h = 9; h <= 24; h++) { const hh = String(h).padStart(2, '0') + ':00'; %>
+                  <% for(let h = 7; h <= 24; h++) { const hh = String(h).padStart(2, '0') + ':00'; %>
                     <option value="<%= hh %>" <%= h === 12 ? 'selected' : '' %>><%= formatTime12(hh) %></option>
                   <% } %>
                 </select>

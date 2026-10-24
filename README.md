@@ -15,7 +15,7 @@
 
 ### 2. ⚡ Public-Facing Reservation System
 - **Court Showcase & Catalog**: Modern responsive grid layout displaying courts, amenities, and hourly rates.
-- **Interactive Availability Calendar**: Live slot matrix from 8:00 AM to 10:00 PM showing available vs. booked slots.
+- **Interactive Availability Calendar**: Live slot matrix from 6:00 AM to 12:00 Midnight showing available vs. booked slots.
 - **Multi-Hour Booking**: Select duration from 1 to 4 hours with conflict detection.
 - **Real-Time Slot Synchronization**: Powered by **Socket.io** — when a user books or pays, the slot updates across all active screens in real-time.
 - **Booking Reference Search**: Quick lookup (`/reservations/lookup`) for receipts using reference IDs (`PKL-YYYY-XXXX`).
