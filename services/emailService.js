@@ -1,4 +1,6 @@
 const nodemailer = require('nodemailer');
+const fs = require('fs');
+const path = require('path');
 const { formatCurrency, formatTime12 } = require('../utils/dateTimeUtils');
 const { Op } = require('sequelize');
 const { SystemSetting, Court, Reservation } = require('../models');
@@ -88,7 +90,7 @@ async function createDynamicTransporter() {
  * 1. Brevo HTTPS API (Port 443 - Bypasses Render Free Tier outbound SMTP port restrictions, delivers to ANY email address)
  * 2. Standard SMTP / Gmail (Nodemailer - Used on local dev or paid Render tiers)
  */
-async function dispatchEmail({ to, subject, html }) {
+async function dispatchEmail({ to, subject, html, attachments }) {
   const cfg = await resolveSmtpConfig();
   const toList = (Array.isArray(to) ? to : String(to).split(/[\s,]+/))
     .map(e => e.trim())
@@ -101,6 +103,26 @@ async function dispatchEmail({ to, subject, html }) {
   // 1. Try Brevo HTTPS API (Port 443 - Never blocked on Render Free)
   if (cfg.brevoApiKey) {
     try {
+      const brevoBody = {
+        sender: { name: cfg.fromName, email: cfg.brevoSender },
+        to: toList.map(email => ({ email })),
+        subject,
+        htmlContent: html
+      };
+
+      if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+        brevoBody.attachment = attachments.map(att => {
+          if (att.content && typeof att.content === 'string') {
+            return { name: att.filename, content: att.content };
+          } else if (att.path && fs.existsSync(att.path)) {
+            return { name: att.filename, content: fs.readFileSync(att.path).toString('base64') };
+          } else if (att.url) {
+            return { name: att.filename, url: att.url };
+          }
+          return null;
+        }).filter(Boolean);
+      }
+
       const res = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
@@ -108,12 +130,7 @@ async function dispatchEmail({ to, subject, html }) {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify({
-          sender: { name: cfg.fromName, email: cfg.brevoSender },
-          to: toList.map(email => ({ email })),
-          subject,
-          htmlContent: html
-        }),
+        body: JSON.stringify(brevoBody),
         signal: AbortSignal.timeout(10000)
       });
       const data = await res.json();
@@ -133,12 +150,16 @@ async function dispatchEmail({ to, subject, html }) {
   const { transporter } = await createDynamicTransporter();
   if (transporter) {
     try {
-      const info = await transporter.sendMail({
+      const mailOptions = {
         from: `"${cfg.fromName}" <${cfg.user}>`,
         to: toList.join(', '),
         subject,
         html
-      });
+      };
+      if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+        mailOptions.attachments = attachments;
+      }
+      const info = await transporter.sendMail(mailOptions);
       console.log(`[Email Service Gmail] Successfully delivered to ${toList.join(', ')} (Message ID: ${info.messageId})`);
       return { success: true, mocked: false, provider: 'smtp', messageId: info.messageId };
     } catch (err) {
@@ -381,6 +402,57 @@ async function notifyAdminsPaymentProofEmail(reservation, totalOrderAmount) {
   if (!recipients || recipients.length === 0) return;
 
   const totalAmount = totalOrderAmount !== undefined ? parseFloat(totalOrderAmount) : parseFloat(reservation.total_amount || 0);
+
+  const baseUrl = process.env.APP_URL && process.env.APP_URL.startsWith('https://')
+    ? process.env.APP_URL.replace(/\/$/, '')
+    : 'https://pickleplay-pro.onrender.com';
+
+  const screenshotUrl = reservation.payment_screenshot
+    ? (reservation.payment_screenshot.startsWith('http')
+        ? reservation.payment_screenshot
+        : `${baseUrl}${reservation.payment_screenshot}`)
+    : '';
+
+  const attachments = [];
+  let screenshotHtml = '';
+
+  if (reservation.payment_screenshot) {
+    const localRelPath = reservation.payment_screenshot.replace(/^\//, '');
+    const localPath = path.join(__dirname, '..', 'public', localRelPath);
+    const filename = `gcash-proof-${reservation.reference_number}.jpg`;
+
+    if (fs.existsSync(localPath)) {
+      attachments.push({
+        filename,
+        path: localPath,
+        cid: 'gcashScreenshot'
+      });
+      screenshotHtml = `
+        <div style="margin: 20px 0; text-align: center; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1.5px dashed #cbd5e1;">
+          <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: bold; color: #334155;">📷 GCash Payment Screenshot (Attached):</p>
+          <a href="${screenshotUrl || '#'}" target="_blank" style="text-decoration: none; display: inline-block;">
+            <img src="cid:gcashScreenshot" alt="GCash Screenshot" style="max-width: 100%; max-height: 480px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #cbd5e1; display: block; margin: 0 auto;" />
+          </a>
+          <p style="margin: 10px 0 0 0; font-size: 11px; color: #64748b;">(Click image or check email attachments to view high-resolution proof)</p>
+        </div>
+      `;
+    } else if (screenshotUrl) {
+      attachments.push({
+        filename,
+        url: screenshotUrl
+      });
+      screenshotHtml = `
+        <div style="margin: 20px 0; text-align: center; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1.5px dashed #cbd5e1;">
+          <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: bold; color: #334155;">📷 GCash Payment Screenshot Preview:</p>
+          <a href="${screenshotUrl}" target="_blank" style="text-decoration: none; display: inline-block;">
+            <img src="${screenshotUrl}" alt="GCash Screenshot" style="max-width: 100%; max-height: 480px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #cbd5e1; display: block; margin: 0 auto;" />
+          </a>
+          <p style="margin: 10px 0 0 0; font-size: 11px; color: #64748b;">(Click image to view high-resolution proof)</p>
+        </div>
+      `;
+    }
+  }
+
   const emailHtml = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 12px;">
       <div style="background: linear-gradient(135deg, #198754 0%, #157347 100%); color: white; padding: 18px; text-align: center; border-radius: 8px 8px 0 0;">
@@ -388,15 +460,18 @@ async function notifyAdminsPaymentProofEmail(reservation, totalOrderAmount) {
         <p style="margin: 5px 0 0 0; font-size: 14px; color: #d1e7dd; font-weight: bold;">🧾 GCash Payment Proof Uploaded</p>
       </div>
       <div style="padding: 20px; color: #1e293b;">
-        <p>A player has submitted their GCash payment receipt for verification:</p>
+        <p>A player has submitted their GCash payment receipt for admin verification:</p>
         <div style="background-color: #f8fafc; border-left: 4px solid #198754; padding: 14px 18px; margin: 15px 0;">
           <p style="margin: 0 0 6px 0;"><strong>Booking Ref:</strong> <span style="font-family: monospace; font-size: 15px; color: #0d6efd;">${reservation.reference_number}</span></p>
           <p style="margin: 0 0 6px 0;"><strong>Player Name:</strong> ${reservation.user_name}</p>
           <p style="margin: 0 0 6px 0;"><strong>GCash Ref Number:</strong> <span style="font-family: monospace; font-weight: bold;">${reservation.gcash_reference_no || 'Uploaded'}</span></p>
           <p style="margin: 0;"><strong>Total Paid:</strong> ${formatCurrency(totalAmount)}</p>
         </div>
-        <p style="margin-top: 15px;">
-          <a href="https://pickleplay-pro.onrender.com/admin/reservations" style="display: inline-block; background-color: #198754; color: #ffffff; padding: 10px 22px; text-decoration: none; border-radius: 20px; font-weight: bold; font-size: 13px;">Review &amp; Approve in Admin Dashboard &rarr;</a>
+
+        ${screenshotHtml}
+
+        <p style="margin-top: 20px; text-align: center;">
+          <a href="${baseUrl}/admin/reservations?ref=${reservation.reference_number}" style="display: inline-block; background-color: #198754; color: #ffffff; padding: 12px 26px; text-decoration: none; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">Review &amp; Approve in Admin Dashboard &rarr;</a>
         </p>
       </div>
       <div style="text-align: center; font-size: 11px; color: #94a3b8; padding-top: 15px; border-top: 1px solid #eee;">
@@ -408,7 +483,8 @@ async function notifyAdminsPaymentProofEmail(reservation, totalOrderAmount) {
   await dispatchEmail({
     to: recipients,
     subject: `[GCash Proof] ${reservation.user_name} - ${reservation.reference_number} (${formatCurrency(totalAmount)})`,
-    html: emailHtml
+    html: emailHtml,
+    attachments
   });
 }
 

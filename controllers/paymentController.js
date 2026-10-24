@@ -206,7 +206,8 @@ const paymentController = {
           date: reservation.reservation_date,
           time: reservation.start_time,
           amount: reservation.total_amount,
-          gcashRef: reservation.gcash_reference_no
+          gcashRef: reservation.gcash_reference_no,
+          screenshot: reservation.payment_screenshot
         });
       } catch (socketErr) {
         console.warn('Socket broadcast warning:', socketErr.message);
