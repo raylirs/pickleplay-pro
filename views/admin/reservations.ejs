@@ -21,8 +21,8 @@
           <option value="ALL" <%= filters.status === 'ALL' ? 'selected' : '' %>>All Statuses</option>
           <option value="AWAITING_CONFIRMATION" <%= filters.status === 'AWAITING_CONFIRMATION' ? 'selected' : '' %>>⏳ AWAITING APPROVAL</option>
           <option value="CONFIRMED" <%= filters.status === 'CONFIRMED' ? 'selected' : '' %>>✅ CONFIRMED</option>
-          <option value="AWAITING_PAYMENT" <%= filters.status === 'AWAITING_PAYMENT' ? 'selected' : '' %>>UNPAID</option>
-          <option value="CANCELLED" <%= filters.status === 'CANCELLED' ? 'selected' : '' %>>CANCELLED</option>
+          <option value="AWAITING_PAYMENT" <%= filters.status === 'AWAITING_PAYMENT' ? 'selected' : '' %>>💳 UNPAID (Awaiting GCash)</option>
+          <option value="CANCELLED" <%= filters.status === 'CANCELLED' ? 'selected' : '' %>>❌ CANCELLED</option>
         </select>
       </div>
 
@@ -115,6 +115,10 @@
                     <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>CONFIRMED</span>
                   <% } else if (res.status === 'AWAITING_CONFIRMATION') { %>
                     <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>AWAITING APPROVAL</span>
+                  <% } else if (res.status === 'PENDING') { %>
+                    <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>PENDING APPROVAL</span>
+                  <% } else if (res.status === 'AWAITING_PAYMENT') { %>
+                    <span class="badge bg-secondary"><i class="bi bi-clock me-1"></i>UNPAID (Awaiting GCash)</span>
                   <% } else if (res.status === 'CANCELLED') { %>
                     <span class="badge bg-danger">CANCELLED</span>
                   <% } else { %>

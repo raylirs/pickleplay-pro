@@ -118,3 +118,5 @@ server.listen(PORT, HOST, async () => {
     console.error('[Database/Worker Init Warning]:', err.message || err);
   }
 });
+
+module.exports = { app, server };

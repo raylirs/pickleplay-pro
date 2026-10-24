@@ -18,7 +18,8 @@ const adminController = {
       const activeCourts = await Court.count({ where: { is_active: true } });
       const totalReservations = await Reservation.count();
       const confirmedReservations = await Reservation.count({ where: { status: 'CONFIRMED' } });
-      const pendingReservations = await Reservation.count({ where: { status: { [Op.in]: ['PENDING', 'AWAITING_PAYMENT'] } } });
+      const pendingReservations = await Reservation.count({ where: { status: { [Op.in]: ['AWAITING_CONFIRMATION', 'PENDING'] } } });
+      const unpaidReservations = await Reservation.count({ where: { status: 'AWAITING_PAYMENT' } });
       const cancelledReservations = await Reservation.count({ where: { status: 'CANCELLED' } });
 
       const allConfirmed = await Reservation.findAll({
@@ -66,6 +67,7 @@ const adminController = {
           totalReservations,
           confirmedReservations,
           pendingReservations,
+          unpaidReservations,
           cancelledReservations,
           totalRevenue,
           todayRevenue,
@@ -325,7 +327,13 @@ const adminController = {
       const where = {};
 
       if (status && status !== 'ALL') {
-        where.status = status;
+        if (status === 'AWAITING_CONFIRMATION') {
+          where.status = { [Op.in]: ['AWAITING_CONFIRMATION', 'PENDING'] };
+        } else if (status === 'AWAITING_PAYMENT') {
+          where.status = { [Op.in]: ['AWAITING_PAYMENT', 'PENDING_PAYMENT'] };
+        } else {
+          where.status = status;
+        }
       }
       if (court_id && court_id !== 'ALL') {
         where.court_id = court_id;
