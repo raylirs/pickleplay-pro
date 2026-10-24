@@ -729,6 +729,44 @@ h1, h2, h3, h4, .font-display {
   color: #DC2626 !important;
 }
 
+/* Open Play Day & Slot Highlights in Calendar & Matrix */
+.badge-open-play {
+  background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.2px;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+}
+
+.calendar-day-cell.is-open-play {
+  background: #F0F9FF !important;
+  border-color: #BAE6FD !important;
+  cursor: pointer !important;
+  opacity: 1 !important;
+}
+
+.calendar-day-cell.is-open-play:hover {
+  background: #E0F2FE !important;
+  border-color: #0284C7 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.18);
+}
+
+.calendar-day-cell.is-open-play .calendar-day-number {
+  color: #0369A1 !important;
+}
+
+.matrix-slot-cell.is-open-play-slot .slot-inner {
+  background: #F0F9FF !important;
+  border: 1.5px solid #38BDF8 !important;
+  color: #0369A1 !important;
+}
+
+.matrix-slot-cell.is-open-play-slot .slot-inner span {
+  color: #0284C7 !important;
+  font-weight: 800 !important;
+}
+
 /* =========================================================
    Floating Sticky Bottom Booking Action Rail
 ========================================================= */

@@ -194,17 +194,23 @@ const courtController = {
         const hasUserBooking = userResForDay.length > 0;
         const userBookingRefs = [...new Set(userResForDay.map(r => r.reference_number))];
 
+        // Check if day has any Open Play block
+        const openPlayBlock = dayBlocks.find(b => b.reason && /open\s*play/i.test(b.reason));
+        const isOpenPlayDay = Boolean(openPlayBlock);
+
         // Check full-day facility block (all courts all day)
         const fullDayClosure = dayBlocks.find(b => b.is_all_day && (b.all_courts || !b.court_id));
         if (fullDayClosure) {
+          const isFullDayOpenPlay = /open\s*play/i.test(fullDayClosure.reason || '');
           daysStatus[dateStr] = {
-            status: 'BLOCKED',
-            label: 'Blocked',
-            reason: fullDayClosure.reason || 'Court Maintenance / Blocked',
+            status: isFullDayOpenPlay ? 'OPEN_PLAY' : 'BLOCKED',
+            label: isFullDayOpenPlay ? 'Open Play' : 'Blocked',
+            reason: fullDayClosure.reason || (isFullDayOpenPlay ? 'Open Play (Walk-ins & Drop-ins Welcome)' : 'Court Maintenance / Blocked'),
             availableSlots: 0,
             totalSlots: totalCourtSlotsPerDay,
             hasUserBooking,
-            userBookingRefs
+            userBookingRefs,
+            isOpenPlay: isFullDayOpenPlay
           };
           continue;
         }
@@ -241,8 +247,16 @@ const courtController = {
 
         if (availableSlots <= 0) {
           const hasBlocks = dayBlocks.length > 0;
-          dayStatus = hasBlocks ? 'BLOCKED' : 'FULL';
-          label = hasBlocks ? 'Blocked' : 'Fully Booked';
+          if (isOpenPlayDay) {
+            dayStatus = 'OPEN_PLAY';
+            label = 'Open Play';
+          } else {
+            dayStatus = hasBlocks ? 'BLOCKED' : 'FULL';
+            label = hasBlocks ? 'Blocked' : 'Fully Booked';
+          }
+        } else if (isOpenPlayDay) {
+          dayStatus = 'OPEN_PLAY';
+          label = 'Open Play';
         } else if (availableSlots <= 5) {
           dayStatus = 'FEW_LEFT';
           label = `${availableSlots} Slots Left`;
@@ -254,7 +268,9 @@ const courtController = {
           availableSlots,
           totalSlots: totalCourtSlotsPerDay,
           hasUserBooking,
-          userBookingRefs
+          userBookingRefs,
+          isOpenPlay: isOpenPlayDay,
+          reason: openPlayBlock ? openPlayBlock.reason : null
         };
       }
 

@@ -90,6 +90,11 @@
             <i class="bi bi-hand-index-thumb"></i> Click open slots to select &amp; block
           </span>
 
+          <button type="button" class="btn btn-outline-info btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5" onclick="quickSetOpenPlay()">
+            <i class="bi bi-people-fill text-info"></i>
+            <span>Set Open Play for This Day</span>
+          </button>
+
           <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5" onclick="quickBlockFullDay()">
             <i class="bi bi-door-closed-fill"></i>
             <span>Block All Courts for This Day</span>
@@ -385,6 +390,7 @@
               Reason / Purpose <span class="text-danger">*</span>
             </label>
             <select name="reason_preset" id="blockReasonPreset" class="form-select rounded-3 mb-2" onchange="handleBlockReasonPresetChange(this.value)">
+              <option value="Open Play (Walk-ins & Drop-ins Welcome)">🏸 Open Play (Walk-ins &amp; Drop-ins Welcome)</option>
               <option value="Court Maintenance & Surface Cleaning">Court Maintenance &amp; Surface Cleaning</option>
               <option value="Club Tournament / League Play">Club Tournament / League Play</option>
               <option value="Coaching Clinic / Private Training">Coaching Clinic / Private Training</option>
@@ -478,6 +484,7 @@
               Reason / Purpose <span class="text-danger">*</span>
             </label>
             <select name="reason_preset" id="multiBlockReasonPreset" class="form-select rounded-3 mb-2" onchange="handleMultiBlockReasonPresetChange(this.value)">
+              <option value="Open Play (Walk-ins & Drop-ins Welcome)">🏸 Open Play (Walk-ins &amp; Drop-ins Welcome)</option>
               <option value="Court Maintenance & Surface Cleaning">Court Maintenance &amp; Surface Cleaning</option>
               <option value="Club Tournament / League Play">Club Tournament / League Play</option>
               <option value="Coaching Clinic / Private Training">Coaching Clinic / Private Training</option>
@@ -913,6 +920,20 @@
     document.getElementById('blockDateInput').value = dateYmd;
     document.getElementById('modeAllDay').checked = true;
     toggleBlockTimeRange(false);
+    const modal = new bootstrap.Modal(document.getElementById('newBlockModal'));
+    modal.show();
+  }
+
+  function quickSetOpenPlay() {
+    document.getElementById('blockCourtSelect').value = 'all';
+    document.getElementById('blockDateInput').value = currentInspectedDate;
+    document.getElementById('modeAllDay').checked = true;
+    toggleBlockTimeRange(false);
+    const preset = document.getElementById('blockReasonPreset');
+    if (preset) {
+      preset.value = 'Open Play (Walk-ins & Drop-ins Welcome)';
+      handleBlockReasonPresetChange('Open Play (Walk-ins & Drop-ins Welcome)');
+    }
     const modal = new bootstrap.Modal(document.getElementById('newBlockModal'));
     modal.show();
   }
