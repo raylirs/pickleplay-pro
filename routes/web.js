@@ -42,12 +42,27 @@ router.get('/', async (req, res, next) => {
       ? await reservationController.getPlayerReservationsGrouped(currentUser)
       : [];
 
+    const playerBookedDates = {};
+    if (myBookings && myBookings.length > 0) {
+      myBookings.forEach(b => {
+        if (b.status !== 'CANCELLED' && b.status !== 'EXPIRED' && b.status !== 'REFUNDED') {
+          (b.dates || [b.reservation_date]).forEach(d => {
+            playerBookedDates[d] = {
+              referenceNumber: b.reference_number,
+              status: b.status
+            };
+          });
+        }
+      });
+    }
+
     res.render('pages/index', {
       title: 'The Playground Pickleball - Championship Courts Reservation',
       categories,
       courts,
       today,
       myBookings,
+      playerBookedDates,
       formatCurrency,
       formatTime12,
       formatDate,
@@ -82,8 +97,9 @@ router.get('/api/account/chat', chatController.getAccountChatJson);
 router.post('/api/account/chat', chatController.sendPlayerChatMessage);
 router.post('/api/account/chat/read', chatController.markPlayerChatRead);
 
-// JSON endpoint for real-time court availability matrix
+// JSON endpoint for real-time court availability matrix and calendar month status
 router.get('/courts-availability', courtController.getAllCourtsAvailabilityJson);
+router.get('/calendar-month-status', courtController.getCalendarMonthStatusJson);
 
 // Courts listing & detail
 router.get('/courts', courtController.getPublicCourts);

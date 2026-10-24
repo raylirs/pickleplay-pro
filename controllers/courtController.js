@@ -1,6 +1,7 @@
-const { CourtCategory, Court, Reservation } = require('../models');
+const { CourtCategory, Court, Reservation, CourtBlock } = require('../models');
 const { getCourtAvailability, getFacilityClosedDates } = require('../services/availabilityService');
 const { formatDate } = require('../utils/dateTimeUtils');
+const { Op } = require('sequelize');
 
 const courtController = {
   async getPublicCourts(req, res, next) {
@@ -107,6 +108,160 @@ const courtController = {
         closedReason,
         closedDates,
         courts: courtsData
+      });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  },
+
+  async getCalendarMonthStatusJson(req, res, next) {
+    try {
+      const year = parseInt(req.query.year, 10) || new Date().getFullYear();
+      const month = parseInt(req.query.month, 10) || (new Date().getMonth() + 1); // 1-12
+      const monthStr = String(month).padStart(2, '0');
+      const startDate = `${year}-${monthStr}-01`;
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const endDate = `${year}-${monthStr}-${String(daysInMonth).padStart(2, '0')}`;
+      const currentUser = req.session ? req.session.user : null;
+
+      // 1. Get active courts and define daily operating slots
+      const courts = await Court.findAll({
+        where: { is_active: true },
+        attributes: ['id', 'display_name']
+      });
+
+      const operatingSlots = [
+        '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
+        '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
+        '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'
+      ];
+      const slotsPerDayPerCourt = operatingSlots.length; // 18
+      const totalCourtSlotsPerDay = (courts.length || 4) * slotsPerDayPerCourt; // e.g. 72
+
+      // 2. Fetch court blocks for the month
+      const blocks = await CourtBlock.findAll({
+        where: {
+          date: { [Op.between]: [startDate, endDate] }
+        }
+      });
+
+      // 3. Fetch active reservations for the month
+      const reservations = await Reservation.findAll({
+        where: {
+          reservation_date: { [Op.between]: [startDate, endDate] },
+          status: { [Op.in]: ['CONFIRMED', 'AWAITING_PAYMENT', 'AWAITING_CONFIRMATION', 'PENDING'] }
+        },
+        attributes: ['id', 'reference_number', 'court_id', 'reservation_date', 'start_time', 'end_time', 'slots_json', 'status', 'user_id', 'user_contact', 'user_email']
+      });
+
+      // Helper to check if a reservation belongs to currentUser
+      const isUserReservation = (r) => {
+        if (!currentUser) return false;
+        if (currentUser.id && r.user_id && Number(currentUser.id) === Number(r.user_id)) return true;
+        if (currentUser.phone && r.user_contact && r.user_contact === currentUser.phone) return true;
+        if (currentUser.email && r.user_email && currentUser.email.toLowerCase() === r.user_email.toLowerCase()) return true;
+        return false;
+      };
+
+      // Helper to parse slots from an object (block or reservation)
+      const extractSlots = (item) => {
+        if (item.slots_json) {
+          try {
+            const arr = JSON.parse(item.slots_json);
+            if (Array.isArray(arr) && arr.length > 0) return arr;
+          } catch(e) {}
+        }
+        const startH = parseInt((item.start_time || '06:00').split(':')[0], 10);
+        const endH = parseInt((item.end_time || '24:00').split(':')[0], 10);
+        const sArr = [];
+        for (let h = startH; h < endH; h++) {
+          const hh = String(h).padStart(2, '0') + ':00';
+          if (operatingSlots.includes(hh)) sArr.push(hh);
+        }
+        return sArr;
+      };
+
+      // 4. Compute status for each day of the month
+      const daysStatus = {};
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${monthStr}-${String(day).padStart(2, '0')}`;
+        const dayBlocks = blocks.filter(b => b.date === dateStr);
+        const dayReservations = reservations.filter(r => r.reservation_date === dateStr);
+
+        // Check user booking hint
+        const userResForDay = dayReservations.filter(isUserReservation);
+        const hasUserBooking = userResForDay.length > 0;
+        const userBookingRefs = [...new Set(userResForDay.map(r => r.reference_number))];
+
+        // Check full-day facility closure (all courts all day)
+        const fullDayClosure = dayBlocks.find(b => b.is_all_day && (b.all_courts || !b.court_id));
+        if (fullDayClosure) {
+          daysStatus[dateStr] = {
+            status: 'CLOSED',
+            label: 'Facility Closed',
+            reason: fullDayClosure.reason || 'Facility Closed',
+            availableSlots: 0,
+            totalSlots: totalCourtSlotsPerDay,
+            hasUserBooking,
+            userBookingRefs
+          };
+          continue;
+        }
+
+        // Count occupied slots per court
+        let occupiedSlotsCount = 0;
+
+        for (const court of courts) {
+          const courtOccupiedSlots = new Set();
+
+          // Blocks affecting this court
+          const relevantBlocks = dayBlocks.filter(b => b.all_courts || !b.court_id || Number(b.court_id) === Number(court.id));
+          for (const b of relevantBlocks) {
+            if (b.is_all_day) {
+              operatingSlots.forEach(s => courtOccupiedSlots.add(s));
+            } else {
+              extractSlots(b).forEach(s => courtOccupiedSlots.add(s));
+            }
+          }
+
+          // Reservations on this court
+          const relevantRes = dayReservations.filter(r => Number(r.court_id) === Number(court.id));
+          for (const r of relevantRes) {
+            extractSlots(r).forEach(s => courtOccupiedSlots.add(s));
+          }
+
+          occupiedSlotsCount += Math.min(courtOccupiedSlots.size, slotsPerDayPerCourt);
+        }
+
+        const availableSlots = Math.max(0, totalCourtSlotsPerDay - occupiedSlotsCount);
+
+        let dayStatus = 'AVAILABLE';
+        let label = 'Available';
+
+        if (availableSlots <= 0) {
+          dayStatus = 'FULL';
+          label = 'Fully Booked';
+        } else if (availableSlots <= 5) {
+          dayStatus = 'FEW_LEFT';
+          label = `${availableSlots} Slots Left`;
+        }
+
+        daysStatus[dateStr] = {
+          status: dayStatus,
+          label,
+          availableSlots,
+          totalSlots: totalCourtSlotsPerDay,
+          hasUserBooking,
+          userBookingRefs
+        };
+      }
+
+      res.json({
+        success: true,
+        year,
+        month,
+        days: daysStatus
       });
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });

@@ -333,6 +333,39 @@
         color: #ffffff !important;
         box-shadow: 0 8px 20px rgba(11, 37, 69, 0.25);
       }
+      .calendar-day-cell.is-fully-booked {
+        background: #FFF1F2;
+        border-color: #FECDD3;
+      }
+      .calendar-day-cell.is-fully-booked:hover {
+        border-color: #F43F5E;
+        background: #FFE4E6;
+        box-shadow: 0 4px 12px rgba(244, 63, 94, 0.15);
+      }
+      .calendar-day-cell.is-fully-booked .calendar-day-number {
+        color: #BE123C;
+      }
+      .calendar-day-cell.is-closed-day {
+        background: #F1F5F9;
+        border-color: #CBD5E1;
+      }
+      .calendar-day-cell.has-player-booking {
+        border: 2px solid #2563EB !important;
+        background: #EFF6FF;
+      }
+      .calendar-day-cell.has-player-booking.is-today {
+        border: 2px solid #D4AF37 !important;
+        background: #FEFCE8;
+      }
+      .calendar-day-cell.has-player-booking.is-selected {
+        background: linear-gradient(135deg, #0B2545 0%, #134074 100%) !important;
+        border-color: #D4AF37 !important;
+      }
+      .calendar-day-badge.badge-player-booked {
+        background: #2563EB !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+      }
       .calendar-day-cell.is-disabled {
         background: #F8FAFC;
         border-color: #F1F5F9;
@@ -463,6 +496,29 @@
           <button type="button" id="btnReturnToTimeSlots" class="btn btn-sm btn-light text-dark rounded-pill px-3 py-1 fw-bold ms-1 d-none" onclick="toggleBookingCalendarView(false)">
             <i class="bi bi-clock-fill text-primary me-1"></i>View Slots &rarr;
           </button>
+        </div>
+      </div>
+
+      <!-- Calendar Legend Row -->
+      <div class="d-flex align-items-center justify-content-between px-3 px-md-4 py-2 bg-light border-bottom flex-wrap gap-2 small">
+        <div class="d-flex align-items-center gap-2 gap-sm-3 flex-wrap" style="font-size: 11px;">
+          <span class="d-inline-flex align-items-center gap-1.5 text-secondary fw-semibold">
+            <span class="badge rounded-circle p-1 bg-success"></span> Available
+          </span>
+          <span class="d-inline-flex align-items-center gap-1.5 text-secondary fw-semibold">
+            <span class="badge rounded-circle p-1 bg-danger"></span> Fully Booked
+          </span>
+          <span class="d-inline-flex align-items-center gap-1.5 text-secondary fw-semibold">
+            <span class="badge rounded-circle p-1 bg-secondary"></span> Not Available / Closed
+          </span>
+          <% if (typeof user !== 'undefined' && user) { %>
+            <span class="d-inline-flex align-items-center gap-1.5 text-primary fw-bold">
+              <span class="badge rounded-pill bg-primary text-white px-2 py-0.5" style="font-size: 9.5px;"><i class="bi bi-star-fill text-warning me-1"></i>Your Booking</span>
+            </span>
+          <% } %>
+        </div>
+        <div class="small text-muted d-none d-md-block" style="font-size: 11px;">
+          <i class="bi bi-info-circle me-1"></i>Select any available day to view court slots
         </div>
       </div>
 
@@ -1661,11 +1717,43 @@
   let calendarViewMonth = todayBaseDate.getMonth(); // 0-indexed
   let hasSelectedDayOnce = false;
   let facilityClosedDatesMap = {};
+  let playerBookedDatesMap = <%- JSON.stringify(typeof playerBookedDates !== 'undefined' ? playerBookedDates : {}) %>;
+  let calendarMonthStatusCache = {};
 
   function formatYmdLocal(year, monthZeroIndexed, dayNum) {
     const m = String(monthZeroIndexed + 1).padStart(2, '0');
     const d = String(dayNum).padStart(2, '0');
     return `${year}-${m}-${d}`;
+  }
+
+  async function fetchCalendarMonthStatus(year, month, forceRefresh = false) {
+    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+    if (!forceRefresh && calendarMonthStatusCache[monthKey]) {
+      renderMonthCalendar();
+      return;
+    }
+
+    try {
+      const res = await fetch(`/calendar-month-status?year=${year}&month=${month + 1}&_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json' }
+      });
+      const data = await res.json();
+      if (data && data.success && data.days) {
+        calendarMonthStatusCache[monthKey] = data.days;
+        Object.entries(data.days).forEach(([d, info]) => {
+          if (info.status === 'CLOSED') {
+            facilityClosedDatesMap[d] = info.reason || 'Facility Closed';
+          }
+          if (info.hasUserBooking) {
+            playerBookedDatesMap[d] = playerBookedDatesMap[d] || { status: 'CONFIRMED' };
+          }
+        });
+        renderMonthCalendar();
+      }
+    } catch (e) {
+      console.warn('Failed to fetch calendar month status:', e);
+    }
   }
 
   function renderMonthCalendar() {
@@ -1694,6 +1782,7 @@
     }
 
     const todayStr = '<%= today %>';
+    const monthKey = `${calendarViewYear}-${String(calendarViewMonth + 1).padStart(2, '0')}`;
     let cellsHtml = '';
 
     // Leading empty cells before the 1st of the month
@@ -1707,18 +1796,31 @@
       const isPast = dateStr < todayStr;
       const isToday = dateStr === todayStr;
       const isSelected = hasSelectedDayOnce && dateStr === currentDate;
-      const isFacilityClosed = Boolean(facilityClosedDatesMap[dateStr]);
-      const closedReason = facilityClosedDatesMap[dateStr] || 'Facility Closed';
+
+      const dayStatus = (calendarMonthStatusCache[monthKey] && calendarMonthStatusCache[monthKey][dateStr]) || null;
+      const hasPlayerBooking = Boolean(playerBookedDatesMap[dateStr] || (dayStatus && dayStatus.hasUserBooking));
+
+      const isFacilityClosed = Boolean(facilityClosedDatesMap[dateStr] || (dayStatus && dayStatus.status === 'CLOSED'));
+      const closedReason = (dayStatus && dayStatus.reason) || facilityClosedDatesMap[dateStr] || 'Facility Closed';
+
+      const isFullyBooked = !isFacilityClosed && dayStatus && dayStatus.status === 'FULL';
+      const isFewLeft = !isFacilityClosed && dayStatus && dayStatus.status === 'FEW_LEFT';
 
       let cellClasses = 'calendar-day-cell';
       if (isFacilityClosed) cellClasses += ' is-disabled is-closed-day';
       if (isPast) cellClasses += ' is-disabled';
+      if (isFullyBooked) cellClasses += ' is-fully-booked';
+      if (hasPlayerBooking) cellClasses += ' has-player-booking';
       if (isToday) cellClasses += ' is-today';
       if (isSelected) cellClasses += ' is-selected';
 
       let badgeHtml = '';
-      if (isFacilityClosed) {
-        badgeHtml = `<span class="calendar-day-badge bg-danger text-white">CLOSED</span>`;
+      if (hasPlayerBooking) {
+        badgeHtml = `<span class="calendar-day-badge badge-player-booked"><i class="bi bi-star-fill text-warning me-0.5"></i>BOOKED</span>`;
+      } else if (isFacilityClosed) {
+        badgeHtml = `<span class="calendar-day-badge bg-secondary text-white">CLOSED</span>`;
+      } else if (isFullyBooked) {
+        badgeHtml = `<span class="calendar-day-badge bg-danger text-white">FULL</span>`;
       } else if (isToday) {
         badgeHtml = `<span class="calendar-day-badge ${isSelected ? 'bg-warning text-dark' : 'bg-warning-subtle text-dark border border-warning'}">TODAY</span>`;
       } else if (isSelected) {
@@ -1726,19 +1828,27 @@
       }
 
       let ctaLabel = '';
-      if (isFacilityClosed) {
-        ctaLabel = `<span class="calendar-day-cta-desktop text-danger fw-bold"><i class="bi bi-slash-circle me-1"></i>${closedReason}</span><span class="calendar-day-cta-mobile text-danger fw-bold">Closed</span>`;
-      } else if (isPast) {
+      if (isPast) {
         ctaLabel = '';
+      } else if (isFacilityClosed) {
+        ctaLabel = `<span class="calendar-day-cta-desktop text-muted fw-bold"><i class="bi bi-slash-circle me-1"></i>Not Available</span><span class="calendar-day-cta-mobile text-muted">Closed</span>`;
+      } else if (isFullyBooked) {
+        ctaLabel = `<span class="calendar-day-cta-desktop text-danger fw-bold"><i class="bi bi-x-circle me-1"></i>Fully Booked</span><span class="calendar-day-cta-mobile text-danger">Full</span>`;
+      } else if (hasPlayerBooking) {
+        ctaLabel = `<span class="calendar-day-cta-desktop text-primary fw-bold"><i class="bi bi-calendar2-check-fill me-1"></i>Your Booking &bull; View</span><span class="calendar-day-cta-mobile text-primary fw-bold">Booked</span>`;
+      } else if (isFewLeft) {
+        ctaLabel = `<span class="calendar-day-cta-desktop text-warning-emphasis fw-bold"><i class="bi bi-exclamation-circle me-1"></i>${dayStatus.label}</span><span class="calendar-day-cta-mobile text-warning">Few</span>`;
       } else {
-        ctaLabel = `<span class="calendar-day-cta-desktop">Select Time <i class="bi bi-arrow-right-short"></i></span><span class="calendar-day-cta-mobile">${isToday ? 'Today' : 'Open'}</span>`;
+        ctaLabel = `<span class="calendar-day-cta-desktop text-success fw-bold"><i class="bi bi-circle-fill me-1 text-success" style="font-size: 6px; vertical-align: middle;"></i>Available <i class="bi bi-arrow-right-short"></i></span><span class="calendar-day-cta-mobile text-success">Open</span>`;
       }
 
       let clickAttr = '';
-      if (isFacilityClosed) {
-        clickAttr = `onclick="showLiveToast('🔒 Facility is closed on this date (${closedReason}).')"`;
-      } else if (isPast) {
+      if (isPast) {
         clickAttr = '';
+      } else if (isFacilityClosed) {
+        clickAttr = `onclick="showLiveToast('🔒 Facility is closed on this date (${escapeJs(closedReason)}).')"`;
+      } else if (isFullyBooked) {
+        clickAttr = `onclick="selectCalendarDay('${dateStr}'); showLiveToast('ℹ️ All courts are currently booked on ${dateStr}. You can inspect time slots or check another date.');"`;
       } else {
         clickAttr = `onclick="selectCalendarDay('${dateStr}')"`;
       }
@@ -1769,12 +1879,14 @@
       calendarViewYear -= 1;
     }
     renderMonthCalendar();
+    fetchCalendarMonthStatus(calendarViewYear, calendarViewMonth);
   }
 
   function jumpCalendarToToday() {
     calendarViewYear = todayBaseDate.getFullYear();
     calendarViewMonth = todayBaseDate.getMonth();
     selectCalendarDay('<%= today %>');
+    fetchCalendarMonthStatus(calendarViewYear, calendarViewMonth);
   }
 
   function selectCalendarDay(dateStr) {
@@ -1809,6 +1921,7 @@
 
     if (showCalendar) {
       renderMonthCalendar();
+      fetchCalendarMonthStatus(calendarViewYear, calendarViewMonth);
       calCard.classList.remove('d-none');
       matrixCard.classList.add('d-none');
       if (rail) rail.classList.remove('is-visible');
@@ -1831,6 +1944,7 @@
 
     updateDateDisplay(currentDate);
     renderMonthCalendar();
+    fetchCalendarMonthStatus(calendarViewYear, calendarViewMonth);
 
     displayBtn.addEventListener('click', () => {
       toggleBookingCalendarView(true);
@@ -4032,15 +4146,21 @@
         if (!data || !data.date || data.date === currentDate) {
           fetchMatrixAvailability(currentDate, true);
         }
+        fetchCalendarMonthStatus(calendarViewYear, calendarViewMonth, true);
         if (currentPlayerUser) {
           refreshMyBookings();
         }
+      });
+
+      socket.on('court_blocks_updated', function (data) {
+        fetchCalendarMonthStatus(calendarViewYear, calendarViewMonth, true);
       });
 
       socket.on('payment_submitted_for_approval', function (data) {
         if (!data || !data.date || data.date === currentDate) {
           fetchMatrixAvailability(currentDate, true);
         }
+        fetchCalendarMonthStatus(calendarViewYear, calendarViewMonth, true);
         if (currentPlayerUser) {
           refreshMyBookings();
         }
@@ -4050,6 +4170,7 @@
         if (!data || !data.date || data.date === currentDate) {
           fetchMatrixAvailability(currentDate, true);
         }
+        fetchCalendarMonthStatus(calendarViewYear, calendarViewMonth, true);
         if (currentPlayerUser) {
           refreshMyBookings();
         }

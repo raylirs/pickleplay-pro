@@ -7,6 +7,7 @@ const paymentController = require('../controllers/paymentController');
 // RESTful JSON API endpoints
 router.get('/courts', courtController.getPublicCourts);
 router.get('/courts-availability', courtController.getAllCourtsAvailabilityJson);
+router.get('/calendar-month-status', courtController.getCalendarMonthStatusJson);
 router.get('/courts/:id/availability', courtController.getCourtAvailabilityJson);
 router.post('/reservations/check-availability', reservationController.checkAvailability);
 router.post('/reservations', reservationController.createReservation);
