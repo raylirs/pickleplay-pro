@@ -81,9 +81,14 @@
           <!-- Legend Pill -->
           <div class="d-flex align-items-center gap-2 small px-2.5 py-1 bg-light rounded-pill border" style="font-size: 11px;">
             <span class="d-inline-flex align-items-center gap-1"><span class="badge rounded-circle p-1 bg-success"></span> Open</span>
+            <span class="d-inline-flex align-items-center gap-1"><span class="badge rounded-circle p-1 bg-warning"></span> Selected</span>
             <span class="d-inline-flex align-items-center gap-1"><span class="badge rounded-circle p-1 bg-danger"></span> Blocked</span>
             <span class="d-inline-flex align-items-center gap-1"><span class="badge rounded-circle p-1" style="background:#0B2545;"></span> Booked</span>
           </div>
+
+          <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1.5 small fw-semibold d-none d-lg-inline-flex align-items-center gap-1">
+            <i class="bi bi-hand-index-thumb"></i> Click open slots to select &amp; block
+          </span>
 
           <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5" onclick="quickBlockFullDay()">
             <i class="bi bi-door-closed-fill"></i>
@@ -184,9 +189,22 @@
                       <i class="bi bi-sun-fill me-1"></i>Entire Day (6AM - 12MN)
                     </span>
                   <% } else { %>
-                    <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 fw-bold font-monospace">
-                      <i class="bi bi-clock me-1 text-primary"></i><%= formatTime12(b.start_time) %> &ndash; <%= formatTime12(b.end_time) %>
-                    </span>
+                    <% 
+                      let parsedSlots = null;
+                      try {
+                        if (b.slots_json) parsedSlots = JSON.parse(b.slots_json);
+                      } catch(e) {}
+                    %>
+                    <div class="d-flex flex-column gap-1">
+                      <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 fw-bold font-monospace">
+                        <i class="bi bi-clock me-1 text-primary"></i><%= formatTime12(b.start_time) %> &ndash; <%= formatTime12(b.end_time) %>
+                      </span>
+                      <% if (parsedSlots && Array.isArray(parsedSlots) && parsedSlots.length > 0) { %>
+                        <span class="text-secondary small fw-semibold" style="font-size: 11px;">
+                          <i class="bi bi-grid-fill text-danger me-1"></i><%= parsedSlots.length %> Slot<%= parsedSlots.length === 1 ? '' : 's' %> Blocked
+                        </span>
+                      <% } %>
+                    </div>
                   <% } %>
                 </td>
 
@@ -300,15 +318,48 @@
                 <input type="radio" class="btn-check" name="time_mode" id="modeCustom" value="custom" onchange="toggleBlockTimeRange(true)">
                 <label class="btn btn-outline-danger w-100 py-2 rounded-3 text-start small fw-bold d-flex align-items-center gap-2" for="modeCustom">
                   <i class="bi bi-clock-history text-primary"></i>
-                  <span>Specific Hours<br><span class="text-muted fw-normal" style="font-size: 10px;">Select time range</span></span>
+                  <span>Specific Hours<br><span class="text-muted fw-normal" style="font-size: 10px;">Select times or range</span></span>
                 </label>
               </div>
             </div>
           </div>
 
-          <!-- 4. Specific Time Range Pickers -->
+          <!-- 4. Specific Time Range & Slot Pickers -->
           <div id="blockCustomTimeWrap" class="mb-3 p-3 bg-light rounded-3 border d-none">
-            <div class="row g-2">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="small fw-bold text-dark"><i class="bi bi-grid-fill text-primary me-1"></i>Select Time Slots to Block</span>
+              <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2 active" id="btnModeSlots" onclick="toggleCustomTimeSubMode('slots')">Pick Slots</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" id="btnModeRange" onclick="toggleCustomTimeSubMode('range')">Time Range</button>
+              </div>
+            </div>
+
+            <!-- Quick Presets for Slots -->
+            <div class="d-flex flex-wrap gap-1 mb-2" id="slotQuickPresets">
+              <button type="button" class="btn btn-sm btn-white bg-white border py-0 px-2 small text-secondary" onclick="presetModalSlots('all')">All Hours</button>
+              <button type="button" class="btn btn-sm btn-white bg-white border py-0 px-2 small text-secondary" onclick="presetModalSlots('morning')">Morning (6AM–12NN)</button>
+              <button type="button" class="btn btn-sm btn-white bg-white border py-0 px-2 small text-secondary" onclick="presetModalSlots('afternoon')">Afternoon (12NN–6PM)</button>
+              <button type="button" class="btn btn-sm btn-white bg-white border py-0 px-2 small text-secondary" onclick="presetModalSlots('evening')">Evening (6PM–12MN)</button>
+              <button type="button" class="btn btn-sm btn-white bg-white border py-0 px-2 small text-danger" onclick="presetModalSlots('clear')">Clear</button>
+            </div>
+
+            <!-- Interactive Slot Chips -->
+            <div id="modalSlotChipsGrid" class="d-flex flex-wrap gap-1.5 mb-2">
+              <% for(let h = 6; h <= 23; h++) { 
+                const hh = String(h).padStart(2, '0') + ':00'; 
+              %>
+                <input type="checkbox" class="btn-check modal-slot-checkbox" name="selected_slots[]" id="modalSlot_<%= h %>" value="<%= hh %>" autocomplete="off" onchange="updateModalSlotCount()">
+                <label class="btn btn-outline-secondary btn-sm rounded-pill py-1 px-2.5 font-monospace" style="font-size: 11px;" for="modalSlot_<%= h %>">
+                  <%= formatTime12(hh) %>
+                </label>
+              <% } %>
+            </div>
+            <div class="small text-muted mb-0" id="modalSlotCountNotice">
+              <i class="bi bi-info-circle me-1"></i>Click one or more times above, or switch to Time Range.
+            </div>
+
+            <!-- Traditional Time Range Dropdowns -->
+            <div id="modalTimeRangeDropdowns" class="row g-2 d-none pt-2 border-top mt-2">
               <div class="col-6">
                 <label class="form-label small fw-semibold text-dark mb-1">Start Time</label>
                 <select name="start_time" id="blockStartTime" class="form-select form-select-sm rounded-3">
@@ -367,41 +418,93 @@
   </div>
 </div>
 
-<!-- =========================================================
-     MODAL 2: 1-CLICK QUICK SLOT BLOCK MODAL (FROM GRID)
-========================================================= -->
-<div class="modal fade" id="quickSlotBlockModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
-      <form action="/admin/blocks" method="POST">
-        <input type="hidden" name="court_id" id="quickBlockCourtId">
-        <input type="hidden" name="date" id="quickBlockDate">
-        <input type="hidden" name="time_mode" value="custom">
-        <input type="hidden" name="start_time" id="quickBlockStartTime">
-        <input type="hidden" name="end_time" id="quickBlockEndTime">
+<!-- Floating Multi-Select Dock for Quick Inspector Blocking -->
+<div id="inspectorMultiSelectBar" class="inspector-multiselect-dock d-none">
+  <div class="d-flex align-items-center gap-2.5 min-w-0">
+    <span class="badge bg-warning text-dark fw-extrabold rounded-pill px-3 py-1.5 fs-6 shadow-xs" id="multiSelectCountBadge">
+      0 Slots Selected
+    </span>
+    <div class="small text-white text-truncate d-none d-md-block" id="multiSelectSummary" style="max-width: 360px;"></div>
+  </div>
+  <div class="d-flex align-items-center gap-2 flex-shrink-0">
+    <button type="button" class="btn btn-outline-light btn-sm rounded-pill px-3 py-1 fw-bold" onclick="clearSelectedSlots()">
+      <i class="bi bi-x-circle me-1"></i>Clear
+    </button>
+    <button type="button" class="btn btn-danger btn-sm rounded-pill px-3.5 py-1.5 fw-bold shadow-sm d-inline-flex align-items-center gap-1.5" onclick="openMultiSlotBlockModal()">
+      <i class="bi bi-shield-lock-fill"></i>
+      <span>Block Selected</span>
+    </button>
+  </div>
+</div>
 
-        <div class="modal-header bg-dark text-white p-3 border-0">
-          <h6 class="modal-title fw-bold mb-0">Block Single Time Slot</h6>
+<!-- =========================================================
+     MODAL 2: MULTI-SLOT BLOCK CONFIRMATION MODAL
+========================================================= -->
+<div class="modal fade" id="multiSlotBlockModal" tabindex="-1" aria-labelledby="multiSlotBlockModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+      <form action="/admin/blocks" method="POST" id="multiSlotBlockForm">
+        <input type="hidden" name="date" id="multiBlockDate">
+        <input type="hidden" name="slots_data" id="multiBlockSlotsData">
+
+        <div class="modal-header text-white px-4 py-3" style="background: linear-gradient(135deg, #0B2545 0%, #07172C 100%); border-bottom: 2px solid #D4AF37;">
+          <div class="d-flex align-items-center gap-2">
+            <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+              <i class="bi bi-shield-lock-fill fs-6"></i>
+            </div>
+            <div>
+              <h5 class="modal-title fw-bold font-display mb-0" id="multiSlotBlockModalLabel">Block Selected Time Slots</h5>
+              <span class="small text-white-50" style="font-size: 11px;" id="multiBlockDateSubtitle">Confirm slot closure</span>
+            </div>
+          </div>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body p-3">
-          <div class="p-2.5 bg-light rounded-3 border mb-3 small">
-            <div><strong id="quickBlockCourtName">—</strong></div>
-            <div class="text-muted" id="quickBlockTimeRange">—</div>
+
+        <div class="modal-body p-4">
+          <!-- Selected Summary Box -->
+          <div class="p-3 bg-light rounded-3 border mb-3">
+            <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom">
+              <strong class="text-dark small"><i class="bi bi-calendar3 me-1 text-primary"></i>Selected Courts &amp; Times</strong>
+              <span class="badge bg-warning text-dark rounded-pill" id="multiBlockTotalBadge">0 Slots</span>
+            </div>
+            <div id="multiBlockReviewList" style="max-height: 200px; overflow-y: auto;" class="d-flex flex-column gap-2">
+              <!-- Injected dynamically -->
+            </div>
           </div>
 
-          <label class="form-label small fw-bold text-dark mb-1">Reason</label>
-          <select name="reason" class="form-select form-select-sm rounded-3 mb-2" required>
-            <option value="Court Maintenance & Surface Cleaning">Court Maintenance</option>
-            <option value="Coaching Clinic / Private Training">Coaching Clinic</option>
-            <option value="Club Tournament / League Play">Tournament / League</option>
-            <option value="Private Event / Venue Buyout">Private Event</option>
-            <option value="Reserved / VIP Booking">VIP / Reserved</option>
-          </select>
+          <!-- Reason Preset + Input -->
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark mb-1">
+              Reason / Purpose <span class="text-danger">*</span>
+            </label>
+            <select name="reason_preset" id="multiBlockReasonPreset" class="form-select rounded-3 mb-2" onchange="handleMultiBlockReasonPresetChange(this.value)">
+              <option value="Court Maintenance & Surface Cleaning">Court Maintenance &amp; Surface Cleaning</option>
+              <option value="Club Tournament / League Play">Club Tournament / League Play</option>
+              <option value="Coaching Clinic / Private Training">Coaching Clinic / Private Training</option>
+              <option value="Private Event / Venue Buyout">Private Event / Venue Buyout</option>
+              <option value="Holiday Closure">Holiday Closure</option>
+              <option value="Inclement Weather / Rain">Inclement Weather / Rain</option>
+              <option value="VIP / Reserved Booking">VIP / Reserved Booking</option>
+              <option value="OTHER">Other (Type custom reason below)</option>
+            </select>
+            <input type="text" name="reason" id="multiBlockReasonInput" class="form-control rounded-3" value="Court Maintenance & Surface Cleaning" placeholder="Enter reason" required>
+          </div>
+
+          <!-- Internal Admin Notes -->
+          <div class="mb-2">
+            <label class="form-label small fw-semibold text-dark mb-1">
+              Internal Admin Notes <span class="text-muted fw-normal">(Optional)</span>
+            </label>
+            <textarea name="notes" class="form-control rounded-3" rows="2" placeholder="e.g. Surface repainting on Court 1 by contractor"></textarea>
+          </div>
         </div>
-        <div class="modal-footer p-2 bg-light d-flex justify-content-between">
-          <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3.5 fw-bold">Block Slot</button>
+
+        <div class="modal-footer bg-light px-4 py-3 d-flex justify-content-between">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-3.5" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger fw-bold rounded-pill px-4 shadow-sm d-inline-flex align-items-center gap-1.5" id="multiBlockSubmitBtn">
+            <i class="bi bi-lock-fill"></i>
+            <span>Confirm &amp; Block Slots</span>
+          </button>
         </div>
       </form>
     </div>
@@ -410,6 +513,12 @@
 
 <script>
   let currentInspectedDate = '<%= today %>';
+  let selectedSlotsMap = new Map(); // key: `${courtId}_${startTime}`, value: { courtId, courtName, startTime, endTime, startLabel, endLabel }
+  let lastLoadedCourts = [];
+
+  function escapeJs(str) {
+    return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  }
 
   function toggleBlockTimeRange(showCustom) {
     const wrap = document.getElementById('blockCustomTimeWrap');
@@ -421,8 +530,78 @@
     }
   }
 
+  function toggleCustomTimeSubMode(mode) {
+    const chipsGrid = document.getElementById('modalSlotChipsGrid');
+    const presets = document.getElementById('slotQuickPresets');
+    const notice = document.getElementById('modalSlotCountNotice');
+    const dropdowns = document.getElementById('modalTimeRangeDropdowns');
+    const btnSlots = document.getElementById('btnModeSlots');
+    const btnRange = document.getElementById('btnModeRange');
+
+    if (mode === 'slots') {
+      if (chipsGrid) chipsGrid.classList.remove('d-none');
+      if (presets) presets.classList.remove('d-none');
+      if (notice) notice.classList.remove('d-none');
+      if (dropdowns) dropdowns.classList.add('d-none');
+      if (btnSlots) btnSlots.classList.add('active');
+      if (btnRange) btnRange.classList.remove('active');
+    } else {
+      if (chipsGrid) chipsGrid.classList.add('d-none');
+      if (presets) presets.classList.add('d-none');
+      if (notice) notice.classList.add('d-none');
+      if (dropdowns) dropdowns.classList.remove('d-none');
+      if (btnSlots) btnSlots.classList.remove('active');
+      if (btnRange) btnRange.classList.add('active');
+      presetModalSlots('clear');
+    }
+  }
+
+  function presetModalSlots(type) {
+    const checkboxes = document.querySelectorAll('.modal-slot-checkbox');
+    checkboxes.forEach(cb => {
+      const hour = parseInt(cb.value.split(':')[0], 10);
+      if (type === 'all') {
+        cb.checked = true;
+      } else if (type === 'morning') {
+        cb.checked = hour >= 6 && hour < 12;
+      } else if (type === 'afternoon') {
+        cb.checked = hour >= 12 && hour < 18;
+      } else if (type === 'evening') {
+        cb.checked = hour >= 18 && hour <= 23;
+      } else if (type === 'clear') {
+        cb.checked = false;
+      }
+    });
+    updateModalSlotCount();
+  }
+
+  function updateModalSlotCount() {
+    const checked = document.querySelectorAll('.modal-slot-checkbox:checked');
+    const notice = document.getElementById('modalSlotCountNotice');
+    if (notice) {
+      if (checked.length === 0) {
+        notice.innerHTML = '<i class="bi bi-info-circle me-1"></i>Click one or more times above, or switch to Time Range.';
+        notice.className = 'small text-muted mb-0';
+      } else {
+        notice.innerHTML = `<i class="bi bi-check2-circle text-success me-1"></i><strong>${checked.length}</strong> time slot${checked.length === 1 ? '' : 's'} selected to block.`;
+        notice.className = 'small text-success mb-0';
+      }
+    }
+  }
+
   function handleBlockReasonPresetChange(val) {
     const input = document.getElementById('blockReasonInput');
+    if (!input) return;
+    if (val === 'OTHER') {
+      input.value = '';
+      input.focus();
+    } else {
+      input.value = val;
+    }
+  }
+
+  function handleMultiBlockReasonPresetChange(val) {
+    const input = document.getElementById('multiBlockReasonInput');
     if (!input) return;
     if (val === 'OTHER') {
       input.value = '';
@@ -457,6 +636,8 @@
 
   function jumpInspectorDate(dateYmd) {
     currentInspectedDate = dateYmd;
+    selectedSlotsMap.clear();
+    updateMultiSelectBar();
     document.getElementById('inspectorDateInput').value = dateYmd;
     loadInspectorSchedule(dateYmd);
   }
@@ -482,6 +663,7 @@
       const data = await res.json();
 
       if (data.success && data.courts) {
+        lastLoadedCourts = data.courts;
         if (data.isDayClosed) {
           closedBanner.classList.remove('d-none');
           closedBanner.classList.add('d-flex');
@@ -536,16 +718,25 @@
           statusBadge = `<span class="badge bg-info text-white rounded-pill px-2 py-0.5" style="font-size: 9.5px;">Verifying</span>`;
           clickAction = `onclick="alert('Under Admin Verification: ${slot.referenceNumber || ''}')"`;
         } else {
-          // Open
-          slotClass = 'slot-open';
-          statusBadge = `<span class="text-success small fw-bold" style="font-size: 11px;">Open</span>`;
-          clickAction = `onclick="openQuickSlotBlockModal(${court.id}, '${court.name}', '${dateYmd}', '${slot.startTime}', '${slot.endTime}', '${slot.startLabel}', '${slot.endLabel}')"`;
+          // Open slot
+          const slotKey = `${court.id}_${slot.startTime}`;
+          const isSelected = selectedSlotsMap.has(slotKey);
+
+          if (isSelected) {
+            slotClass = 'slot-open slot-selected';
+            statusBadge = `<span class="badge bg-warning text-dark rounded-pill px-2 py-0.5" style="font-size: 9.5px;"><i class="bi bi-check-lg me-1"></i>Selected</span>`;
+          } else {
+            slotClass = 'slot-open';
+            statusBadge = `<span class="text-success small fw-bold" style="font-size: 11px;">Open</span>`;
+          }
+
+          clickAction = `onclick="toggleSlotSelection(${court.id}, '${escapeJs(court.name)}', '${slot.startTime}', '${slot.endTime}', '${slot.startLabel}', '${slot.endLabel}', this)"`;
         }
 
         slotsHtml += `
           <div class="admin-court-grid-slot ${slotClass} mb-1.5" ${clickAction}>
             <div class="fw-bold" style="font-size: 11px;">${slot.startLabel}</div>
-            <div>${statusBadge}</div>
+            <div class="slot-status-badge">${statusBadge}</div>
           </div>
         `;
       });
@@ -557,9 +748,14 @@
               <strong class="text-dark d-block fs-6">${court.name}</strong>
               <span class="small text-muted" style="font-size: 11px;">₱${court.pricePerHour}/hr</span>
             </div>
-            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-2.5 py-0.5 fw-bold" style="font-size: 10.5px;" onclick="quickBlockSingleCourtAllDay(${court.id}, '${court.name}', '${dateYmd}')">
-              Block Court
-            </button>
+            <div class="d-flex align-items-center gap-1">
+              <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-0.5 fw-bold" style="font-size: 10px;" onclick="selectAllOpenForCourt(${court.id})" title="Select all open slots for this court">
+                <i class="bi bi-check2-square me-1"></i>Select Open
+              </button>
+              <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-0.5 fw-bold" style="font-size: 10px;" onclick="quickBlockSingleCourtAllDay(${court.id}, '${escapeJs(court.name)}', '${dateYmd}')" title="Block entire day for this court">
+                All Day
+              </button>
+            </div>
           </div>
           <div style="max-height: 480px; overflow-y: auto; padding-right: 2px;">
             ${slotsHtml}
@@ -571,15 +767,144 @@
     });
   }
 
-  function openQuickSlotBlockModal(courtId, courtName, dateYmd, startTime, endTime, startLabel, endLabel) {
-    document.getElementById('quickBlockCourtId').value = courtId;
-    document.getElementById('quickBlockCourtName').innerText = courtName;
-    document.getElementById('quickBlockDate').value = dateYmd;
-    document.getElementById('quickBlockStartTime').value = startTime;
-    document.getElementById('quickBlockEndTime').value = endTime;
-    document.getElementById('quickBlockTimeRange').innerText = `${dateYmd} · ${startLabel} to ${endLabel}`;
+  function toggleSlotSelection(courtId, courtName, startTime, endTime, startLabel, endLabel, el) {
+    const key = `${courtId}_${startTime}`;
+    if (selectedSlotsMap.has(key)) {
+      selectedSlotsMap.delete(key);
+      if (el) {
+        el.classList.remove('slot-selected');
+        const badgeDiv = el.querySelector('.slot-status-badge');
+        if (badgeDiv) badgeDiv.innerHTML = '<span class="text-success small fw-bold" style="font-size: 11px;">Open</span>';
+      }
+    } else {
+      selectedSlotsMap.set(key, { courtId, courtName, startTime, endTime, startLabel, endLabel });
+      if (el) {
+        el.classList.add('slot-selected');
+        const badgeDiv = el.querySelector('.slot-status-badge');
+        if (badgeDiv) badgeDiv.innerHTML = '<span class="badge bg-warning text-dark rounded-pill px-2 py-0.5" style="font-size: 9.5px;"><i class="bi bi-check-lg me-1"></i>Selected</span>';
+      }
+    }
+    updateMultiSelectBar();
+  }
 
-    const modal = new bootstrap.Modal(document.getElementById('quickSlotBlockModal'));
+  function selectAllOpenForCourt(courtId) {
+    const court = (lastLoadedCourts || []).find(c => c.id === courtId);
+    if (!court) return;
+
+    const openSlots = (court.slots || []).filter(s => s.status === 'AVAILABLE' || s.status === 'OPEN' || (!s.status && s.isAvailable));
+    if (openSlots.length === 0) {
+      alert(`No open slots available on ${court.name} today.`);
+      return;
+    }
+
+    const allAlreadySelected = openSlots.every(s => selectedSlotsMap.has(`${courtId}_${s.startTime}`));
+
+    openSlots.forEach(s => {
+      const key = `${courtId}_${s.startTime}`;
+      if (allAlreadySelected) {
+        selectedSlotsMap.delete(key);
+      } else {
+        selectedSlotsMap.set(key, {
+          courtId: court.id,
+          courtName: court.name,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          startLabel: s.startLabel,
+          endLabel: s.endLabel
+        });
+      }
+    });
+
+    renderInspectorGrid(lastLoadedCourts, currentInspectedDate);
+    updateMultiSelectBar();
+  }
+
+  function clearSelectedSlots() {
+    selectedSlotsMap.clear();
+    renderInspectorGrid(lastLoadedCourts, currentInspectedDate);
+    updateMultiSelectBar();
+  }
+
+  function updateMultiSelectBar() {
+    const bar = document.getElementById('inspectorMultiSelectBar');
+    const countBadge = document.getElementById('multiSelectCountBadge');
+    const summaryEl = document.getElementById('multiSelectSummary');
+
+    if (!bar) return;
+
+    const count = selectedSlotsMap.size;
+    if (count === 0) {
+      bar.classList.add('d-none');
+      bar.classList.remove('d-flex');
+      return;
+    }
+
+    bar.classList.remove('d-none');
+    bar.classList.add('d-flex');
+
+    countBadge.innerText = `${count} Slot${count === 1 ? '' : 's'} Selected`;
+
+    const byCourt = {};
+    for (const item of selectedSlotsMap.values()) {
+      if (!byCourt[item.courtName]) byCourt[item.courtName] = [];
+      byCourt[item.courtName].push(item.startLabel || item.startTime);
+    }
+
+    const summaryParts = Object.entries(byCourt).map(([cName, times]) => {
+      return `<strong>${cName}:</strong> ${times.join(', ')}`;
+    });
+
+    summaryEl.innerHTML = summaryParts.join(' &bull; ');
+  }
+
+  function openMultiSlotBlockModal() {
+    if (selectedSlotsMap.size === 0) {
+      alert('Please click on at least one open time slot to select it.');
+      return;
+    }
+
+    const grouped = {};
+    for (const item of selectedSlotsMap.values()) {
+      if (!grouped[item.courtId]) {
+        grouped[item.courtId] = {
+          court_id: item.courtId,
+          court_name: item.courtName,
+          slots: []
+        };
+      }
+      grouped[item.courtId].slots.push(item.startTime);
+    }
+
+    const slotsDataArray = Object.values(grouped);
+    document.getElementById('multiBlockSlotsData').value = JSON.stringify(slotsDataArray);
+    document.getElementById('multiBlockDate').value = currentInspectedDate;
+
+    const dateObj = new Date(currentInspectedDate + 'T00:00:00');
+    document.getElementById('multiBlockDateSubtitle').innerText = `${dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`;
+    document.getElementById('multiBlockTotalBadge').innerText = `${selectedSlotsMap.size} Slot${selectedSlotsMap.size === 1 ? '' : 's'}`;
+
+    const reviewEl = document.getElementById('multiBlockReviewList');
+    reviewEl.innerHTML = '';
+
+    slotsDataArray.forEach(group => {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'p-2 bg-white rounded-3 border';
+      const badgesHtml = group.slots.sort().map(s => {
+        const slotObj = Array.from(selectedSlotsMap.values()).find(x => x.courtId === group.court_id && x.startTime === s);
+        const label = slotObj ? `${slotObj.startLabel} - ${slotObj.endLabel}` : s;
+        return `<span class="badge bg-danger-subtle text-danger border border-danger-subtle font-monospace px-2 py-1 rounded-pill small">${label}</span>`;
+      }).join(' ');
+
+      itemDiv.innerHTML = `
+        <div class="fw-bold text-dark small mb-1.5"><i class="bi bi-circle-fill text-warning me-1" style="font-size: 8px;"></i>${group.court_name} (${group.slots.length} slots):</div>
+        <div class="d-flex flex-wrap gap-1">${badgesHtml}</div>
+      `;
+      reviewEl.appendChild(itemDiv);
+    });
+
+    document.getElementById('multiBlockSubmitBtn').innerHTML = `<i class="bi bi-lock-fill me-1"></i>Block ${selectedSlotsMap.size} Selected Slot${selectedSlotsMap.size === 1 ? '' : 's'}`;
+
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('multiSlotBlockModal'));
     modal.show();
   }
 

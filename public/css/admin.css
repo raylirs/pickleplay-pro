@@ -155,3 +155,44 @@ h1, h2, h3, h4, h5, h6 {
   border: 1.5px dashed #F59E0B;
   color: #B45309;
 }
+
+.admin-court-grid-slot.slot-selected {
+  background: #FFFBEB !important;
+  border: 2px solid #D97706 !important;
+  color: #92400E !important;
+  font-weight: 700;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3) !important;
+  transform: translateY(-1px);
+}
+
+.inspector-multiselect-dock {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1060;
+  background: linear-gradient(135deg, #0B2545 0%, #07172C 100%);
+  border: 2px solid #D4AF37;
+  color: #FFFFFF;
+  border-radius: 999px;
+  padding: 10px 20px;
+  box-shadow: 0 16px 36px rgba(11, 37, 69, 0.4), 0 4px 12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 92vw;
+  width: auto;
+  animation: slideUpFloat 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpFloat {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}

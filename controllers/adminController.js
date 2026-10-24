@@ -1124,7 +1124,9 @@ const adminController = {
         start_time,
         end_time,
         reason,
-        notes
+        notes,
+        slots_data,
+        selected_slots
       } = req.body;
 
       if (!date) {
@@ -1132,52 +1134,135 @@ const adminController = {
         return res.redirect('/admin/blocks');
       }
 
-      const isAllCourts = court_id === 'all' || !court_id;
-      const isAllDay = time_mode === 'all_day';
-      const actualStartTime = isAllDay ? '06:00' : (start_time || '06:00');
-      const actualEndTime = isAllDay ? '24:00' : (end_time || '24:00');
+      const targetDate = date.trim();
+      const defaultReason = (reason && reason.trim()) || 'Court Maintenance / Reserved';
+      const cleanNotes = notes ? notes.trim() : null;
+      const userId = req.session.user ? req.session.user.id : null;
+      const { generateTimeSlots } = require('../utils/dateTimeUtils');
 
-      if (!isAllDay && actualStartTime >= actualEndTime) {
-        req.flash('error', 'Start time must be before end time.');
-        return res.redirect('/admin/blocks');
+      const addOneHour = (timeStr) => {
+        const parts = timeStr.split(':');
+        const h = parseInt(parts[0], 10) + 1;
+        return String(h).padStart(2, '0') + ':00';
+      };
+
+      // 1. Multi-Slot Block from Interactive Inspector Grid (grouped by court)
+      if (slots_data) {
+        let parsedData = [];
+        try {
+          parsedData = typeof slots_data === 'string' ? JSON.parse(slots_data) : slots_data;
+        } catch (e) {
+          parsedData = [];
+        }
+
+        if (Array.isArray(parsedData) && parsedData.length > 0) {
+          let totalSlots = 0;
+          for (const item of parsedData) {
+            const cId = item.court_id ? parseInt(item.court_id, 10) : null;
+            const cSlots = Array.isArray(item.slots) ? item.slots.sort() : [];
+            if (cSlots.length === 0) continue;
+
+            const cStartTime = cSlots[0];
+            const cEndTime = addOneHour(cSlots[cSlots.length - 1]);
+            const cSlotsJson = JSON.stringify(cSlots);
+
+            await CourtBlock.create({
+              court_id: cId,
+              all_courts: !cId,
+              date: targetDate,
+              start_time: cStartTime,
+              end_time: cEndTime,
+              slots_json: cSlotsJson,
+              is_all_day: false,
+              reason: defaultReason,
+              notes: cleanNotes,
+              created_by: userId
+            });
+
+            await logAudit(
+              userId,
+              'CREATE_COURT_BLOCK',
+              `Blocked ${cId ? 'Court #' + cId : 'ALL COURTS'} on ${targetDate} (${cSlots.length} slots: ${cSlots.join(', ')}) - Reason: ${defaultReason}`
+            );
+            totalSlots += cSlots.length;
+          }
+
+          try {
+            const io = getIO();
+            io.emit('court_availability_updated', { date: targetDate, courtId: null });
+            io.emit('court_blocks_updated', { date: targetDate });
+          } catch (e) {}
+
+          req.flash('success', `Successfully blocked ${totalSlots} selected slot${totalSlots === 1 ? '' : 's'} on ${targetDate}.`);
+          return res.redirect('/admin/blocks');
+        }
       }
 
-      // Generate slots list
-      const { generateTimeSlots } = require('../utils/dateTimeUtils');
-      const generatedSlots = generateTimeSlots(actualStartTime, actualEndTime, 60);
-      const slotsJson = JSON.stringify(generatedSlots.map(s => s.startTime));
+      // 2. Specific slots selected via modal chips/checkboxes
+      let rawSlots = [];
+      if (selected_slots) {
+        rawSlots = Array.isArray(selected_slots) ? selected_slots : [selected_slots];
+        rawSlots = rawSlots.filter(Boolean).map(s => s.trim()).sort();
+      }
+
+      const isAllCourts = court_id === 'all' || !court_id;
+      const isAllDay = time_mode === 'all_day';
+
+      let actualStartTime = '06:00';
+      let actualEndTime = '24:00';
+      let slotsJson = null;
+
+      if (isAllDay) {
+        actualStartTime = '06:00';
+        actualEndTime = '24:00';
+        const generatedSlots = generateTimeSlots('06:00', '24:00', 60);
+        slotsJson = JSON.stringify(generatedSlots.map(s => s.startTime));
+      } else if (rawSlots.length > 0) {
+        actualStartTime = rawSlots[0];
+        actualEndTime = addOneHour(rawSlots[rawSlots.length - 1]);
+        slotsJson = JSON.stringify(rawSlots);
+      } else {
+        actualStartTime = start_time || '06:00';
+        actualEndTime = end_time || '24:00';
+        if (actualStartTime >= actualEndTime) {
+          req.flash('error', 'Start time must be before end time.');
+          return res.redirect('/admin/blocks');
+        }
+        const generatedSlots = generateTimeSlots(actualStartTime, actualEndTime, 60);
+        slotsJson = JSON.stringify(generatedSlots.map(s => s.startTime));
+      }
 
       await CourtBlock.create({
         court_id: isAllCourts ? null : parseInt(court_id, 10),
         all_courts: isAllCourts,
-        date: date.trim(),
+        date: targetDate,
         start_time: actualStartTime,
         end_time: actualEndTime,
         slots_json: slotsJson,
         is_all_day: isAllDay,
-        reason: (reason && reason.trim()) || 'Court Maintenance / Reserved',
-        notes: notes ? notes.trim() : null,
-        created_by: req.session.user ? req.session.user.id : null
+        reason: defaultReason,
+        notes: cleanNotes,
+        created_by: userId
       });
 
       // Log audit
       await logAudit(
-        req.session.user ? req.session.user.id : null,
+        userId,
         'CREATE_COURT_BLOCK',
-        `Blocked ${isAllCourts ? 'ALL COURTS' : 'Court #' + court_id} on ${date} (${isAllDay ? 'All Day' : actualStartTime + '-' + actualEndTime}) - Reason: ${reason}`
+        `Blocked ${isAllCourts ? 'ALL COURTS' : 'Court #' + court_id} on ${targetDate} (${isAllDay ? 'All Day' : actualStartTime + '-' + actualEndTime}) - Reason: ${defaultReason}`
       );
 
       // Real-time broadcast to all connected players
       try {
         const io = getIO();
         io.emit('court_availability_updated', {
-          date: date.trim(),
+          date: targetDate,
           courtId: isAllCourts ? null : parseInt(court_id, 10)
         });
-        io.emit('court_blocks_updated', { date: date.trim() });
+        io.emit('court_blocks_updated', { date: targetDate });
       } catch (e) {}
 
-      req.flash('success', `Successfully blocked ${isAllCourts ? 'all courts' : 'court'} on ${date}.`);
+      req.flash('success', `Successfully blocked ${isAllCourts ? 'all courts' : 'court'} on ${targetDate}.`);
       res.redirect('/admin/blocks');
     } catch (err) {
       next(err);

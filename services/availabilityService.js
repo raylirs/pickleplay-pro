@@ -51,8 +51,8 @@ async function getCourtAvailability(courtId, date, currentUser = null) {
       if (block.slots_json) {
         try {
           const bookedArr = JSON.parse(block.slots_json);
-          if (Array.isArray(bookedArr) && bookedArr.includes(slot.startTime)) {
-            return true;
+          if (Array.isArray(bookedArr)) {
+            return bookedArr.includes(slot.startTime);
           }
         } catch (e) {}
       }
