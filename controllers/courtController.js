@@ -194,13 +194,13 @@ const courtController = {
         const hasUserBooking = userResForDay.length > 0;
         const userBookingRefs = [...new Set(userResForDay.map(r => r.reference_number))];
 
-        // Check full-day facility closure (all courts all day)
+        // Check full-day facility block (all courts all day)
         const fullDayClosure = dayBlocks.find(b => b.is_all_day && (b.all_courts || !b.court_id));
         if (fullDayClosure) {
           daysStatus[dateStr] = {
-            status: 'CLOSED',
-            label: 'Facility Closed',
-            reason: fullDayClosure.reason || 'Facility Closed',
+            status: 'BLOCKED',
+            label: 'Blocked',
+            reason: fullDayClosure.reason || 'Court Maintenance / Blocked',
             availableSlots: 0,
             totalSlots: totalCourtSlotsPerDay,
             hasUserBooking,
@@ -240,8 +240,9 @@ const courtController = {
         let label = 'Available';
 
         if (availableSlots <= 0) {
-          dayStatus = 'FULL';
-          label = 'Fully Booked';
+          const hasBlocks = dayBlocks.length > 0;
+          dayStatus = hasBlocks ? 'BLOCKED' : 'FULL';
+          label = hasBlocks ? 'Blocked' : 'Fully Booked';
         } else if (availableSlots <= 5) {
           dayStatus = 'FEW_LEFT';
           label = `${availableSlots} Slots Left`;

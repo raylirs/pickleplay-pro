@@ -509,7 +509,7 @@
             <span class="badge rounded-circle p-1 bg-danger"></span> Fully Booked
           </span>
           <span class="d-inline-flex align-items-center gap-1.5 text-secondary fw-semibold">
-            <span class="badge rounded-circle p-1 bg-secondary"></span> Not Available / Closed
+            <span class="badge rounded-circle p-1 bg-secondary"></span> Blocked / Closed
           </span>
           <% if (typeof user !== 'undefined' && user) { %>
             <span class="d-inline-flex align-items-center gap-1.5 text-primary fw-bold">
@@ -600,11 +600,11 @@
         </div>
       </div>
 
-      <!-- Facility Closed Alert Banner (Appears when all courts are blocked all day) -->
+      <!-- Facility Blocked Alert Banner (Appears when all courts are blocked all day) -->
       <div id="dayClosedBanner" class="alert alert-danger d-none align-items-center gap-2 rounded-4 mb-3 border-danger-subtle shadow-sm px-3.5 py-2.5">
         <i class="bi bi-slash-circle-fill fs-5 text-danger flex-shrink-0"></i>
         <div class="flex-grow-1">
-          <strong id="dayClosedTitle" class="d-block text-danger">Facility Closed for This Date</strong>
+          <strong id="dayClosedTitle" class="d-block text-danger">Courts Blocked for This Date</strong>
           <span class="small text-danger-emphasis" id="dayClosedReason">All courts are reserved or under facility maintenance.</span>
         </div>
       </div>
@@ -1746,8 +1746,8 @@
       if (data && data.success && data.days) {
         calendarMonthStatusCache[monthKey] = data.days;
         Object.entries(data.days).forEach(([d, info]) => {
-          if (info.status === 'CLOSED') {
-            facilityClosedDatesMap[d] = info.reason || 'Facility Closed';
+          if (info.status === 'BLOCKED' || info.status === 'CLOSED') {
+            facilityClosedDatesMap[d] = info.reason || 'Court Maintenance / Blocked';
           }
           if (info.hasUserBooking) {
             playerBookedDatesMap[d] = playerBookedDatesMap[d] || { status: 'CONFIRMED' };
@@ -1804,8 +1804,8 @@
       const dayStatus = (calendarMonthStatusCache[monthKey] && calendarMonthStatusCache[monthKey][dateStr]) || null;
       const hasPlayerBooking = Boolean(playerBookedDatesMap[dateStr] || (dayStatus && dayStatus.hasUserBooking));
 
-      const isFacilityClosed = Boolean(facilityClosedDatesMap[dateStr] || (dayStatus && dayStatus.status === 'CLOSED'));
-      const closedReason = (dayStatus && dayStatus.reason) || facilityClosedDatesMap[dateStr] || 'Facility Closed';
+      const isFacilityClosed = Boolean(facilityClosedDatesMap[dateStr] || (dayStatus && (dayStatus.status === 'BLOCKED' || dayStatus.status === 'CLOSED')));
+      const closedReason = (dayStatus && dayStatus.reason) || facilityClosedDatesMap[dateStr] || 'Court Maintenance / Blocked';
 
       const isFullyBooked = !isFacilityClosed && dayStatus && dayStatus.status === 'FULL';
       const isFewLeft = !isFacilityClosed && dayStatus && dayStatus.status === 'FEW_LEFT';
@@ -1822,7 +1822,7 @@
       if (hasPlayerBooking) {
         badgeHtml = `<span class="calendar-day-badge badge-player-booked"><i class="bi bi-star-fill text-warning me-0.5"></i>BOOKED</span>`;
       } else if (isFacilityClosed) {
-        badgeHtml = `<span class="calendar-day-badge bg-secondary text-white">CLOSED</span>`;
+        badgeHtml = `<span class="calendar-day-badge bg-secondary text-white">BLOCKED</span>`;
       } else if (isFullyBooked) {
         badgeHtml = `<span class="calendar-day-badge bg-danger text-white">FULL</span>`;
       } else if (isToday) {
@@ -1835,7 +1835,7 @@
       if (isPast) {
         ctaLabel = '';
       } else if (isFacilityClosed) {
-        ctaLabel = `<span class="calendar-day-cta-desktop text-muted fw-bold"><i class="bi bi-slash-circle me-1"></i>Not Available</span><span class="calendar-day-cta-mobile text-muted">Closed</span>`;
+        ctaLabel = `<span class="calendar-day-cta-desktop text-muted fw-bold"><i class="bi bi-slash-circle me-1"></i>Blocked</span><span class="calendar-day-cta-mobile text-muted">Blocked</span>`;
       } else if (isFullyBooked) {
         ctaLabel = `<span class="calendar-day-cta-desktop text-danger fw-bold"><i class="bi bi-x-circle me-1"></i>Fully Booked</span><span class="calendar-day-cta-mobile text-danger">Full</span>`;
       } else if (hasPlayerBooking) {
@@ -1850,7 +1850,7 @@
       if (isPast) {
         clickAttr = '';
       } else if (isFacilityClosed) {
-        clickAttr = `onclick="showLiveToast('🔒 Facility is closed on this date (${escapeJs(closedReason)}).')"`;
+        clickAttr = `onclick="selectCalendarDay('${dateStr}'); showLiveToast('🔒 Courts are blocked on this date (${escapeJs(closedReason)}). You can inspect schedule details below.');"`;
       } else if (isFullyBooked) {
         clickAttr = `onclick="selectCalendarDay('${dateStr}'); showLiveToast('ℹ️ All courts are currently booked on ${dateStr}. You can inspect time slots or check another date.');"`;
       } else {
@@ -1858,7 +1858,7 @@
       }
 
       cellsHtml += `
-        <div class="${cellClasses}" ${clickAttr} role="button" tabindex="${(isPast || isFacilityClosed) ? '-1' : '0'}" aria-label="Select ${dateStr}">
+        <div class="${cellClasses}" ${clickAttr} role="button" tabindex="${isPast ? '-1' : '0'}" aria-label="Select ${dateStr}">
           <div class="calendar-day-top">
             <span class="calendar-day-number">${day}</span>
             ${badgeHtml}
@@ -2038,7 +2038,7 @@
       if (isDayClosed) {
         dayBanner.classList.remove('d-none');
         dayBanner.classList.add('d-flex');
-        if (dayTitle) dayTitle.innerText = `Facility Closed on ${currentDate}`;
+        if (dayTitle) dayTitle.innerText = `Courts Blocked on ${currentDate}`;
         if (dayReason) dayReason.innerText = closedReason || 'All courts are reserved or under facility maintenance today.';
       } else {
         dayBanner.classList.add('d-none');
