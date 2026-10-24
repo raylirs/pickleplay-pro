@@ -520,8 +520,11 @@ const adminController = {
         postBookingSystemMessage(reservation, 'BOOKING_CANCELLED').catch(e => console.warn('[Chat Notify Error]:', e.message));
       } catch (e) {}
 
+      // Dispatch Facebook Messenger notification to Admins (Ryan & Karlo) & Player
       try {
-        const { notifyPlayerBookingCancelled } = require('../services/facebookService');
+        const { notifyAdminsBookingDeclined, notifyPlayerBookingCancelled } = require('../services/facebookService');
+        const adminUser = req.session && req.session.user ? req.session.user.username : 'Admin';
+        notifyAdminsBookingDeclined(reservation, { adminName: adminUser, source: 'web', reason: cancellation_reason }).catch(e => console.warn('[FB Admin Cancel Notify Error]:', e.message));
         notifyPlayerBookingCancelled(reservation).catch(e => console.warn('[FB Player Cancel Notify Error]:', e.message));
       } catch (e) {}
 
@@ -591,9 +594,11 @@ const adminController = {
       await sendReservationConfirmation(reservation, reservation.court);
       await sendReservationSMS(reservation, reservation.court);
 
-      // Dispatch Facebook Messenger notification to Player if bound
+      // Dispatch Facebook Messenger notification to Admins (Ryan & Karlo) & Player
       try {
-        const { notifyPlayerBookingConfirmed } = require('../services/facebookService');
+        const { notifyAdminsBookingApproved, notifyPlayerBookingConfirmed } = require('../services/facebookService');
+        const adminUser = req.session && req.session.user ? req.session.user.username : 'Admin';
+        notifyAdminsBookingApproved(reservation, { adminName: adminUser, source: 'web' }).catch(e => console.warn('[FB Admin Confirm Notify Error]:', e.message));
         notifyPlayerBookingConfirmed(reservation).catch(e => console.warn('[FB Player Notify Error]:', e.message));
       } catch (e) {}
 

@@ -1,6 +1,7 @@
 const { SystemSetting, Reservation, Court, User } = require('../models');
 const { getIO } = require('../config/socket');
 const { Op } = require('sequelize');
+const { formatTime12 } = require('../utils/dateTimeUtils');
 
 const FB_VERSION = 'v24.0';
 
@@ -501,6 +502,104 @@ async function notifyAdminPaymentProof(reservation) {
 }
 
 /**
+ * Notify all Admins on Messenger when a reservation is APPROVED (via Web Admin or Messenger 1-Click)
+ */
+async function notifyAdminsBookingApproved(reservation, { adminName = 'Web Admin', source = 'web', senderPsid = null } = {}) {
+  const adminPsids = await getAllAdminPsids();
+  if (!adminPsids || adminPsids.length === 0) return;
+
+  const masterRef = (reservation.reference_number || '').split('-')[0];
+  const courtLabel = await resolveBookingCourtSummary(reservation);
+  const timeStr = reservation.start_time && reservation.end_time
+    ? `${formatTime12(reservation.start_time)} – ${formatTime12(reservation.end_time)}`
+    : (reservation.start_time || '');
+
+  let totalOrderAmount = parseFloat(reservation.total_amount || 0);
+  try {
+    const siblings = await Reservation.findAll({
+      where: {
+        reference_number: {
+          [Op.or]: [masterRef, { [Op.like]: `${masterRef}-%` }]
+        }
+      }
+    });
+    if (siblings && siblings.length > 0) {
+      totalOrderAmount = siblings.reduce((sum, s) => sum + parseFloat(s.total_amount || 0), 0);
+    }
+  } catch (e) {}
+
+  for (const psid of adminPsids) {
+    let msg = '';
+    if (source === 'messenger' && psid === senderPsid) {
+      msg = `🎉 [1-CLICK APPROVED] Booking #${masterRef} for ${reservation.user_name} is now CONFIRMED!\n\n` +
+        `🏟️ Court: ${courtLabel}\n` +
+        `📅 Date: ${reservation.reservation_date} (${timeStr})\n` +
+        `💰 Amount: ₱${totalOrderAmount.toFixed(2)}\n\n` +
+        `Player has been sent their confirmed digital pass on Messenger & In-App Chat.`;
+    } else if (source === 'messenger') {
+      msg = `ℹ️ [CO-ADMIN UPDATE] Booking #${masterRef} for ${reservation.user_name} was just APPROVED by Co-Admin.\n\n` +
+        `🏟️ Court: ${courtLabel}\n` +
+        `📅 Date: ${reservation.reservation_date} (${timeStr})\n` +
+        `💰 Amount: ₱${totalOrderAmount.toFixed(2)}`;
+    } else {
+      // Approved from Web Admin Console
+      msg = `🎉 [BOOKING APPROVED - WEB ADMIN]\n\n` +
+        `📋 Ref: #${masterRef}\n` +
+        `👤 Player: ${reservation.user_name}\n` +
+        `🏟️ Court: ${courtLabel}\n` +
+        `📅 Date: ${reservation.reservation_date} (${timeStr})\n` +
+        `💰 Total Paid: ₱${totalOrderAmount.toFixed(2)}\n` +
+        `✅ Approved by: ${adminName}\n\n` +
+        `Digital Pass sent to player & court schedule is locked.`;
+    }
+
+    await sendMessengerNotify(psid, msg, { tag: 'CONFIRMED_EVENT_UPDATE' }).catch(() => {});
+  }
+}
+
+/**
+ * Notify all Admins on Messenger when a reservation is DECLINED / CANCELLED (via Web Admin or Messenger 1-Click)
+ */
+async function notifyAdminsBookingDeclined(reservation, { adminName = 'Web Admin', source = 'web', senderPsid = null, reason = '' } = {}) {
+  const adminPsids = await getAllAdminPsids();
+  if (!adminPsids || adminPsids.length === 0) return;
+
+  const masterRef = (reservation.reference_number || '').split('-')[0];
+  const courtLabel = await resolveBookingCourtSummary(reservation);
+  const timeStr = reservation.start_time && reservation.end_time
+    ? `${formatTime12(reservation.start_time)} – ${formatTime12(reservation.end_time)}`
+    : (reservation.start_time || '');
+  const reasonText = reason || reservation.cancellation_reason || 'Declined by Administrator';
+
+  for (const psid of adminPsids) {
+    let msg = '';
+    if (source === 'messenger' && psid === senderPsid) {
+      msg = `❌ [1-CLICK CANCELLED] Booking #${masterRef} for ${reservation.user_name} has been cancelled and slots released.\n\n` +
+        `🏟️ Court: ${courtLabel}\n` +
+        `📅 Date: ${reservation.reservation_date} (${timeStr})\n` +
+        `⚠️ Reason: ${reasonText}`;
+    } else if (source === 'messenger') {
+      msg = `ℹ️ [CO-ADMIN UPDATE] Booking #${masterRef} for ${reservation.user_name} was DECLINED by Co-Admin.\n\n` +
+        `🏟️ Court: ${courtLabel}\n` +
+        `📅 Date: ${reservation.reservation_date} (${timeStr})\n` +
+        `⚠️ Reason: ${reasonText}`;
+    } else {
+      // Declined / Cancelled from Web Admin Console
+      msg = `❌ [BOOKING DECLINED - WEB ADMIN]\n\n` +
+        `📋 Ref: #${masterRef}\n` +
+        `👤 Player: ${reservation.user_name}\n` +
+        `🏟️ Court: ${courtLabel}\n` +
+        `📅 Date: ${reservation.reservation_date} (${timeStr})\n` +
+        `⚠️ Reason: ${reasonText}\n` +
+        `👤 Action by: ${adminName}\n\n` +
+        `The court slots have been released back to the availability pool.`;
+    }
+
+    await sendMessengerNotify(psid, msg, { tag: 'CONFIRMED_EVENT_UPDATE' }).catch(() => {});
+  }
+}
+
+/**
  * Helper to resolve Player's FB PSID from reservation or User record
  */
 async function resolvePlayerPsid(reservation) {
@@ -841,15 +940,8 @@ async function processAdminAction(senderId, rawText, contextRef = null) {
       });
     } catch (e) {}
 
-    // Notify BOTH Ryan & Karlo with the exact approved player details
-    const adminPsids = await getAllAdminPsids();
-    for (const psid of adminPsids) {
-      if (psid === senderId) {
-        await sendMessengerNotify(psid, `🎉 [1-CLICK APPROVED] Reservation #${masterRef} for ${reservation.user_name} is now CONFIRMED!\n\nPlayer has been sent their confirmed digital pass on Messenger & In-App Chat.`);
-      } else {
-        await sendMessengerNotify(psid, `ℹ️ [CO-ADMIN UPDATE] Reservation #${masterRef} for ${reservation.user_name} was just APPROVED by Co-Admin.`);
-      }
-    }
+    // Notify BOTH Ryan & Karlo on Messenger with the exact approved player details
+    await notifyAdminsBookingApproved(reservation, { source: 'messenger', senderPsid: senderId });
     return true;
   }
 
@@ -880,15 +972,8 @@ async function processAdminAction(senderId, rawText, contextRef = null) {
 
     await notifyPlayerBookingCancelled(reservation);
 
-    // Notify BOTH Ryan & Karlo with the exact cancelled player details
-    const adminPsids = await getAllAdminPsids();
-    for (const psid of adminPsids) {
-      if (psid === senderId) {
-        await sendMessengerNotify(psid, `❌ [1-CLICK CANCELLED] Reservation #${masterRef} for ${reservation.user_name} has been cancelled and slots released.`);
-      } else {
-        await sendMessengerNotify(psid, `ℹ️ [CO-ADMIN UPDATE] Reservation #${masterRef} for ${reservation.user_name} was DECLINED by Co-Admin.`);
-      }
-    }
+    // Notify BOTH Ryan & Karlo on Messenger with the exact cancelled player details
+    await notifyAdminsBookingDeclined(reservation, { source: 'messenger', senderPsid: senderId, reason: 'Cancelled by Admin via 1-Click Messenger' });
     return true;
   }
 
@@ -1086,6 +1171,8 @@ module.exports = {
   fetchUserPages,
   notifyAdminNewBooking,
   notifyAdminPaymentProof,
+  notifyAdminsBookingApproved,
+  notifyAdminsBookingDeclined,
   notifyPlayerNewBooking,
   notifyPlayerPaymentSubmitted,
   notifyPlayerBookingConfirmed,
