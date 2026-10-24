@@ -545,33 +545,34 @@
     ========================================================= -->
     <div id="bookingTimeMatrixCard" class="matrix-card mt-3">
       <!-- Matrix Toolbar: Date Navigation & Quick Actions -->
-      <div class="matrix-date-toolbar d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
-        <!-- Date Navigator Buttons (Far Left) -->
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-          <button type="button" class="btn btn-dark btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-xs" onclick="scrollToCalendar()" title="Jump up to Month Calendar">
-            <i class="bi bi-calendar3 text-warning"></i>
-            <span>Calendar &uarr;</span>
-          </button>
-
-          <button type="button" class="matrix-date-btn" id="btnPrevDate" title="Previous Day">
-            <i class="bi bi-chevron-left"></i>
-          </button>
-
-          <div class="position-relative">
-            <button type="button" class="matrix-date-btn matrix-date-center-btn" id="btnDisplayDate" title="Click to toggle Month Calendar">
-              <i class="bi bi-calendar2-check-fill me-2 text-warning"></i>
-              <span id="dateDisplayText">Loading date...</span>
+      <div class="matrix-date-toolbar">
+        <div class="matrix-toolbar-row d-flex align-items-center justify-content-between gap-2">
+          <!-- Minimalist Stepper: Prev, Date, Next (Unified Pill) -->
+          <div class="matrix-date-stepper d-inline-flex align-items-center">
+            <button type="button" class="date-stepper-btn" id="btnPrevDate" title="Previous Day" aria-label="Previous Day">
+              <i class="bi bi-chevron-left"></i>
             </button>
-            <input type="date" id="nativeDatePicker" min="<%= today %>" value="<%= today %>" style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
+            <div class="position-relative d-inline-flex align-items-center">
+              <button type="button" class="date-stepper-label" id="btnDisplayDate" title="Choose date / Jump to Month Calendar">
+                <i class="bi bi-calendar-event me-1.5 text-warning"></i>
+                <span id="dateDisplayText">Loading date...</span>
+              </button>
+              <input type="date" id="nativeDatePicker" min="<%= today %>" value="<%= today %>" style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
+            </div>
+            <button type="button" class="date-stepper-btn" id="btnNextDate" title="Next Day" aria-label="Next Day">
+              <i class="bi bi-chevron-right"></i>
+            </button>
           </div>
 
-          <button type="button" class="matrix-date-btn" id="btnNextDate" title="Next Day">
-            <i class="bi bi-chevron-right"></i>
-          </button>
-
-          <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-bold" id="btnTodayShortcut">
-            Today
-          </button>
+          <!-- Quick Actions: Today & Calendar Jump -->
+          <div class="matrix-toolbar-actions d-inline-flex align-items-center gap-1.5 flex-shrink-0">
+            <button type="button" class="matrix-action-pill" id="btnTodayShortcut" title="Jump to Today">
+              Today
+            </button>
+            <button type="button" class="matrix-action-icon" onclick="scrollToCalendar()" title="Jump up to Month Calendar" aria-label="Month Calendar">
+              <i class="bi bi-calendar3"></i>
+            </button>
+          </div>
         </div>
 
         <!-- Legend Swatches (Single-Line Row) -->
@@ -1993,8 +1994,17 @@
     const options = { weekday: 'short', month: 'short', day: 'numeric' };
     const formatted = d.toLocaleDateString('en-US', options);
 
-    document.getElementById('dateDisplayText').innerText = (isToday ? 'Today, ' : '') + formatted;
-    document.getElementById('nativeDatePicker').value = dateStr;
+    const displaySpan = document.getElementById('dateDisplayText');
+    if (displaySpan) {
+      if (isToday) {
+        const monthDay = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        displaySpan.innerText = `Today, ${monthDay}`;
+      } else {
+        displaySpan.innerText = formatted;
+      }
+    }
+    const picker = document.getElementById('nativeDatePicker');
+    if (picker) picker.value = dateStr;
   }
 
   // Fetch Matrix API Data (supports silent background & socket real-time sync)

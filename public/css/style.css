@@ -261,11 +261,126 @@ h1, h2, h3, h4, .font-display {
 }
 
 .matrix-date-toolbar {
-  background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
-  padding: 14px 18px;
+  background: #ffffff;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
+.matrix-toolbar-row {
+  width: 100%;
+}
+
+/* Minimalist Unified Date Stepper */
+.matrix-date-stepper {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 9999px;
+  padding: 3px 6px;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.matrix-date-stepper:hover {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+}
+
+.date-stepper-btn {
+  background: transparent;
+  border: none;
+  color: var(--navy-800);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.date-stepper-btn:hover {
+  background: rgba(11, 37, 69, 0.08);
+  color: var(--navy-900);
+}
+
+.date-stepper-btn:active {
+  transform: scale(0.92);
+}
+
+.date-stepper-label {
+  background: transparent;
+  border: none;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--navy-800);
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+}
+
+.date-stepper-label:hover {
+  color: var(--court-blue);
+}
+
+/* Minimalist Quick Actions */
+.matrix-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+}
+
+.matrix-action-pill {
+  background: #ffffff;
+  border: 1.5px solid #CBD5E1;
+  color: var(--navy-800);
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 9999px;
+  padding: 5px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.matrix-action-pill:hover {
+  background: var(--navy-800);
+  color: #ffffff;
+  border-color: var(--navy-800);
+}
+
+.matrix-action-icon {
+  background: #ffffff;
+  border: 1.5px solid #CBD5E1;
+  color: var(--navy-800);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.matrix-action-icon:hover {
+  background: #0B2545;
+  color: #ffffff;
+  border-color: #0B2545;
+}
+
+/* Backward compatibility aliases */
 .matrix-date-btn {
   background: #ffffff;
   border: 1px solid var(--border-subtle);
@@ -292,10 +407,6 @@ h1, h2, h3, h4, .font-display {
   font-size: 15px;
   font-weight: 800;
   color: var(--navy-800);
-  min-width: 200px;
-  background: #ffffff;
-  border: 1.5px solid rgba(11, 37, 69, 0.15);
-  box-shadow: 0 2px 6px rgba(11, 37, 69, 0.04);
 }
 
 /* Status Legend */
@@ -967,22 +1078,57 @@ h1, h2, h3, h4, .font-display {
     display: none;
   }
 
-  /* Date toolbar on mobile */
+  /* Minimalist Date Toolbar on mobile - strictly single-line, zero wrapping */
   .matrix-date-toolbar {
     padding: 8px 10px;
-    gap: 8px;
+  }
+
+  .matrix-toolbar-row {
+    flex-wrap: nowrap !important;
+  }
+
+  .matrix-date-stepper {
+    padding: 2px 4px;
+    background: #F1F5F9;
+  }
+
+  .date-stepper-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 11.5px;
+  }
+
+  .date-stepper-label {
+    font-size: 12px;
+    font-weight: 800;
+    padding: 2px 6px;
+  }
+
+  .matrix-action-pill {
+    font-size: 11px;
+    padding: 4px 10px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .matrix-action-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 11.5px;
   }
 
   .matrix-date-btn {
     padding: 6px 10px;
-    min-height: 36px;
+    min-height: 32px;
     font-size: 12px;
   }
 
   .matrix-date-center-btn {
-    min-width: 110px;
-    font-size: 12.5px;
-    padding: 5px 10px;
+    min-width: 0;
+    font-size: 12px;
+    padding: 4px 8px;
     white-space: nowrap;
   }
 
