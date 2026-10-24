@@ -1557,7 +1557,18 @@
 
 <script>
   // Global State for Courtogo Matrix & Player Account
-  let currentDate = '<%= today %>';
+  function getEffectiveToday() {
+    try {
+      const now = new Date();
+      const localYmd = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+      const srvToday = '<%= today %>';
+      return (localYmd > srvToday) ? localYmd : srvToday;
+    } catch (e) {
+      return '<%= today %>';
+    }
+  }
+  const effectiveToday = getEffectiveToday();
+  let currentDate = effectiveToday;
   let matrixCourtsData = [];
   let selectedSlotItems = []; // Array of { courtId, courtName, startTime, endTime, rate, startLabel, endLabel }
   let mapInitialized = false;
@@ -1716,7 +1727,7 @@
   // =========================================================
   // STEP 1 & STEP 2: CURRENT MONTH CALENDAR -> TIME SLOT MATRIX TOGGLE
   // =========================================================
-  const todayBaseDate = new Date('<%= today %>T00:00:00');
+  const todayBaseDate = new Date(effectiveToday + 'T00:00:00');
   let calendarViewYear = todayBaseDate.getFullYear();
   let calendarViewMonth = todayBaseDate.getMonth(); // 0-indexed
   let hasSelectedDayOnce = false;
@@ -1789,7 +1800,7 @@
       prevMonthBtn.disabled = isCurrentOrPastMonth;
     }
 
-    const todayStr = '<%= today %>';
+    const todayStr = effectiveToday;
     const monthKey = `${calendarViewYear}-${String(calendarViewMonth + 1).padStart(2, '0')}`;
     let cellsHtml = '';
 
@@ -1893,12 +1904,12 @@
   function jumpCalendarToToday() {
     calendarViewYear = todayBaseDate.getFullYear();
     calendarViewMonth = todayBaseDate.getMonth();
-    selectCalendarDay('<%= today %>');
+    selectCalendarDay(effectiveToday);
     fetchCalendarMonthStatus(calendarViewYear, calendarViewMonth);
   }
 
   function selectCalendarDay(dateStr) {
-    if (!dateStr || dateStr < '<%= today %>') return;
+    if (!dateStr || dateStr < effectiveToday) return;
     const dateChanged = currentDate !== dateStr;
     currentDate = dateStr;
     hasSelectedDayOnce = true;
@@ -1949,6 +1960,11 @@
     const nextBtn = document.getElementById('btnNextDate');
     const todayBtn = document.getElementById('btnTodayShortcut');
 
+    if (nativePicker) {
+      nativePicker.min = effectiveToday;
+      nativePicker.value = currentDate;
+    }
+
     updateDateDisplay(currentDate);
     renderMonthCalendar();
     fetchCalendarMonthStatus(calendarViewYear, calendarViewMonth);
@@ -1967,7 +1983,7 @@
     prevBtn.addEventListener('click', () => {
       const d = new Date(currentDate + 'T00:00:00');
       d.setDate(d.getDate() - 1);
-      const minDate = new Date('<%= today %>T00:00:00');
+      const minDate = new Date(effectiveToday + 'T00:00:00');
       if (d >= minDate) {
         const ymd = formatYmdLocal(d.getFullYear(), d.getMonth(), d.getDate());
         selectCalendarDay(ymd);
@@ -1982,14 +1998,13 @@
     });
 
     todayBtn.addEventListener('click', () => {
-      selectCalendarDay('<%= today %>');
+      selectCalendarDay(effectiveToday);
     });
   }
 
   function updateDateDisplay(dateStr) {
     const d = new Date(dateStr + 'T00:00:00');
-    const todayStr = '<%= today %>';
-    const isToday = dateStr === todayStr;
+    const isToday = dateStr === effectiveToday;
 
     const options = { weekday: 'short', month: 'short', day: 'numeric' };
     const formatted = d.toLocaleDateString('en-US', options);
