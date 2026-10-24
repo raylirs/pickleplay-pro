@@ -2032,6 +2032,24 @@
     }
   }
 
+  // Short time format helper for mobile (e.g., '06:00' -> '6 AM', '12:00' -> '12 PM', '00:00' -> '12 MN')
+  function formatShortHour(time24, startLabel) {
+    if (time24) {
+      const parts = time24.split(':');
+      const h = parseInt(parts[0], 10);
+      const m = parts[1] ? parseInt(parts[1], 10) : 0;
+      if (h === 0 || h === 24) return m > 0 ? `12:${m < 10 ? '0' + m : m} AM` : '12 MN';
+      if (h === 12 && m === 0) return '12 PM';
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const h12 = h % 12 || 12;
+      return m > 0 ? `${h12}:${m < 10 ? '0' + m : m} ${ampm}` : `${h12} ${ampm}`;
+    }
+    if (startLabel) {
+      return startLabel.replace(/:00\b/gi, '').replace(/\s+/g, ' ');
+    }
+    return '';
+  }
+
   // Render Table Grid
   function renderMatrixTable(courts, isDayClosed = false, closedReason = null) {
     const dayBanner = document.getElementById('dayClosedBanner');
@@ -2080,9 +2098,13 @@
       timeTd.className = 'matrix-time-cell';
       const isMidnight = slot.endTime === '24:00' || slot.endTime === '00:00';
       const endLabelFormatted = isMidnight ? '12:00 Midnight' : slot.endLabel;
+      const shortTime = formatShortHour(slot.startTime, slot.startLabel);
       timeTd.innerHTML = `
-        <span class="matrix-time-start fw-bold text-dark d-block" style="font-size: 11px;">${slot.startLabel}</span>
-        <span class="matrix-time-end text-muted d-block" style="font-size: 9px; line-height: 1.1;">to ${endLabelFormatted}</span>
+        <span class="matrix-time-short d-md-none">${shortTime}</span>
+        <div class="matrix-time-full d-none d-md-block">
+          <span class="matrix-time-start fw-bold text-dark d-block" style="font-size: 11px;">${slot.startLabel}</span>
+          <span class="matrix-time-end text-muted d-block" style="font-size: 9px; line-height: 1.1;">to ${endLabelFormatted}</span>
+        </div>
       `;
       tr.appendChild(timeTd);
 

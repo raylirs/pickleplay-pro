@@ -986,64 +986,116 @@ h1, h2, h3, h4, .font-display {
     white-space: nowrap;
   }
 
-  /* Matrix table sizing on mobile */
+  /* Matrix table sizing on mobile - strictly mobile only, accommodates all 4 courts without horizontal scroll */
+  .schedule-matrix-wrapper {
+    overflow-x: auto;
+    width: 100%;
+  }
+
   .matrix-table {
-    min-width: 460px;
+    min-width: 0 !important;
+    width: 100% !important;
+    table-layout: fixed !important;
   }
 
   .matrix-time-header {
-    width: 78px;
-    min-width: 75px;
-    font-size: 11px;
-    padding: 6px 2px;
+    width: 48px !important;
+    min-width: 44px !important;
+    max-width: 50px !important;
+    font-size: 9.5px !important;
+    letter-spacing: 0.3px;
+    padding: 6px 1px !important;
+    text-align: center;
   }
 
   .matrix-time-cell {
-    width: 78px;
-    min-width: 75px;
-    padding: 4px 2px;
-    height: 48px;
+    width: 48px !important;
+    min-width: 44px !important;
+    max-width: 50px !important;
+    padding: 2px 1px !important;
+    height: 44px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
   }
 
-  .matrix-time-start {
-    font-size: 10.5px !important;
-  }
-
-  .matrix-time-end {
-    font-size: 8.5px !important;
+  .matrix-time-short {
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    color: var(--navy-800) !important;
+    white-space: nowrap !important;
+    line-height: 1.1 !important;
+    text-align: center !important;
   }
 
   .matrix-header-cell {
-    min-width: 95px;
-    padding: 6px 4px;
+    min-width: 0 !important;
+    width: calc((100% - 48px) / 4) !important;
+    padding: 5px 1px !important;
+    text-align: center;
   }
 
   .matrix-header-court-title {
-    font-size: 12px;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.1 !important;
   }
 
   .matrix-header-court-rate {
-    font-size: 9.5px;
-    padding: 1px 5px;
+    font-size: 8px !important;
+    font-weight: 700 !important;
+    padding: 1px 3px !important;
+    border-radius: 6px !important;
+    white-space: nowrap !important;
+    margin-top: 1px !important;
+    display: inline-block;
   }
 
   .matrix-slot-cell {
-    min-width: 95px;
-    height: 48px;
-    padding: 3px;
+    min-width: 0 !important;
+    width: calc((100% - 48px) / 4) !important;
+    height: 44px !important;
+    padding: 2px 1px !important;
   }
 
   .slot-inner {
-    border-radius: 6px;
-    padding: 1px 2px;
+    border-radius: 6px !important;
+    padding: 2px 1px !important;
+    line-height: 1.1 !important;
   }
 
   .slot-inner span {
-    font-size: 10.5px;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
   }
 
   .slot-inner::after {
-    font-size: 9px;
+    font-size: 7.5px !important;
+    line-height: 1 !important;
+    margin-top: 1px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+  }
+
+  .matrix-slot-cell.state-blocked .slot-inner span {
+    font-size: 8.5px !important;
+  }
+
+  .matrix-slot-cell.state-blocked .slot-inner span i {
+    font-size: 8px !important;
+    margin-right: 2px !important;
   }
 
   /* Floating rail docks cleanly above the mobile bottom navigation bar */
