@@ -613,11 +613,16 @@
         </div>
 
         <div class="modal-footer bg-light px-4 py-3 d-flex justify-content-between">
-          <button type="button" class="btn btn-outline-secondary rounded-pill px-3.5" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary fw-bold rounded-pill px-4 shadow-sm d-inline-flex align-items-center gap-1.5">
-            <i class="bi bi-check-circle-fill"></i>
-            <span>Save Reason Changes</span>
+          <button type="button" class="btn btn-outline-danger rounded-pill px-3" id="editBlockUnblockBtn">
+            <i class="bi bi-unlock-fill me-1"></i>Unblock Rule
           </button>
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-3.5" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary fw-bold rounded-pill px-4 shadow-sm d-inline-flex align-items-center gap-1.5">
+              <i class="bi bi-check-circle-fill"></i>
+              <span>Save Reason Changes</span>
+            </button>
+          </div>
         </div>
       </form>
     </div>
@@ -863,13 +868,26 @@
         let slotClass = 'slot-open';
         let clickAction = '';
 
+        let descriptionHtml = '';
         if (slot.status === 'BLOCKED' || slot.status === 'MAINTENANCE') {
-          slotClass = 'slot-blocked';
-          statusBadge = `<span class="badge bg-danger text-white rounded-pill px-2 py-0.5" style="font-size: 9.5px;">⊘ Blocked</span>`;
-          if (slot.blockId) {
-            clickAction = `onclick="handleUnblockClick(${slot.blockId}, '${dateYmd}')"`;
+          const isOpenPlay = /open\s*play/i.test(slot.blockReason || '');
+          slotClass = isOpenPlay ? 'slot-open-play' : 'slot-blocked';
+
+          if (isOpenPlay) {
+            statusBadge = `<span class="badge badge-open-play px-2 py-0.5 fw-bold" style="font-size: 9.5px;"><i class="bi bi-people-fill me-1"></i>Open Play</span>`;
           } else {
-            clickAction = `onclick="alert('This slot is part of a day or facility block rule below.')"`;
+            statusBadge = `<span class="badge bg-danger text-white rounded-pill px-2 py-0.5 fw-bold" style="font-size: 9.5px;"><i class="bi bi-slash-circle me-0.5"></i>Blocked</span>`;
+          }
+
+          if (slot.blockReason) {
+            const descColor = isOpenPlay ? 'text-info-emphasis' : 'text-danger-emphasis';
+            descriptionHtml = `<div class="small fw-semibold text-truncate ${descColor}" style="font-size: 9.5px; max-width: 135px;" title="${escapeJs(slot.blockReason)}">${escapeJs(slot.blockReason)}</div>`;
+          }
+
+          if (slot.blockId) {
+            clickAction = `onclick="openEditBlockModal(${slot.blockId}, '${dateYmd}', '${escapeJs(slot.blockReason || 'Court Maintenance & Surface Cleaning')}', '${escapeJs(slot.blockNotes || '')}', '${escapeJs(court.name)}')" title="Click to edit reason / purpose or unblock"`;
+          } else {
+            clickAction = `onclick="alert('This slot is part of a day or facility block rule: ${escapeJs(slot.blockReason || 'Blocked')}')"`;
           }
         } else if (slot.status === 'CONFIRMED' || slot.status === 'BOOKED') {
           slotClass = 'slot-booked';
@@ -901,8 +919,11 @@
 
         slotsHtml += `
           <div class="admin-court-grid-slot ${slotClass} mb-1.5" ${clickAction}>
-            <div class="fw-bold" style="font-size: 11px;">${slot.startLabel}</div>
-            <div class="slot-status-badge">${statusBadge}</div>
+            <div class="d-flex flex-column min-w-0 me-1.5 text-start">
+              <div class="fw-bold" style="font-size: 11px;">${slot.startLabel}</div>
+              ${descriptionHtml}
+            </div>
+            <div class="slot-status-badge flex-shrink-0">${statusBadge}</div>
           </div>
         `;
       });
@@ -1173,6 +1194,19 @@
         customInput.value = currentReason;
       }
       hiddenInput.value = currentReason;
+    }
+
+    const unblockBtn = document.getElementById('editBlockUnblockBtn');
+    if (unblockBtn) {
+      unblockBtn.onclick = function() {
+        if (confirm(`Unblock this rule on ${dateYmd}? Slots will immediately reopen for player bookings.`)) {
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = `/admin/blocks/${blockId}/delete`;
+          document.body.appendChild(form);
+          form.submit();
+        }
+      };
     }
 
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('editBlockModal'));

@@ -85,6 +85,7 @@ async function getCourtAvailability(courtId, date, currentUser = null) {
     let isAvailable = true;
     let slotStatus = 'AVAILABLE';
     let blockReason = null;
+    let blockNotes = null;
     let blockId = null;
 
     if (!court.is_active) {
@@ -94,6 +95,7 @@ async function getCourtAvailability(courtId, date, currentUser = null) {
       isAvailable = false;
       slotStatus = 'BLOCKED';
       blockReason = conflictingBlock.reason || 'Court Maintenance / Reserved';
+      blockNotes = conflictingBlock.notes || null;
       blockId = conflictingBlock.id;
     } else if (conflictingRes) {
       isAvailable = false;
@@ -110,6 +112,7 @@ async function getCourtAvailability(courtId, date, currentUser = null) {
       courtActive: court.is_active,
       status: slotStatus,
       blockReason,
+      blockNotes,
       blockId,
       isMyBooking: isOwner,
       reservationId: isOwner ? conflictingRes.id : null,
