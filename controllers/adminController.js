@@ -5,7 +5,7 @@ const { getCourtAvailability } = require('../services/availabilityService');
 const { getIO } = require('../config/socket');
 const { sendReservationConfirmation } = require('../services/emailService');
 const { sendReservationSMS } = require('../services/smsService');
-const { formatCurrency, formatDate, formatTime12 } = require('../utils/dateTimeUtils');
+const { formatCurrency, formatDate, formatTime12, formatDateTime, formatDateFriendly } = require('../utils/dateTimeUtils');
 const { logAudit } = require('../utils/helpers');
 
 const adminController = {
@@ -1110,7 +1110,9 @@ const adminController = {
         allDayCount: allDayBlocks.length,
         totalCount: blocks.length,
         formatDate,
-        formatTime12
+        formatTime12,
+        formatDateTime,
+        formatDateFriendly
       });
     } catch (err) {
       next(err);

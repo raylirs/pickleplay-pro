@@ -93,10 +93,43 @@ function calculateHours(startTime, endTime) {
   return (eParts[0] * 60 + eParts[1] - (sParts[0] * 60 + sParts[1])) / 60;
 }
 
+function formatDateTime(date) {
+  if (!date) return '';
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return '';
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Manila',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    }).format(d);
+  } catch (e) {
+    return d.toLocaleString();
+  }
+}
+
+function formatDateFriendly(dateStr) {
+  if (!dateStr) return '';
+  if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  const d = dateStr instanceof Date ? dateStr : new Date(dateStr);
+  if (isNaN(d.getTime())) return String(dateStr);
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 module.exports = {
   formatCurrency,
   formatDate,
   formatTime12,
+  formatDateTime,
+  formatDateFriendly,
   generateTimeSlots,
   addHoursToTime,
   calculateHours

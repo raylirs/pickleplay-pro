@@ -222,3 +222,160 @@ h1, h2, h3, h4, h5, h6 {
     transform: translate(-50%, 0);
   }
 }
+
+/* =========================================================
+   CUSTOM SLEEK MODERN SCROLLBAR (Eliminates Chunky Windows Scrollbars)
+   ========================================================= */
+.admin-slots-scroll::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar,
+.table-responsive::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.admin-slots-scroll::-webkit-scrollbar-track,
+.custom-scrollbar::-webkit-scrollbar-track,
+.table-responsive::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-slots-scroll::-webkit-scrollbar-thumb,
+.custom-scrollbar::-webkit-scrollbar-thumb,
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+
+.admin-slots-scroll::-webkit-scrollbar-thumb:hover,
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+.admin-slots-scroll,
+.custom-scrollbar,
+.table-responsive {
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+
+/* =========================================================
+   MODERN SOFT DASHBOARD BUTTONS
+   ========================================================= */
+.btn-soft-primary {
+  background: #EFF6FF !important;
+  color: #1D4ED8 !important;
+  border: 1px solid #BFDBFE !important;
+  font-weight: 700;
+  transition: all 0.15s ease-in-out;
+}
+.btn-soft-primary:hover {
+  background: #DBEAFE !important;
+  color: #1E40AF !important;
+  border-color: #93C5FD !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.15);
+}
+
+.btn-soft-danger {
+  background: #FEF2F2 !important;
+  color: #DC2626 !important;
+  border: 1px solid #FECACA !important;
+  font-weight: 700;
+  transition: all 0.15s ease-in-out;
+}
+.btn-soft-danger:hover {
+  background: #FEE2E2 !important;
+  color: #B91C1C !important;
+  border-color: #FCA5A5 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+}
+
+.btn-soft-info {
+  background: #F0F9FF !important;
+  color: #0369A1 !important;
+  border: 1px solid #BAE6FD !important;
+  font-weight: 700;
+  transition: all 0.15s ease-in-out;
+}
+.btn-soft-info:hover {
+  background: #E0F2FE !important;
+  color: #0284C7 !important;
+  border-color: #7DD3FC !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
+}
+
+.btn-soft-warning {
+  background: #FFFBEB !important;
+  color: #B45309 !important;
+  border: 1px solid #FDE68A !important;
+  font-weight: 700;
+  transition: all 0.15s ease-in-out;
+}
+.btn-soft-warning:hover {
+  background: #FEF3C7 !important;
+  color: #92400E !important;
+  border-color: #FCD34D !important;
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   COURT CARD & TABLE POLISH
+   ========================================================= */
+.admin-court-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 18px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.admin-court-card:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  transform: translateY(-2px);
+}
+
+.admin-court-card-header {
+  background: #F8FAFC;
+  border-bottom: 1px solid #E2E8F0;
+  padding: 12px 14px;
+}
+
+/* Modern Clean Table Styling */
+.admin-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.admin-table thead th {
+  background: #F8FAFC !important;
+  color: #475569 !important;
+  font-weight: 800 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  border-top: none !important;
+  border-bottom: 1.5px solid #E2E8F0 !important;
+  padding: 14px 18px !important;
+  white-space: nowrap;
+}
+
+.admin-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.admin-table tbody tr:hover {
+  background-color: #F8FAFC !important;
+}
+
+.admin-table tbody td {
+  padding: 14px 18px !important;
+  border-bottom: 1px solid #F1F5F9 !important;
+  vertical-align: middle !important;
+}

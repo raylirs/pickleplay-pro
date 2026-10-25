@@ -44,18 +44,19 @@
   <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
     <!-- Inspector Header & Date Controls -->
     <div class="card-header bg-white p-3 p-md-4 border-bottom">
+      <!-- Top Row: Date Navigator & Primary Actions -->
       <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
-        <!-- Date Navigator -->
+        <!-- Date Navigator & Quick Day Jump -->
         <div class="d-flex align-items-center gap-2 flex-wrap">
-          <div class="btn-group shadow-xs">
-            <button type="button" class="btn btn-outline-secondary btn-sm rounded-start-pill px-3" onclick="navigateInspectorDate(-1)" title="Previous Day">
+          <div class="btn-group bg-light rounded-pill border p-0.5 shadow-xs">
+            <button type="button" class="btn btn-sm btn-light rounded-pill text-dark px-2.5 py-1 border-0" onclick="navigateInspectorDate(-1)" title="Previous Day">
               <i class="bi bi-chevron-left"></i>
             </button>
-            <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-bold text-dark" id="inspectorDateDisplayBtn" onclick="openInspectorDatePicker()">
+            <button type="button" class="btn btn-sm btn-white bg-white rounded-pill px-3 py-1 fw-bold text-dark shadow-xs border-0" id="inspectorDateDisplayBtn" onclick="openInspectorDatePicker()">
               <i class="bi bi-calendar3 me-1.5 text-primary"></i>
               <span id="inspectorDateLabel"><%= typeof inspectedDate !== 'undefined' && inspectedDate ? inspectedDate : today %></span>
             </button>
-            <button type="button" class="btn btn-outline-secondary btn-sm rounded-end-pill px-3" onclick="navigateInspectorDate(1)" title="Next Day">
+            <button type="button" class="btn btn-sm btn-light rounded-pill text-dark px-2.5 py-1 border-0" onclick="navigateInspectorDate(1)" title="Next Day">
               <i class="bi bi-chevron-right"></i>
             </button>
           </div>
@@ -63,42 +64,57 @@
           <input type="date" id="inspectorDateInput" class="visually-hidden" value="<%= typeof inspectedDate !== 'undefined' && inspectedDate ? inspectedDate : today %>" onchange="jumpInspectorDate(this.value)">
 
           <!-- Quick Day Jump Pills -->
-          <div class="d-flex align-items-center gap-1">
-            <button type="button" class="btn btn-light btn-sm rounded-pill px-2.5 py-1 text-secondary fw-semibold border" onclick="jumpInspectorDate('<%= today %>')">
+          <div class="d-flex align-items-center gap-1.5 bg-light rounded-pill border p-0.5">
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-1 text-secondary fw-semibold border-0" onclick="jumpInspectorDate('<%= today %>')">
               Today
             </button>
-            <button type="button" class="btn btn-light btn-sm rounded-pill px-2.5 py-1 text-secondary fw-semibold border" onclick="jumpInspectorOffset(1)">
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-1 text-secondary fw-semibold border-0" onclick="jumpInspectorOffset(1)">
               Tomorrow
             </button>
-            <button type="button" class="btn btn-light btn-sm rounded-pill px-2.5 py-1 text-secondary fw-semibold border" onclick="jumpInspectorToWeekend()">
-              This Weekend
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-1 text-secondary fw-semibold border-0" onclick="jumpInspectorToWeekend()">
+              Weekend
             </button>
           </div>
         </div>
 
-        <!-- Legend and Quick Full-Day Closure Button -->
-        <div class="d-flex align-items-center gap-2 gap-sm-3 flex-wrap">
-          <!-- Legend Pill -->
-          <div class="d-flex align-items-center gap-2 small px-2.5 py-1 bg-light rounded-pill border" style="font-size: 11px;">
-            <span class="d-inline-flex align-items-center gap-1"><span class="badge rounded-circle p-1 bg-success"></span> Open</span>
-            <span class="d-inline-flex align-items-center gap-1"><span class="badge rounded-circle p-1 bg-warning"></span> Selected</span>
-            <span class="d-inline-flex align-items-center gap-1"><span class="badge rounded-circle p-1 bg-danger"></span> Blocked</span>
-            <span class="d-inline-flex align-items-center gap-1"><span class="badge rounded-circle p-1" style="background:#0B2545;"></span> Booked</span>
-          </div>
-
-          <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1.5 small fw-semibold d-none d-lg-inline-flex align-items-center gap-1">
-            <i class="bi bi-hand-index-thumb"></i> Click open slots to select &amp; block
-          </span>
-
-          <button type="button" class="btn btn-outline-info btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5" onclick="quickSetOpenPlay()">
-            <i class="bi bi-people-fill text-info"></i>
+        <!-- Action Buttons -->
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <button type="button" class="btn btn-soft-info btn-sm rounded-pill px-3.5 py-2 fw-bold d-inline-flex align-items-center gap-1.5 shadow-xs" onclick="quickSetOpenPlay()">
+            <i class="bi bi-people-fill"></i>
             <span>Set Open Play for This Day</span>
           </button>
 
-          <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5" onclick="quickBlockFullDay()">
-            <i class="bi bi-door-closed-fill"></i>
+          <button type="button" class="btn btn-soft-danger btn-sm rounded-pill px-3.5 py-2 fw-bold d-inline-flex align-items-center gap-1.5 shadow-xs" onclick="quickBlockFullDay()">
+            <i class="bi bi-slash-circle-fill"></i>
             <span>Block All Courts for This Day</span>
           </button>
+        </div>
+      </div>
+
+      <!-- Bottom Row: Legend & Instructions -->
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-3 mt-3 border-top">
+        <div class="d-flex align-items-center gap-2 gap-sm-3 flex-wrap">
+          <span class="text-secondary small fw-bold text-uppercase" style="font-size: 10px; letter-spacing: 0.05em;">Legend:</span>
+          <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-bold">
+            <span class="badge rounded-circle bg-success p-1 me-1"></span>Available
+          </span>
+          <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 small fw-bold">
+            <span class="badge rounded-circle bg-warning p-1 me-1"></span>Selected
+          </span>
+          <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 small fw-bold">
+            <i class="bi bi-bookmark-fill me-1"></i>Reserved
+          </span>
+          <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1 small fw-bold">
+            <span class="badge rounded-circle bg-danger p-1 me-1"></span>Blocked
+          </span>
+          <span class="badge text-white rounded-pill px-2.5 py-1 small fw-bold" style="background:#0B2545;">
+            <span class="badge rounded-circle bg-light p-1 me-1"></span>Booked
+          </span>
+        </div>
+
+        <div class="text-secondary small fw-semibold d-none d-md-inline-flex align-items-center gap-1" style="font-size: 11.5px;">
+          <i class="bi bi-info-circle text-primary"></i>
+          <span>Click any open slot to multi-block • Click any blocked slot to edit / unblock</span>
         </div>
       </div>
 
@@ -146,15 +162,15 @@
     </div>
 
     <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr class="small text-uppercase text-secondary" style="font-size: 11px; letter-spacing: 0.04em;">
+      <table class="table admin-table table-hover align-middle mb-0">
+        <thead>
+          <tr class="small text-uppercase text-secondary" style="font-size: 11px; letter-spacing: 0.05em;">
             <th class="ps-4">Date</th>
             <th>Court(s) Affected</th>
             <th>Duration</th>
             <th>Reason / Purpose</th>
             <th>Notes</th>
-            <th>Created By</th>
+            <th>Created By &amp; Time</th>
             <th class="text-end pe-4">Action</th>
           </tr>
         </thead>
@@ -163,26 +179,31 @@
             <% blocks.forEach(function(b) { %>
               <tr>
                 <td class="ps-4">
-                  <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-calendar3 text-primary"></i>
+                  <div class="d-flex align-items-center gap-2.5">
+                    <div class="bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 shadow-xs" style="width: 38px; height: 38px;">
+                      <i class="bi bi-calendar3 fs-6"></i>
+                    </div>
                     <div>
-                      <strong class="text-dark d-block"><%= b.date %></strong>
-                      <span class="small text-muted"><%= formatDate(b.date) %></span>
+                      <strong class="text-dark d-block font-display" style="font-size: 13.5px;"><%= typeof formatDateFriendly === 'function' ? formatDateFriendly(b.date) : b.date %></strong>
+                      <span class="small font-monospace text-muted d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                        <i class="bi bi-calendar-check text-primary opacity-75"></i><%= b.date %>
+                      </span>
                     </div>
                   </div>
                 </td>
 
                 <td>
                   <% if (b.all_courts || !b.court_id) { %>
-                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1 rounded-pill fw-bold">
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1.5 rounded-pill fw-bold">
                       <i class="bi bi-grid-3x3-gap-fill me-1"></i>All 4 Courts
                     </span>
                   <% } else if (b.court) { %>
-                    <span class="badge bg-dark text-white px-2.5 py-1 rounded-pill fw-bold">
-                      <i class="bi bi-circle-fill text-warning me-1" style="font-size: 7px;"></i><%= b.court.display_name %>
+                    <span class="badge bg-dark text-white px-2.5 py-1.5 rounded-pill fw-bold d-inline-flex align-items-center gap-1.5 shadow-xs">
+                      <span class="badge rounded-circle bg-warning p-1"></span>
+                      <span><%= b.court.display_name %></span>
                     </span>
                   <% } else { %>
-                    <span class="badge bg-secondary-subtle text-secondary px-2.5 py-1 rounded-pill">
+                    <span class="badge bg-secondary-subtle text-secondary px-2.5 py-1.5 rounded-pill">
                       Court #<%= b.court_id %>
                     </span>
                   <% } %>
@@ -190,7 +211,7 @@
 
                 <td>
                   <% if (b.is_all_day) { %>
-                    <span class="badge bg-danger text-white rounded-pill px-2.5 py-1 fw-bold">
+                    <span class="badge bg-danger text-white rounded-pill px-2.5 py-1.5 fw-bold">
                       <i class="bi bi-sun-fill me-1"></i>Entire Day (6AM - 12MN)
                     </span>
                   <% } else { %>
@@ -201,7 +222,7 @@
                       } catch(e) {}
                     %>
                     <div class="d-flex flex-column gap-1">
-                      <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 fw-bold font-monospace">
+                      <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1.5 fw-bold font-monospace" style="width: fit-content;">
                         <i class="bi bi-clock me-1 text-primary"></i><%= formatTime12(b.start_time) %> &ndash; <%= formatTime12(b.end_time) %>
                       </span>
                       <% if (parsedSlots && Array.isArray(parsedSlots) && parsedSlots.length > 0) { %>
@@ -224,14 +245,14 @@
                           data-notes="<%= b.notes || '' %>"
                           data-court="<%= b.all_courts || !b.court_id ? 'All 4 Courts' : (b.court ? b.court.display_name : 'Court #' + b.court_id) %>"
                           title="Click to change Reason / Purpose">
-                    <span class="badge <%= isOpenPlay ? 'badge-open-play' : (isReserved ? 'bg-warning text-dark border border-warning-subtle' : 'bg-warning-subtle text-dark border border-warning') %> px-2.5 py-1 rounded-pill fw-semibold d-inline-flex align-items-center gap-1 shadow-xs">
+                    <span class="badge <%= isOpenPlay ? 'badge-open-play' : (isReserved ? 'bg-warning text-dark border border-warning-subtle' : 'bg-warning-subtle text-dark border border-warning') %> px-3 py-1.5 rounded-pill fw-bold d-inline-flex align-items-center gap-1.5 shadow-xs">
                       <% if (isOpenPlay) { %><i class="bi bi-people-fill"></i><% } else if (isReserved) { %><i class="bi bi-bookmark-fill"></i><% } %>
                       <span><%= b.reason %></span>
                       <i class="bi bi-pencil-fill ms-1 opacity-50" style="font-size: 8px;"></i>
                     </span>
                   </button>
                   <% if (b.notes) { %>
-                    <div class="small text-truncate mt-1 fw-bold" style="font-size: 11px; max-width: 200px; color: #92400E;" title="Reserved for / Note: <%= b.notes %>">
+                    <div class="small text-truncate mt-1.5 fw-bold" style="font-size: 11px; max-width: 200px; color: #92400E;" title="Reserved for / Note: <%= b.notes %>">
                       <i class="bi bi-person-fill text-warning me-1"></i><%= b.notes %>
                     </div>
                   <% } %>
@@ -239,26 +260,34 @@
 
                 <td class="small" style="max-width: 220px;">
                   <% if (b.notes) { %>
-                    <span class="fw-semibold <%= isReserved ? 'text-warning-emphasis' : 'text-dark' %>">
-                      <i class="bi bi-sticky-fill text-warning me-1"></i><%= b.notes %>
+                    <span class="fw-bold <%= isReserved ? 'text-warning-emphasis' : 'text-dark' %> d-inline-flex align-items-center gap-1">
+                      <i class="bi bi-sticky-fill text-warning"></i>
+                      <span><%= b.notes %></span>
                     </span>
                   <% } else { %>
                     <span class="text-muted fst-italic">—</span>
                   <% } %>
                 </td>
 
-                <td class="small text-secondary">
-                  <div class="d-flex align-items-center gap-1.5">
-                    <i class="bi bi-person-fill text-muted"></i>
-                    <span><%= b.creator ? (b.creator.full_name || b.creator.username) : 'Admin' %></span>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 fw-bold" style="width: 30px; height: 30px; font-size: 12.5px;">
+                      <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div>
+                      <strong class="text-dark d-block lh-1 mb-1" style="font-size: 12.5px;"><%= b.creator ? (b.creator.full_name || b.creator.username) : 'Admin' %></strong>
+                      <span class="text-muted small d-inline-flex align-items-center gap-1 font-monospace" style="font-size: 11px;">
+                        <i class="bi bi-clock-history text-secondary"></i>
+                        <%= b.created_at ? (typeof formatDateTime === 'function' ? formatDateTime(b.created_at) : formatDate(b.created_at)) : '—' %>
+                      </span>
+                    </div>
                   </div>
-                  <span class="text-muted" style="font-size: 10px;"><%= b.created_at ? formatDate(b.created_at) : '' %></span>
                 </td>
 
                 <td class="text-end pe-4">
                   <div class="d-inline-flex align-items-center gap-1.5">
                     <button type="button" 
-                            class="btn btn-outline-primary btn-sm rounded-pill px-2.5 fw-bold btn-edit-block shadow-none"
+                            class="btn btn-soft-primary btn-sm rounded-pill px-3 py-1 fw-bold btn-edit-block"
                             data-block-id="<%= b.id %>"
                             data-date="<%= b.date %>"
                             data-reason="<%= b.reason %>"
@@ -268,7 +297,7 @@
                       <i class="bi bi-pencil-square me-1"></i>Edit
                     </button>
                     <form action="/admin/blocks/<%= b.id %>/delete" method="POST" onsubmit="return confirm('Unblock this rule? Slots on <%= b.date %> will immediately reopen for player bookings.');" class="d-inline">
-                      <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2.5 fw-bold shadow-none">
+                      <button type="submit" class="btn btn-soft-danger btn-sm rounded-pill px-3 py-1 fw-bold">
                         <i class="bi bi-unlock-fill me-1"></i>Unblock
                       </button>
                     </form>
@@ -966,22 +995,27 @@
       });
 
       col.innerHTML = `
-        <div class="card border rounded-4 bg-light p-3 shadow-xs h-100">
-          <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom">
-            <div>
-              <strong class="text-dark d-block fs-6">${court.name}</strong>
-              <span class="small text-muted" style="font-size: 11px;">₱${court.pricePerHour}/hr</span>
+        <div class="admin-court-card h-100 shadow-sm d-flex flex-column">
+          <div class="admin-court-card-header d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+              <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold font-monospace shadow-xs" style="width: 28px; height: 28px; font-size: 13px;">
+                ${court.court_number || court.id}
+              </div>
+              <div>
+                <strong class="text-dark d-block fs-6 lh-1 mb-0.5">${court.name}</strong>
+                <span class="text-muted fw-semibold" style="font-size: 11px;">₱${court.pricePerHour}/hr</span>
+              </div>
             </div>
-            <div class="d-flex align-items-center gap-1">
-              <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-0.5 fw-bold" style="font-size: 10px;" onclick="selectAllOpenForCourt(${court.id})" title="Select all open slots for this court">
+            <div class="d-flex align-items-center gap-1.5">
+              <button type="button" class="btn btn-soft-primary btn-sm rounded-pill px-2.5 py-1 fw-bold" style="font-size: 10.5px;" onclick="selectAllOpenForCourt(${court.id})" title="Select all open slots for this court">
                 <i class="bi bi-check2-square me-1"></i>Select Open
               </button>
-              <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-0.5 fw-bold" style="font-size: 10px;" onclick="quickBlockSingleCourtAllDay(${court.id}, '${escapeJs(court.name)}', '${dateYmd}')" title="Block entire day for this court">
-                All Day
+              <button type="button" class="btn btn-soft-danger btn-sm rounded-pill px-2.5 py-1 fw-bold" style="font-size: 10.5px;" onclick="quickBlockSingleCourtAllDay(${court.id}, '${escapeJs(court.name)}', '${dateYmd}')" title="Block entire day for this court">
+                <i class="bi bi-lock-fill me-0.5"></i>All Day
               </button>
             </div>
           </div>
-          <div style="max-height: 480px; overflow-y: auto; padding-right: 2px;">
+          <div class="p-2.5 admin-slots-scroll flex-grow-1" style="max-height: 480px; overflow-y: auto; overflow-x: hidden;">
             ${slotsHtml}
           </div>
         </div>
