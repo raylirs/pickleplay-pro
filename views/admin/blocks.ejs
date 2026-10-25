@@ -215,6 +215,7 @@
 
                 <td>
                   <% const isOpenPlay = /open\s*play/i.test(b.reason); %>
+                  <% const isReserved = !isOpenPlay && /reserved/i.test(b.reason); %>
                   <button type="button" 
                           class="btn btn-sm p-0 border-0 text-start btn-edit-block"
                           data-block-id="<%= b.id %>"
@@ -223,8 +224,8 @@
                           data-notes="<%= b.notes || '' %>"
                           data-court="<%= b.all_courts || !b.court_id ? 'All 4 Courts' : (b.court ? b.court.display_name : 'Court #' + b.court_id) %>"
                           title="Click to change Reason / Purpose">
-                    <span class="badge <%= isOpenPlay ? 'badge-open-play' : 'bg-warning-subtle text-dark border border-warning' %> px-2.5 py-1 rounded-pill fw-semibold d-inline-flex align-items-center gap-1 shadow-xs">
-                      <% if (isOpenPlay) { %><i class="bi bi-people-fill"></i><% } %>
+                    <span class="badge <%= isOpenPlay ? 'badge-open-play' : (isReserved ? 'bg-warning text-dark border border-warning-subtle' : 'bg-warning-subtle text-dark border border-warning') %> px-2.5 py-1 rounded-pill fw-semibold d-inline-flex align-items-center gap-1 shadow-xs">
+                      <% if (isOpenPlay) { %><i class="bi bi-people-fill"></i><% } else if (isReserved) { %><i class="bi bi-bookmark-fill"></i><% } %>
                       <span><%= b.reason %></span>
                       <i class="bi bi-pencil-fill ms-1 opacity-50" style="font-size: 8px;"></i>
                     </span>
@@ -415,6 +416,7 @@
             </label>
             <select id="blockReasonPreset" class="form-select rounded-3" onchange="handleBlockReasonPresetChange(this.value)">
               <option value="Open Play (Walk-ins & Drop-ins Welcome)">🏸 Open Play (Walk-ins &amp; Drop-ins Welcome)</option>
+              <option value="Reserved">🔒 Reserved</option>
               <option value="Court Maintenance & Surface Cleaning">Court Maintenance &amp; Surface Cleaning</option>
               <option value="Club Tournament / League Play">Club Tournament / League Play</option>
               <option value="Coaching Clinic / Private Training">Coaching Clinic / Private Training</option>
@@ -512,6 +514,7 @@
             </label>
             <select id="multiBlockReasonPreset" class="form-select rounded-3" onchange="handleMultiBlockReasonPresetChange(this.value)">
               <option value="Open Play (Walk-ins & Drop-ins Welcome)">🏸 Open Play (Walk-ins &amp; Drop-ins Welcome)</option>
+              <option value="Reserved">🔒 Reserved</option>
               <option value="Court Maintenance & Surface Cleaning">Court Maintenance &amp; Surface Cleaning</option>
               <option value="Club Tournament / League Play">Club Tournament / League Play</option>
               <option value="Coaching Clinic / Private Training">Coaching Clinic / Private Training</option>
@@ -588,6 +591,7 @@
             </label>
             <select id="editBlockReasonPreset" class="form-select rounded-3" onchange="handleEditBlockReasonPresetChange(this.value)">
               <option value="Open Play (Walk-ins & Drop-ins Welcome)">🏸 Open Play (Walk-ins &amp; Drop-ins Welcome)</option>
+              <option value="Reserved">🔒 Reserved</option>
               <option value="Court Maintenance & Surface Cleaning">Court Maintenance &amp; Surface Cleaning</option>
               <option value="Club Tournament / League Play">Club Tournament / League Play</option>
               <option value="Coaching Clinic / Private Training">Coaching Clinic / Private Training</option>
@@ -871,16 +875,19 @@
         let descriptionHtml = '';
         if (slot.status === 'BLOCKED' || slot.status === 'MAINTENANCE') {
           const isOpenPlay = /open\s*play/i.test(slot.blockReason || '');
-          slotClass = isOpenPlay ? 'slot-open-play' : 'slot-blocked';
+          const isReserved = !isOpenPlay && /reserved/i.test(slot.blockReason || '');
+          slotClass = isOpenPlay ? 'slot-open-play' : (isReserved ? 'slot-reserved' : 'slot-blocked');
 
           if (isOpenPlay) {
             statusBadge = `<span class="badge badge-open-play px-2 py-0.5 fw-bold" style="font-size: 9.5px;"><i class="bi bi-people-fill me-1"></i>Open Play</span>`;
+          } else if (isReserved) {
+            statusBadge = `<span class="badge bg-warning text-dark rounded-pill px-2 py-0.5 fw-bold" style="font-size: 9.5px;"><i class="bi bi-bookmark-fill me-0.5"></i>Reserved</span>`;
           } else {
             statusBadge = `<span class="badge bg-danger text-white rounded-pill px-2 py-0.5 fw-bold" style="font-size: 9.5px;"><i class="bi bi-slash-circle me-0.5"></i>Blocked</span>`;
           }
 
           if (slot.blockReason) {
-            const descColor = isOpenPlay ? 'text-info-emphasis' : 'text-danger-emphasis';
+            const descColor = isOpenPlay ? 'text-info-emphasis' : (isReserved ? 'text-warning-emphasis' : 'text-danger-emphasis');
             descriptionHtml = `<div class="small fw-semibold text-truncate ${descColor}" style="font-size: 9.5px; max-width: 135px;" title="${escapeJs(slot.blockReason)}">${escapeJs(slot.blockReason)}</div>`;
           }
 

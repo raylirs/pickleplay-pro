@@ -767,6 +767,17 @@ h1, h2, h3, h4, .font-display {
   font-weight: 800 !important;
 }
 
+.matrix-slot-cell.is-reserved-slot .slot-inner {
+  background: #FFFBEB !important;
+  border: 1.5px solid #FCD34D !important;
+  color: #B45309 !important;
+}
+
+.matrix-slot-cell.is-reserved-slot .slot-inner span {
+  color: #D97706 !important;
+  font-weight: 800 !important;
+}
+
 /* =========================================================
    Floating Sticky Bottom Booking Action Rail
 ========================================================= */

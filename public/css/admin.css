@@ -156,6 +156,19 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 3px 8px rgba(2, 132, 199, 0.2);
 }
 
+.admin-court-grid-slot.slot-reserved {
+  background: #FFFBEB;
+  border: 1.5px solid #FCD34D;
+  color: #B45309;
+  font-weight: 700;
+}
+
+.admin-court-grid-slot.slot-reserved:hover {
+  background: #FEF3C7;
+  border-color: #F59E0B;
+  box-shadow: 0 3px 8px rgba(245, 158, 11, 0.2);
+}
+
 .admin-court-grid-slot.slot-booked {
   background: #0B2545;
   border: 1px solid #07172C;

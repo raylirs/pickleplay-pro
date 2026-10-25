@@ -2183,6 +2183,9 @@
         const isSlotOpenPlay = Boolean(
           courtSlot.blockReason && /open\s*play/i.test(courtSlot.blockReason)
         );
+        const isSlotReserved = Boolean(
+          !isSlotOpenPlay && courtSlot.blockReason && /reserved/i.test(courtSlot.blockReason)
+        );
 
         if (stateClass === 'state-blocked') {
           if (isSlotOpenPlay) {
@@ -2190,6 +2193,13 @@
             td.innerHTML = `
               <div class="slot-inner">
                 <span class="small fw-bold text-info"><i class="bi bi-people-fill me-1"></i>Open Play</span>
+              </div>
+            `;
+          } else if (isSlotReserved) {
+            td.className += ' is-reserved-slot';
+            td.innerHTML = `
+              <div class="slot-inner">
+                <span class="small fw-bold text-warning"><i class="bi bi-bookmark-fill me-1 text-warning"></i>Reserved</span>
               </div>
             `;
           } else {
@@ -2217,6 +2227,11 @@
             td.title = `Open Play Session: Walk-ins & drop-in players welcome! ${courtSlot.blockReason || ''}`;
             td.addEventListener('click', () => {
               showLiveToast('🎾 Open Play is scheduled for this session! Drop by the arena and join the games on site.');
+            });
+          } else if (isSlotReserved) {
+            td.title = `Reserved: This court slot has been reserved.`;
+            td.addEventListener('click', () => {
+              showLiveToast('🔒 This court slot is reserved by facility management.');
             });
           } else {
             td.title = `Unavailable: Slot blocked by facility admin${rText}`;
