@@ -51,7 +51,7 @@
             <button type="button" class="btn btn-outline-secondary btn-sm rounded-start-pill px-3" onclick="navigateInspectorDate(-1)" title="Previous Day">
               <i class="bi bi-chevron-left"></i>
             </button>
-            <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-bold text-dark" id="inspectorDateDisplayBtn" onclick="document.getElementById('inspectorDateInput').showPicker()">
+            <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-bold text-dark" id="inspectorDateDisplayBtn" onclick="openInspectorDatePicker()">
               <i class="bi bi-calendar3 me-1.5 text-primary"></i>
               <span id="inspectorDateLabel"><%= today %></span>
             </button>
@@ -60,7 +60,7 @@
             </button>
           </div>
 
-          <input type="date" id="inspectorDateInput" class="visually-hidden" value="<%= today %>" onchange="loadInspectorSchedule(this.value)">
+          <input type="date" id="inspectorDateInput" class="visually-hidden" value="<%= today %>" onchange="jumpInspectorDate(this.value)">
 
           <!-- Quick Day Jump Pills -->
           <div class="d-flex align-items-center gap-1">
@@ -618,26 +618,52 @@
     }
   }
 
+  function formatLocalDateYmd(dateObj) {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  function parseLocalDate(ymdString) {
+    if (!ymdString) return new Date();
+    const parts = ymdString.split('-').map(Number);
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+
+  function openInspectorDatePicker() {
+    const input = document.getElementById('inspectorDateInput');
+    if (!input) return;
+    if (typeof input.showPicker === 'function') {
+      try {
+        input.showPicker();
+        return;
+      } catch (err) {}
+    }
+    input.focus();
+    input.click();
+  }
+
   function navigateInspectorDate(delta) {
-    const d = new Date(currentInspectedDate + 'T00:00:00');
+    const d = parseLocalDate(currentInspectedDate);
     d.setDate(d.getDate() + delta);
-    const ymd = d.toISOString().split('T')[0];
+    const ymd = formatLocalDateYmd(d);
     jumpInspectorDate(ymd);
   }
 
   function jumpInspectorOffset(days) {
-    const d = new Date('<%= today %>T00:00:00');
+    const d = parseLocalDate('<%= today %>');
     d.setDate(d.getDate() + days);
-    const ymd = d.toISOString().split('T')[0];
+    const ymd = formatLocalDateYmd(d);
     jumpInspectorDate(ymd);
   }
 
   function jumpInspectorToWeekend() {
-    const d = new Date('<%= today %>T00:00:00');
+    const d = parseLocalDate('<%= today %>');
     const day = d.getDay();
     const daysUntilSaturday = (6 - day + 7) % 7;
     d.setDate(d.getDate() + (daysUntilSaturday === 0 ? 7 : daysUntilSaturday));
-    const ymd = d.toISOString().split('T')[0];
+    const ymd = formatLocalDateYmd(d);
     jumpInspectorDate(ymd);
   }
 
@@ -658,7 +684,7 @@
     const closedReasonEl = document.getElementById('inspectorClosedReason');
 
     if (labelEl) {
-      const d = new Date(dateYmd + 'T00:00:00');
+      const d = parseLocalDate(dateYmd);
       labelEl.innerText = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
     }
 
@@ -886,7 +912,7 @@
     document.getElementById('multiBlockSlotsData').value = JSON.stringify(slotsDataArray);
     document.getElementById('multiBlockDate').value = currentInspectedDate;
 
-    const dateObj = new Date(currentInspectedDate + 'T00:00:00');
+    const dateObj = parseLocalDate(currentInspectedDate);
     document.getElementById('multiBlockDateSubtitle').innerText = `${dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`;
     document.getElementById('multiBlockTotalBadge').innerText = `${selectedSlotsMap.size} Slot${selectedSlotsMap.size === 1 ? '' : 's'}`;
 
