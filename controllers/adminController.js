@@ -1271,6 +1271,47 @@ const adminController = {
     }
   },
 
+  async updateCourtBlock(req, res, next) {
+    try {
+      const id = req.params.id;
+      const { reason, notes } = req.body;
+      const block = await CourtBlock.findByPk(id);
+      if (!block) {
+        req.flash('error', 'Block record not found.');
+        return res.redirect('/admin/blocks');
+      }
+
+      const oldReason = block.reason;
+      const newReason = (reason && reason.trim()) || oldReason;
+      block.reason = newReason;
+      if (typeof notes !== 'undefined') {
+        block.notes = notes ? notes.trim() : null;
+      }
+      await block.save();
+
+      await logAudit(
+        req.session.user ? req.session.user.id : null,
+        'UPDATE_COURT_BLOCK',
+        `Updated block on ${block.date} (${block.all_courts ? 'All Courts' : 'Court #' + block.court_id}) reason from "${oldReason}" to "${newReason}"`
+      );
+
+      // Real-time broadcast to all connected players
+      try {
+        const io = getIO();
+        io.emit('court_availability_updated', {
+          date: block.date,
+          courtId: block.all_courts ? null : block.court_id
+        });
+        io.emit('court_blocks_updated', { date: block.date });
+      } catch (e) {}
+
+      req.flash('success', `Updated block reason to "${newReason}" on ${block.date}.`);
+      res.redirect('/admin/blocks?date=' + encodeURIComponent(block.date));
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async deleteCourtBlock(req, res, next) {
     try {
       const id = req.params.id;

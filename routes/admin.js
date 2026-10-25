@@ -32,6 +32,7 @@ router.post('/reservations/:id/confirm', requireAuth, adminController.confirmRes
 // Court & Slot Blocking Management
 router.get('/blocks', requireAuth, adminController.showCourtBlocks);
 router.post('/blocks', requireAuth, adminController.createCourtBlock);
+router.post('/blocks/:id/update', requireAuth, adminController.updateCourtBlock);
 router.post('/blocks/:id/delete', requireAuth, adminController.deleteCourtBlock);
 
 // QR Code & Payment Settings

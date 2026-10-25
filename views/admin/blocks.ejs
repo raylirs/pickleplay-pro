@@ -214,9 +214,21 @@
                 </td>
 
                 <td>
-                  <span class="badge bg-warning-subtle text-dark border border-warning px-2.5 py-1 rounded-pill fw-semibold">
-                    <%= b.reason %>
-                  </span>
+                  <% const isOpenPlay = /open\s*play/i.test(b.reason); %>
+                  <button type="button" 
+                          class="btn btn-sm p-0 border-0 text-start btn-edit-block"
+                          data-block-id="<%= b.id %>"
+                          data-date="<%= b.date %>"
+                          data-reason="<%= b.reason %>"
+                          data-notes="<%= b.notes || '' %>"
+                          data-court="<%= b.all_courts || !b.court_id ? 'All 4 Courts' : (b.court ? b.court.display_name : 'Court #' + b.court_id) %>"
+                          title="Click to change Reason / Purpose">
+                    <span class="badge <%= isOpenPlay ? 'badge-open-play' : 'bg-warning-subtle text-dark border border-warning' %> px-2.5 py-1 rounded-pill fw-semibold d-inline-flex align-items-center gap-1 shadow-xs">
+                      <% if (isOpenPlay) { %><i class="bi bi-people-fill"></i><% } %>
+                      <span><%= b.reason %></span>
+                      <i class="bi bi-pencil-fill ms-1 opacity-50" style="font-size: 8px;"></i>
+                    </span>
+                  </button>
                 </td>
 
                 <td class="small text-secondary" style="max-width: 220px;">
@@ -232,11 +244,23 @@
                 </td>
 
                 <td class="text-end pe-4">
-                  <form action="/admin/blocks/<%= b.id %>/delete" method="POST" onsubmit="return confirm('Unblock this rule? Slots on <%= b.date %> will immediately reopen for player bookings.');" class="d-inline">
-                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold shadow-none">
-                      <i class="bi bi-unlock-fill me-1"></i>Unblock
+                  <div class="d-inline-flex align-items-center gap-1.5">
+                    <button type="button" 
+                            class="btn btn-outline-primary btn-sm rounded-pill px-2.5 fw-bold btn-edit-block shadow-none"
+                            data-block-id="<%= b.id %>"
+                            data-date="<%= b.date %>"
+                            data-reason="<%= b.reason %>"
+                            data-notes="<%= b.notes || '' %>"
+                            data-court="<%= b.all_courts || !b.court_id ? 'All 4 Courts' : (b.court ? b.court.display_name : 'Court #' + b.court_id) %>"
+                            title="Change Reason / Purpose">
+                      <i class="bi bi-pencil-square me-1"></i>Edit
                     </button>
-                  </form>
+                    <form action="/admin/blocks/<%= b.id %>/delete" method="POST" onsubmit="return confirm('Unblock this rule? Slots on <%= b.date %> will immediately reopen for player bookings.');" class="d-inline">
+                      <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2.5 fw-bold shadow-none">
+                        <i class="bi bi-unlock-fill me-1"></i>Unblock
+                      </button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             <% }); %>
@@ -517,6 +541,82 @@
           <button type="submit" class="btn btn-danger fw-bold rounded-pill px-4 shadow-sm d-inline-flex align-items-center gap-1.5" id="multiBlockSubmitBtn">
             <i class="bi bi-lock-fill"></i>
             <span>Confirm &amp; Block Slots</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     MODAL 3: EDIT BLOCK REASON & PURPOSE
+========================================================= -->
+<div class="modal fade" id="editBlockModal" tabindex="-1" aria-labelledby="editBlockModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+      <form id="editBlockForm" method="POST">
+        <div class="modal-header text-white px-4 py-3" style="background: linear-gradient(135deg, #0B2545 0%, #07172C 100%); border-bottom: 2px solid #D4AF37;">
+          <div class="d-flex align-items-center gap-2">
+            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+              <i class="bi bi-pencil-square fs-6"></i>
+            </div>
+            <div>
+              <h5 class="modal-title fw-bold font-display mb-0" id="editBlockModalLabel">Change Reason / Purpose</h5>
+              <span class="small text-white-50" style="font-size: 11px;" id="editBlockSubtitle">Switch to Open Play or other reason</span>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body p-4">
+          <!-- Summary info of target block -->
+          <div class="p-3 bg-light rounded-3 border mb-3">
+            <div class="d-flex align-items-center justify-content-between mb-1">
+              <span class="text-secondary small fw-semibold">Target Court:</span>
+              <span class="badge bg-dark text-white rounded-pill px-2.5 py-1" id="editBlockCourtBadge">Court</span>
+            </div>
+            <div class="d-flex align-items-center justify-content-between">
+              <span class="text-secondary small fw-semibold">Scheduled Date:</span>
+              <strong class="text-dark small" id="editBlockDateText"></strong>
+            </div>
+          </div>
+
+          <!-- Reason / Purpose Preset -->
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark mb-1">
+              Reason / Purpose <span class="text-danger">*</span>
+            </label>
+            <select id="editBlockReasonPreset" class="form-select rounded-3" onchange="handleEditBlockReasonPresetChange(this.value)">
+              <option value="Open Play (Walk-ins & Drop-ins Welcome)">🏸 Open Play (Walk-ins &amp; Drop-ins Welcome)</option>
+              <option value="Court Maintenance & Surface Cleaning">Court Maintenance &amp; Surface Cleaning</option>
+              <option value="Club Tournament / League Play">Club Tournament / League Play</option>
+              <option value="Coaching Clinic / Private Training">Coaching Clinic / Private Training</option>
+              <option value="Private Event / Venue Buyout">Private Event / Venue Buyout</option>
+              <option value="Holiday Closure">Holiday Closure</option>
+              <option value="Inclement Weather / Rain">Inclement Weather / Rain</option>
+              <option value="VIP / Reserved Booking">VIP / Reserved Booking</option>
+              <option value="OTHER">Other (Type custom reason below)</option>
+            </select>
+            <input type="hidden" name="reason" id="editBlockReasonInput" value="">
+            <div id="editBlockCustomReasonWrap" class="d-none mt-2">
+              <input type="text" id="editBlockCustomReasonInput" class="form-control rounded-3" placeholder="Enter custom reason" oninput="document.getElementById('editBlockReasonInput').value = this.value.trim()">
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="mb-2">
+            <label class="form-label small fw-semibold text-dark mb-1">
+              Internal Admin Notes <span class="text-muted fw-normal">(Optional)</span>
+            </label>
+            <textarea name="notes" id="editBlockNotesInput" class="form-control rounded-3" rows="2" placeholder="e.g. Changed to Open Play for public walk-in rotation"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light px-4 py-3 d-flex justify-content-between">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-3.5" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary fw-bold rounded-pill px-4 shadow-sm d-inline-flex align-items-center gap-1.5">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>Save Reason Changes</span>
           </button>
         </div>
       </form>
@@ -1035,6 +1135,73 @@
     alert('Please find the matching block rule in the table below and click "Unblock".');
   }
 
+  function openEditBlockModal(blockId, dateYmd, currentReason, currentNotes, courtDisplay) {
+    const form = document.getElementById('editBlockForm');
+    form.action = `/admin/blocks/${blockId}/update`;
+
+    document.getElementById('editBlockCourtBadge').innerText = courtDisplay || 'Court';
+    document.getElementById('editBlockDateText').innerText = dateYmd;
+    document.getElementById('editBlockSubtitle').innerText = `${dateYmd} • ${courtDisplay || 'Court'}`;
+    document.getElementById('editBlockNotesInput').value = currentNotes || '';
+
+    const presetSelect = document.getElementById('editBlockReasonPreset');
+    const hiddenInput = document.getElementById('editBlockReasonInput');
+    const customWrap = document.getElementById('editBlockCustomReasonWrap');
+    const customInput = document.getElementById('editBlockCustomReasonInput');
+
+    let matched = false;
+    for (let i = 0; i < presetSelect.options.length; i++) {
+      if (presetSelect.options[i].value === currentReason) {
+        presetSelect.selectedIndex = i;
+        matched = true;
+        break;
+      }
+    }
+
+    if (matched) {
+      if (customWrap) customWrap.classList.add('d-none');
+      if (customInput) {
+        customInput.required = false;
+        customInput.value = '';
+      }
+      hiddenInput.value = currentReason;
+    } else {
+      presetSelect.value = 'OTHER';
+      if (customWrap) customWrap.classList.remove('d-none');
+      if (customInput) {
+        customInput.required = true;
+        customInput.value = currentReason;
+      }
+      hiddenInput.value = currentReason;
+    }
+
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('editBlockModal'));
+    modal.show();
+  }
+
+  function handleEditBlockReasonPresetChange(val) {
+    const hiddenInput = document.getElementById('editBlockReasonInput');
+    const wrap = document.getElementById('editBlockCustomReasonWrap');
+    const customInput = document.getElementById('editBlockCustomReasonInput');
+    if (!hiddenInput) return;
+
+    if (val === 'OTHER') {
+      if (wrap) wrap.classList.remove('d-none');
+      if (customInput) {
+        customInput.required = true;
+        customInput.focus();
+        hiddenInput.value = customInput.value.trim();
+      }
+    } else {
+      if (wrap) wrap.classList.add('d-none');
+      if (customInput) {
+        customInput.required = false;
+        customInput.value = '';
+      }
+      hiddenInput.value = val;
+    }
+  }
+
   // Initial Load & Form Submit Handlers
   document.addEventListener('DOMContentLoaded', () => {
     loadInspectorSchedule(currentInspectedDate);
@@ -1042,6 +1209,14 @@
     if (p1) handleBlockReasonPresetChange(p1.value);
     const p2 = document.getElementById('multiBlockReasonPreset');
     if (p2) handleMultiBlockReasonPresetChange(p2.value);
+
+    // Edit button click delegation for rules table
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('.btn-edit-block');
+      if (!btn) return;
+      const { blockId, date, reason, notes, court } = btn.dataset;
+      openEditBlockModal(blockId, date, reason, notes, court);
+    });
 
     const f1 = document.getElementById('courtBlockForm');
     if (f1) {
@@ -1063,6 +1238,20 @@
         const preset = document.getElementById('multiBlockReasonPreset')?.value;
         const hidden = document.getElementById('multiBlockReasonInput');
         const custom = document.getElementById('multiBlockCustomReasonInput');
+        if (preset === 'OTHER') {
+          hidden.value = custom?.value.trim() || 'Custom Block';
+        } else if (preset) {
+          hidden.value = preset;
+        }
+      });
+    }
+
+    const f3 = document.getElementById('editBlockForm');
+    if (f3) {
+      f3.addEventListener('submit', function() {
+        const preset = document.getElementById('editBlockReasonPreset')?.value;
+        const hidden = document.getElementById('editBlockReasonInput');
+        const custom = document.getElementById('editBlockCustomReasonInput');
         if (preset === 'OTHER') {
           hidden.value = custom?.value.trim() || 'Custom Block';
         } else if (preset) {
