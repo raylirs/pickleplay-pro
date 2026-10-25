@@ -7,6 +7,7 @@ const { sendReservationConfirmation } = require('../services/emailService');
 const { sendReservationSMS } = require('../services/smsService');
 const { formatCurrency, formatDate, formatTime12, formatDateTime, formatDateFriendly } = require('../utils/dateTimeUtils');
 const { logAudit } = require('../utils/helpers');
+const { uploadToStorage } = require('../services/storageService');
 
 const adminController = {
   async showDashboard(req, res, next) {
@@ -151,7 +152,7 @@ const adminController = {
 
       let imageUrl = '/img/default-court.jpg';
       if (req.file) {
-        imageUrl = `/uploads/courts/${req.file.filename}`;
+        imageUrl = await uploadToStorage(req.file, 'receipts');
       }
 
       const category = await CourtCategory.create({
@@ -206,7 +207,7 @@ const adminController = {
       category.price_per_hour = price;
 
       if (req.file) {
-        category.image_url = `/uploads/courts/${req.file.filename}`;
+        category.image_url = await uploadToStorage(req.file, 'receipts');
       }
 
       const currentCourtCount = category.courts.length;
@@ -729,7 +730,7 @@ const adminController = {
       const { gcash_account_name, gcash_account_number } = req.body;
 
       if (req.file) {
-        const qrUrl = `/uploads/courts/${req.file.filename}`;
+        const qrUrl = await uploadToStorage(req.file, 'receipts');
         await SystemSetting.upsert({
           key: 'GCASH_QR_IMAGE',
           value: qrUrl,

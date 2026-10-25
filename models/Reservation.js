@@ -68,7 +68,7 @@ const Reservation = sequelize.define('Reservation', {
     allowNull: true
   },
   payment_screenshot: {
-    type: DataTypes.STRING(255),
+    type: DataTypes.TEXT,
     allowNull: true
   },
   payment_provider: {

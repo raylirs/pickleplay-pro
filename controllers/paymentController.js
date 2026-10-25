@@ -3,6 +3,7 @@ const { Op } = require('sequelize');
 const { getIO } = require('../config/socket');
 const { formatCurrency, formatTime12 } = require('../utils/dateTimeUtils');
 const { logAudit } = require('../utils/helpers');
+const { uploadToStorage } = require('../services/storageService');
 
 function isReservationOwner(reservation, currentUser) {
   if (!reservation || !currentUser) return false;
@@ -159,7 +160,7 @@ const paymentController = {
         return res.redirect(`/payment/gcash-checkout?ref=${ref}`);
       }
 
-      const screenshotPath = `/uploads/courts/${req.file.filename}`;
+      const screenshotPath = await uploadToStorage(req.file, 'receipts');
 
       // Find and update all sibling court reservations under this master order
       const masterRef = ref.split('-')[0];

@@ -145,24 +145,33 @@ async function seedDatabase() {
       }
     }
 
-    // Seed official GCash SystemSettings
-    await SystemSetting.upsert({
-      key: 'GCASH_QR_IMAGE',
-      value: '/images/gcash-qr.jpg',
-      description: 'Official GCash InstaPay QR Code'
-    });
+    // Seed official GCash SystemSettings (only if not already set)
+    const existingQr = await SystemSetting.findByPk('GCASH_QR_IMAGE');
+    if (!existingQr) {
+      await SystemSetting.create({
+        key: 'GCASH_QR_IMAGE',
+        value: '/images/gcash-qr.jpg',
+        description: 'Official GCash InstaPay QR Code'
+      });
+    }
 
-    await SystemSetting.upsert({
-      key: 'GCASH_ACCOUNT_NAME',
-      value: 'KA**O P.',
-      description: 'Merchant GCash Account Name'
-    });
+    const existingName = await SystemSetting.findByPk('GCASH_ACCOUNT_NAME');
+    if (!existingName) {
+      await SystemSetting.create({
+        key: 'GCASH_ACCOUNT_NAME',
+        value: 'KA**O P.',
+        description: 'Merchant GCash Account Name'
+      });
+    }
 
-    await SystemSetting.upsert({
-      key: 'GCASH_ACCOUNT_NUMBER',
-      value: '0977-013-5041',
-      description: 'Merchant GCash Mobile Number'
-    });
+    const existingNum = await SystemSetting.findByPk('GCASH_ACCOUNT_NUMBER');
+    if (!existingNum) {
+      await SystemSetting.create({
+        key: 'GCASH_ACCOUNT_NUMBER',
+        value: '0977-013-5041',
+        description: 'Merchant GCash Mobile Number'
+      });
+    }
 
     // Seed Facebook Meta credentials (preserve any custom values saved in Admin Settings)
     const fbDefaults = [
