@@ -230,10 +230,21 @@
                       <i class="bi bi-pencil-fill ms-1 opacity-50" style="font-size: 8px;"></i>
                     </span>
                   </button>
+                  <% if (b.notes) { %>
+                    <div class="small text-truncate mt-1 fw-bold" style="font-size: 11px; max-width: 200px; color: #92400E;" title="Reserved for / Note: <%= b.notes %>">
+                      <i class="bi bi-person-fill text-warning me-1"></i><%= b.notes %>
+                    </div>
+                  <% } %>
                 </td>
 
-                <td class="small text-secondary" style="max-width: 220px;">
-                  <%= b.notes || '—' %>
+                <td class="small" style="max-width: 220px;">
+                  <% if (b.notes) { %>
+                    <span class="fw-semibold <%= isReserved ? 'text-warning-emphasis' : 'text-dark' %>">
+                      <i class="bi bi-sticky-fill text-warning me-1"></i><%= b.notes %>
+                    </span>
+                  <% } else { %>
+                    <span class="text-muted fst-italic">—</span>
+                  <% } %>
                 </td>
 
                 <td class="small text-secondary">
@@ -434,10 +445,10 @@
 
           <!-- 6. Internal Notes -->
           <div class="mb-2">
-            <label class="form-label small fw-semibold text-dark mb-1">
-              Internal Admin Notes <span class="text-muted fw-normal">(Optional)</span>
+            <label class="form-label small fw-semibold text-dark mb-1" id="blockNotesLabel">
+              Reserved For / Internal Notes <span class="text-muted fw-normal">(Optional)</span>
             </label>
-            <textarea name="notes" class="form-control rounded-3" rows="2" placeholder="e.g. Surface repainting on Court 1 by contractor"></textarea>
+            <textarea name="notes" id="blockNotesInput" class="form-control rounded-3" rows="2" placeholder="e.g. Reserved for John Doe, or surface maintenance by contractor"></textarea>
           </div>
         </div>
 
@@ -532,10 +543,10 @@
 
           <!-- Internal Admin Notes -->
           <div class="mb-2">
-            <label class="form-label small fw-semibold text-dark mb-1">
-              Internal Admin Notes <span class="text-muted fw-normal">(Optional)</span>
+            <label class="form-label small fw-semibold text-dark mb-1" id="multiBlockNotesLabel">
+              Reserved For / Internal Notes <span class="text-muted fw-normal">(Optional)</span>
             </label>
-            <textarea name="notes" class="form-control rounded-3" rows="2" placeholder="e.g. Surface repainting on Court 1 by contractor"></textarea>
+            <textarea name="notes" id="multiBlockNotesInput" class="form-control rounded-3" rows="2" placeholder="e.g. Reserved for John Doe, or tournament practice"></textarea>
           </div>
         </div>
 
@@ -609,10 +620,10 @@
 
           <!-- Notes -->
           <div class="mb-2">
-            <label class="form-label small fw-semibold text-dark mb-1">
-              Internal Admin Notes <span class="text-muted fw-normal">(Optional)</span>
+            <label class="form-label small fw-semibold text-dark mb-1" id="editBlockNotesLabel">
+              Reserved For / Internal Notes <span class="text-muted fw-normal">(Optional)</span>
             </label>
-            <textarea name="notes" id="editBlockNotesInput" class="form-control rounded-3" rows="2" placeholder="e.g. Changed to Open Play for public walk-in rotation"></textarea>
+            <textarea name="notes" id="editBlockNotesInput" class="form-control rounded-3" rows="2" placeholder="e.g. Reserved for John Doe, or public walk-in rotation"></textarea>
           </div>
         </div>
 
@@ -711,10 +722,25 @@
     }
   }
 
+  function updateNotesPlaceholder(presetVal, labelId, textareaId) {
+    const lbl = document.getElementById(labelId);
+    const txt = document.getElementById(textareaId);
+    if (!lbl || !txt) return;
+    const isRes = /reserved/i.test(presetVal || '');
+    if (isRes) {
+      lbl.innerHTML = '<i class="bi bi-person-fill text-warning me-1"></i>Reserved For (Name / Group) <span class="text-danger">*</span>';
+      txt.placeholder = 'e.g. Reserved for John Doe, Mayor Santos, or VIP Player';
+    } else {
+      lbl.innerHTML = 'Internal Admin Notes <span class="text-muted fw-normal">(Optional)</span>';
+      txt.placeholder = 'e.g. Surface repainting on Court 1 by contractor';
+    }
+  }
+
   function handleBlockReasonPresetChange(val) {
     const hiddenInput = document.getElementById('blockReasonInput');
     const wrap = document.getElementById('blockCustomReasonWrap');
     const customInput = document.getElementById('blockCustomReasonInput');
+    updateNotesPlaceholder(val, 'blockNotesLabel', 'blockNotesInput');
     if (!hiddenInput) return;
 
     if (val === 'OTHER') {
@@ -738,6 +764,7 @@
     const hiddenInput = document.getElementById('multiBlockReasonInput');
     const wrap = document.getElementById('multiBlockCustomReasonWrap');
     const customInput = document.getElementById('multiBlockCustomReasonInput');
+    updateNotesPlaceholder(val, 'multiBlockNotesLabel', 'multiBlockNotesInput');
     if (!hiddenInput) return;
 
     if (val === 'OTHER') {
@@ -888,7 +915,10 @@
 
           if (slot.blockReason) {
             const descColor = isOpenPlay ? 'text-info-emphasis' : (isReserved ? 'text-warning-emphasis' : 'text-danger-emphasis');
-            descriptionHtml = `<div class="small fw-semibold text-truncate ${descColor}" style="font-size: 9.5px; max-width: 135px;" title="${escapeJs(slot.blockReason)}">${escapeJs(slot.blockReason)}</div>`;
+            descriptionHtml = `<div class="small fw-semibold text-truncate ${descColor}" style="font-size: 9.5px; max-width: 140px;" title="${escapeJs(slot.blockReason)}">${escapeJs(slot.blockReason)}</div>`;
+          }
+          if (slot.blockNotes) {
+            descriptionHtml += `<div class="small text-truncate fw-bold mt-0.5" style="font-size: 8.5px; max-width: 140px; color: #92400E !important;" title="Note / Reserved For: ${escapeJs(slot.blockNotes)}"><i class="bi bi-person-fill text-warning me-0.5"></i>${escapeJs(slot.blockNotes)}</div>`;
           }
 
           if (slot.blockId) {
@@ -1203,6 +1233,8 @@
       hiddenInput.value = currentReason;
     }
 
+    updateNotesPlaceholder(currentReason, 'editBlockNotesLabel', 'editBlockNotesInput');
+
     const unblockBtn = document.getElementById('editBlockUnblockBtn');
     if (unblockBtn) {
       unblockBtn.onclick = function() {
@@ -1224,6 +1256,7 @@
     const hiddenInput = document.getElementById('editBlockReasonInput');
     const wrap = document.getElementById('editBlockCustomReasonWrap');
     const customInput = document.getElementById('editBlockCustomReasonInput');
+    updateNotesPlaceholder(val, 'editBlockNotesLabel', 'editBlockNotesInput');
     if (!hiddenInput) return;
 
     if (val === 'OTHER') {

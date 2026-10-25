@@ -1745,6 +1745,16 @@
     return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
   }
 
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   async function fetchCalendarMonthStatus(year, month, forceRefresh = false) {
     const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
     if (!forceRefresh && calendarMonthStatusCache[monthKey]) {
@@ -2197,9 +2207,13 @@
             `;
           } else if (isSlotReserved) {
             td.className += ' is-reserved-slot';
+            const noteText = courtSlot.blockNotes
+              ? `<span class="slot-reserved-note text-truncate d-block mt-0.5" style="font-size: 8.5px; max-width: 95px; color: #78350F; font-weight: 700; line-height: 1.15;" title="${escapeHtml(courtSlot.blockNotes)}"><i class="bi bi-person-fill me-0.5 opacity-75"></i>${escapeHtml(courtSlot.blockNotes)}</span>`
+              : '';
             td.innerHTML = `
-              <div class="slot-inner">
-                <span class="small fw-bold text-warning"><i class="bi bi-bookmark-fill me-1 text-warning"></i>Reserved</span>
+              <div class="slot-inner d-flex flex-column align-items-center justify-content-center py-1">
+                <span class="small fw-bold text-warning"><i class="bi bi-bookmark-fill me-0.5 text-warning"></i>Reserved</span>
+                ${noteText}
               </div>
             `;
           } else {
@@ -2229,9 +2243,10 @@
               showLiveToast('🎾 Open Play is scheduled for this session! Drop by the arena and join the games on site.');
             });
           } else if (isSlotReserved) {
-            td.title = `Reserved: This court slot has been reserved.`;
+            const whoNote = courtSlot.blockNotes ? ` for "${courtSlot.blockNotes}"` : '';
+            td.title = `Reserved: This court slot has been reserved${whoNote}.`;
             td.addEventListener('click', () => {
-              showLiveToast('🔒 This court slot is reserved by facility management.');
+              showLiveToast(`🔒 This court slot is reserved${courtSlot.blockNotes ? ' for ' + courtSlot.blockNotes : ' by facility management'}.`);
             });
           } else {
             td.title = `Unavailable: Slot blocked by facility admin${rText}`;
