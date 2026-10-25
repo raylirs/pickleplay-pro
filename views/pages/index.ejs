@@ -2084,9 +2084,16 @@
       if (isDayClosed) {
         dayBanner.classList.remove('d-none');
         dayBanner.classList.add('d-flex');
-        dayBanner.className = 'alert alert-danger d-flex align-items-center gap-2 rounded-4 mb-3 border-danger-subtle shadow-sm px-3.5 py-2.5';
-        if (dayTitle) dayTitle.innerText = `Courts Blocked on ${currentDate}`;
-        if (dayReason) dayReason.innerText = closedReason || 'All courts are reserved or under facility maintenance today.';
+        const isOpenPlayDay = closedReason && /open\s*play/i.test(closedReason);
+        if (isOpenPlayDay) {
+          dayBanner.className = 'alert alert-info d-flex align-items-center gap-2 rounded-4 mb-3 border-info-subtle shadow-sm px-3.5 py-2.5';
+          if (dayTitle) dayTitle.innerHTML = `<span class="badge bg-info text-dark me-1"><i class="bi bi-people-fill me-1"></i>OPEN PLAY</span> Open Play Scheduled on ${currentDate}`;
+          if (dayReason) dayReason.innerText = closedReason || 'Courts are reserved for Open Play rotation. Drop in and join the games on site!';
+        } else {
+          dayBanner.className = 'alert alert-danger d-flex align-items-center gap-2 rounded-4 mb-3 border-danger-subtle shadow-sm px-3.5 py-2.5';
+          if (dayTitle) dayTitle.innerText = `Courts Blocked on ${currentDate}`;
+          if (dayReason) dayReason.innerText = closedReason || 'All courts are reserved or under facility maintenance today.';
+        }
       } else {
         dayBanner.classList.add('d-none');
         dayBanner.classList.remove('d-flex');
@@ -2173,12 +2180,25 @@
         td.dataset.endLabel = slot.endLabel;
         td.id = `cell-${court.id}-${slot.startTime.replace(':', '')}`;
 
+        const isSlotOpenPlay = Boolean(
+          courtSlot.blockReason && /open\s*play/i.test(courtSlot.blockReason)
+        );
+
         if (stateClass === 'state-blocked') {
-          td.innerHTML = `
-            <div class="slot-inner">
-              <span class="small fw-bold"><i class="bi bi-slash-circle me-1 text-danger"></i>Blocked</span>
-            </div>
-          `;
+          if (isSlotOpenPlay) {
+            td.className += ' is-open-play-slot';
+            td.innerHTML = `
+              <div class="slot-inner">
+                <span class="small fw-bold text-info"><i class="bi bi-people-fill me-1"></i>Open Play</span>
+              </div>
+            `;
+          } else {
+            td.innerHTML = `
+              <div class="slot-inner">
+                <span class="small fw-bold"><i class="bi bi-slash-circle me-1 text-danger"></i>Blocked</span>
+              </div>
+            `;
+          }
         } else {
           td.innerHTML = `
             <div class="slot-inner">
@@ -2191,12 +2211,19 @@
         if (courtSlot.isAvailable) {
           td.addEventListener('click', () => handleSlotClick(court, slot));
         } else if (courtSlot.status === 'BLOCKED' || courtSlot.status === 'MAINTENANCE') {
-          td.style.cursor = 'not-allowed';
+          td.style.cursor = isSlotOpenPlay ? 'pointer' : 'not-allowed';
           const rText = courtSlot.blockReason ? ` (${courtSlot.blockReason})` : '';
-          td.title = `Unavailable: Slot blocked by facility admin${rText}`;
-          td.addEventListener('click', () => {
-            showLiveToast(`🔒 This court slot is unavailable${rText}.`);
-          });
+          if (isSlotOpenPlay) {
+            td.title = `Open Play Session: Walk-ins & drop-in players welcome! ${courtSlot.blockReason || ''}`;
+            td.addEventListener('click', () => {
+              showLiveToast('🎾 Open Play is scheduled for this session! Drop by the arena and join the games on site.');
+            });
+          } else {
+            td.title = `Unavailable: Slot blocked by facility admin${rText}`;
+            td.addEventListener('click', () => {
+              showLiveToast(`🔒 This court slot is unavailable${rText}.`);
+            });
+          }
         } else if (courtSlot.status === 'AWAITING_PAYMENT' || courtSlot.status === 'PENDING') {
           if (isMine) {
             td.style.cursor = 'pointer';
