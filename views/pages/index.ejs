@@ -511,11 +511,8 @@
           <span class="d-inline-flex align-items-center gap-1.5 text-secondary fw-semibold">
             <span class="badge rounded-circle p-1 bg-danger"></span> Fully Booked
           </span>
-          <span class="d-inline-flex align-items-center gap-1.5 text-info-emphasis fw-bold">
-            <span class="badge rounded-pill bg-info text-dark px-2 py-0.5" style="font-size: 9.5px;"><i class="bi bi-people-fill me-1"></i>OPEN PLAY</span>
-          </span>
           <span class="d-inline-flex align-items-center gap-1.5 text-secondary fw-semibold">
-            <span class="badge rounded-circle p-1 bg-secondary"></span> Blocked
+            <span class="badge rounded-circle p-1 bg-secondary"></span> Blocked / Closed
           </span>
           <% if (typeof user !== 'undefined' && user) { %>
             <span class="d-inline-flex align-items-center gap-1.5 text-primary fw-bold">
@@ -1822,21 +1819,14 @@
       const dayStatus = (calendarMonthStatusCache[monthKey] && calendarMonthStatusCache[monthKey][dateStr]) || null;
       const hasPlayerBooking = Boolean(playerBookedDatesMap[dateStr] || (dayStatus && dayStatus.hasUserBooking));
 
-      const isOpenPlay = Boolean(
-        (dayStatus && (dayStatus.isOpenPlay || dayStatus.status === 'OPEN_PLAY')) ||
-        (dayStatus && dayStatus.reason && /open\s*play/i.test(dayStatus.reason)) ||
-        (facilityClosedDatesMap[dateStr] && /open\s*play/i.test(facilityClosedDatesMap[dateStr]))
-      );
-
       const isFacilityClosed = Boolean(facilityClosedDatesMap[dateStr] || (dayStatus && (dayStatus.status === 'BLOCKED' || dayStatus.status === 'CLOSED')));
-      const closedReason = (dayStatus && dayStatus.reason) || facilityClosedDatesMap[dateStr] || (isOpenPlay ? 'Open Play (Walk-ins & Drop-ins Welcome)' : 'Court Maintenance / Blocked');
+      const closedReason = (dayStatus && dayStatus.reason) || facilityClosedDatesMap[dateStr] || 'Court Maintenance / Blocked';
 
-      const isFullyBooked = !isFacilityClosed && !isOpenPlay && dayStatus && dayStatus.status === 'FULL';
-      const isFewLeft = !isFacilityClosed && !isOpenPlay && dayStatus && dayStatus.status === 'FEW_LEFT';
+      const isFullyBooked = !isFacilityClosed && dayStatus && dayStatus.status === 'FULL';
+      const isFewLeft = !isFacilityClosed && dayStatus && dayStatus.status === 'FEW_LEFT';
 
       let cellClasses = 'calendar-day-cell';
-      if (isOpenPlay) cellClasses += ' is-open-play';
-      if (isFacilityClosed && !isOpenPlay) cellClasses += ' is-disabled is-closed-day';
+      if (isFacilityClosed) cellClasses += ' is-disabled is-closed-day';
       if (isPast) cellClasses += ' is-disabled';
       if (isFullyBooked) cellClasses += ' is-fully-booked';
       if (hasPlayerBooking) cellClasses += ' has-player-booking';
@@ -1846,8 +1836,6 @@
       let badgeHtml = '';
       if (hasPlayerBooking) {
         badgeHtml = `<span class="calendar-day-badge badge-player-booked"><i class="bi bi-star-fill text-warning me-0.5"></i>BOOKED</span>`;
-      } else if (isOpenPlay) {
-        badgeHtml = `<span class="calendar-day-badge badge-open-play"><i class="bi bi-people-fill me-0.5"></i>OPEN PLAY</span>`;
       } else if (isFacilityClosed) {
         badgeHtml = `<span class="calendar-day-badge bg-secondary text-white">BLOCKED</span>`;
       } else if (isFullyBooked) {
@@ -1861,8 +1849,6 @@
       let ctaLabel = '';
       if (isPast) {
         ctaLabel = '';
-      } else if (isOpenPlay) {
-        ctaLabel = `<span class="calendar-day-cta-desktop text-info-emphasis fw-bold"><i class="bi bi-people-fill me-1"></i>Open Play &bull; Join</span><span class="calendar-day-cta-mobile text-info fw-bold">Open Play</span>`;
       } else if (isFacilityClosed) {
         ctaLabel = `<span class="calendar-day-cta-desktop text-muted fw-bold"><i class="bi bi-slash-circle me-1"></i>Blocked</span>`;
       } else if (isFullyBooked) {
@@ -1878,8 +1864,6 @@
       let clickAttr = '';
       if (isPast) {
         clickAttr = '';
-      } else if (isOpenPlay) {
-        clickAttr = `onclick="selectCalendarDay('${dateStr}'); showLiveToast('🎾 Open Play session scheduled! Walk-in and drop-in players are welcome on site.');"`;
       } else if (isFacilityClosed) {
         clickAttr = `onclick="selectCalendarDay('${dateStr}'); showLiveToast('🔒 Courts are blocked on this date (${escapeJs(closedReason)}). You can inspect schedule details below.');"`;
       } else if (isFullyBooked) {
@@ -2100,16 +2084,9 @@
       if (isDayClosed) {
         dayBanner.classList.remove('d-none');
         dayBanner.classList.add('d-flex');
-        const isOpenPlayDay = closedReason && /open\s*play/i.test(closedReason);
-        if (isOpenPlayDay) {
-          dayBanner.className = 'alert alert-info d-flex align-items-center gap-2 rounded-4 mb-3 border-info-subtle shadow-sm px-3.5 py-2.5';
-          if (dayTitle) dayTitle.innerHTML = `<span class="badge bg-info text-dark me-1"><i class="bi bi-people-fill me-1"></i>OPEN PLAY</span> Open Play Scheduled on ${currentDate}`;
-          if (dayReason) dayReason.innerText = closedReason || 'Courts are reserved for Open Play rotation. Drop in and join the games on site!';
-        } else {
-          dayBanner.className = 'alert alert-danger d-flex align-items-center gap-2 rounded-4 mb-3 border-danger-subtle shadow-sm px-3.5 py-2.5';
-          if (dayTitle) dayTitle.innerText = `Courts Blocked on ${currentDate}`;
-          if (dayReason) dayReason.innerText = closedReason || 'All courts are reserved or under facility maintenance today.';
-        }
+        dayBanner.className = 'alert alert-danger d-flex align-items-center gap-2 rounded-4 mb-3 border-danger-subtle shadow-sm px-3.5 py-2.5';
+        if (dayTitle) dayTitle.innerText = `Courts Blocked on ${currentDate}`;
+        if (dayReason) dayReason.innerText = closedReason || 'All courts are reserved or under facility maintenance today.';
       } else {
         dayBanner.classList.add('d-none');
         dayBanner.classList.remove('d-flex');
@@ -2196,25 +2173,12 @@
         td.dataset.endLabel = slot.endLabel;
         td.id = `cell-${court.id}-${slot.startTime.replace(':', '')}`;
 
-        const isSlotOpenPlay = Boolean(
-          courtSlot.blockReason && /open\s*play/i.test(courtSlot.blockReason)
-        );
-
         if (stateClass === 'state-blocked') {
-          if (isSlotOpenPlay) {
-            td.className += ' is-open-play-slot';
-            td.innerHTML = `
-              <div class="slot-inner">
-                <span class="small fw-bold text-info"><i class="bi bi-people-fill me-1"></i>Open Play</span>
-              </div>
-            `;
-          } else {
-            td.innerHTML = `
-              <div class="slot-inner">
-                <span class="small fw-bold"><i class="bi bi-slash-circle me-1 text-danger"></i>Blocked</span>
-              </div>
-            `;
-          }
+          td.innerHTML = `
+            <div class="slot-inner">
+              <span class="small fw-bold"><i class="bi bi-slash-circle me-1 text-danger"></i>Blocked</span>
+            </div>
+          `;
         } else {
           td.innerHTML = `
             <div class="slot-inner">
@@ -2227,19 +2191,12 @@
         if (courtSlot.isAvailable) {
           td.addEventListener('click', () => handleSlotClick(court, slot));
         } else if (courtSlot.status === 'BLOCKED' || courtSlot.status === 'MAINTENANCE') {
-          td.style.cursor = isSlotOpenPlay ? 'pointer' : 'not-allowed';
+          td.style.cursor = 'not-allowed';
           const rText = courtSlot.blockReason ? ` (${courtSlot.blockReason})` : '';
-          if (isSlotOpenPlay) {
-            td.title = `Open Play Session: Walk-ins & drop-in players welcome! ${courtSlot.blockReason || ''}`;
-            td.addEventListener('click', () => {
-              showLiveToast('🎾 Open Play is scheduled for this session! Drop by the arena and join the games on site.');
-            });
-          } else {
-            td.title = `Unavailable: Slot blocked by facility admin${rText}`;
-            td.addEventListener('click', () => {
-              showLiveToast(`🔒 This court slot is unavailable${rText}.`);
-            });
-          }
+          td.title = `Unavailable: Slot blocked by facility admin${rText}`;
+          td.addEventListener('click', () => {
+            showLiveToast(`🔒 This court slot is unavailable${rText}.`);
+          });
         } else if (courtSlot.status === 'AWAITING_PAYMENT' || courtSlot.status === 'PENDING') {
           if (isMine) {
             td.style.cursor = 'pointer';
