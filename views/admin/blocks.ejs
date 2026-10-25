@@ -389,7 +389,7 @@
             <label class="form-label small fw-bold text-dark mb-1">
               Reason / Purpose <span class="text-danger">*</span>
             </label>
-            <select name="reason_preset" id="blockReasonPreset" class="form-select rounded-3 mb-2" onchange="handleBlockReasonPresetChange(this.value)">
+            <select id="blockReasonPreset" class="form-select rounded-3" onchange="handleBlockReasonPresetChange(this.value)">
               <option value="Open Play (Walk-ins & Drop-ins Welcome)">🏸 Open Play (Walk-ins &amp; Drop-ins Welcome)</option>
               <option value="Court Maintenance & Surface Cleaning">Court Maintenance &amp; Surface Cleaning</option>
               <option value="Club Tournament / League Play">Club Tournament / League Play</option>
@@ -400,7 +400,10 @@
               <option value="VIP / Reserved Booking">VIP / Reserved Booking</option>
               <option value="OTHER">Other (Type custom reason below)</option>
             </select>
-            <input type="text" name="reason" id="blockReasonInput" class="form-control rounded-3" value="Court Maintenance & Surface Cleaning" placeholder="Enter reason" required>
+            <input type="hidden" name="reason" id="blockReasonInput" value="Open Play (Walk-ins & Drop-ins Welcome)">
+            <div id="blockCustomReasonWrap" class="d-none mt-2">
+              <input type="text" id="blockCustomReasonInput" class="form-control rounded-3" placeholder="Enter custom reason" oninput="document.getElementById('blockReasonInput').value = this.value.trim()">
+            </div>
           </div>
 
           <!-- 6. Internal Notes -->
@@ -483,7 +486,7 @@
             <label class="form-label small fw-bold text-dark mb-1">
               Reason / Purpose <span class="text-danger">*</span>
             </label>
-            <select name="reason_preset" id="multiBlockReasonPreset" class="form-select rounded-3 mb-2" onchange="handleMultiBlockReasonPresetChange(this.value)">
+            <select id="multiBlockReasonPreset" class="form-select rounded-3" onchange="handleMultiBlockReasonPresetChange(this.value)">
               <option value="Open Play (Walk-ins & Drop-ins Welcome)">🏸 Open Play (Walk-ins &amp; Drop-ins Welcome)</option>
               <option value="Court Maintenance & Surface Cleaning">Court Maintenance &amp; Surface Cleaning</option>
               <option value="Club Tournament / League Play">Club Tournament / League Play</option>
@@ -494,7 +497,10 @@
               <option value="VIP / Reserved Booking">VIP / Reserved Booking</option>
               <option value="OTHER">Other (Type custom reason below)</option>
             </select>
-            <input type="text" name="reason" id="multiBlockReasonInput" class="form-control rounded-3" value="Court Maintenance & Surface Cleaning" placeholder="Enter reason" required>
+            <input type="hidden" name="reason" id="multiBlockReasonInput" value="Open Play (Walk-ins & Drop-ins Welcome)">
+            <div id="multiBlockCustomReasonWrap" class="d-none mt-2">
+              <input type="text" id="multiBlockCustomReasonInput" class="form-control rounded-3" placeholder="Enter custom reason" oninput="document.getElementById('multiBlockReasonInput').value = this.value.trim()">
+            </div>
           </div>
 
           <!-- Internal Admin Notes -->
@@ -597,24 +603,48 @@
   }
 
   function handleBlockReasonPresetChange(val) {
-    const input = document.getElementById('blockReasonInput');
-    if (!input) return;
+    const hiddenInput = document.getElementById('blockReasonInput');
+    const wrap = document.getElementById('blockCustomReasonWrap');
+    const customInput = document.getElementById('blockCustomReasonInput');
+    if (!hiddenInput) return;
+
     if (val === 'OTHER') {
-      input.value = '';
-      input.focus();
+      if (wrap) wrap.classList.remove('d-none');
+      if (customInput) {
+        customInput.required = true;
+        customInput.focus();
+        hiddenInput.value = customInput.value.trim();
+      }
     } else {
-      input.value = val;
+      if (wrap) wrap.classList.add('d-none');
+      if (customInput) {
+        customInput.required = false;
+        customInput.value = '';
+      }
+      hiddenInput.value = val;
     }
   }
 
   function handleMultiBlockReasonPresetChange(val) {
-    const input = document.getElementById('multiBlockReasonInput');
-    if (!input) return;
+    const hiddenInput = document.getElementById('multiBlockReasonInput');
+    const wrap = document.getElementById('multiBlockCustomReasonWrap');
+    const customInput = document.getElementById('multiBlockCustomReasonInput');
+    if (!hiddenInput) return;
+
     if (val === 'OTHER') {
-      input.value = '';
-      input.focus();
+      if (wrap) wrap.classList.remove('d-none');
+      if (customInput) {
+        customInput.required = true;
+        customInput.focus();
+        hiddenInput.value = customInput.value.trim();
+      }
     } else {
-      input.value = val;
+      if (wrap) wrap.classList.add('d-none');
+      if (customInput) {
+        customInput.required = false;
+        customInput.value = '';
+      }
+      hiddenInput.value = val;
     }
   }
 
@@ -937,6 +967,11 @@
 
     document.getElementById('multiBlockSubmitBtn').innerHTML = `<i class="bi bi-lock-fill me-1"></i>Block ${selectedSlotsMap.size} Selected Slot${selectedSlotsMap.size === 1 ? '' : 's'}`;
 
+    const multiPreset = document.getElementById('multiBlockReasonPreset');
+    if (multiPreset) {
+      handleMultiBlockReasonPresetChange(multiPreset.value);
+    }
+
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('multiSlotBlockModal'));
     modal.show();
   }
@@ -946,6 +981,11 @@
     document.getElementById('blockDateInput').value = dateYmd;
     document.getElementById('modeAllDay').checked = true;
     toggleBlockTimeRange(false);
+    const preset = document.getElementById('blockReasonPreset');
+    if (preset) {
+      preset.value = 'Court Maintenance & Surface Cleaning';
+      handleBlockReasonPresetChange('Court Maintenance & Surface Cleaning');
+    }
     const modal = new bootstrap.Modal(document.getElementById('newBlockModal'));
     modal.show();
   }
@@ -969,6 +1009,11 @@
     document.getElementById('blockDateInput').value = currentInspectedDate;
     document.getElementById('modeAllDay').checked = true;
     toggleBlockTimeRange(false);
+    const preset = document.getElementById('blockReasonPreset');
+    if (preset) {
+      preset.value = 'Court Maintenance & Surface Cleaning';
+      handleBlockReasonPresetChange('Court Maintenance & Surface Cleaning');
+    }
     const modal = new bootstrap.Modal(document.getElementById('newBlockModal'));
     modal.show();
   }
@@ -987,8 +1032,40 @@
     alert('Please find the matching block rule in the table below and click "Unblock".');
   }
 
-  // Initial Load
+  // Initial Load & Form Submit Handlers
   document.addEventListener('DOMContentLoaded', () => {
     loadInspectorSchedule(currentInspectedDate);
+    const p1 = document.getElementById('blockReasonPreset');
+    if (p1) handleBlockReasonPresetChange(p1.value);
+    const p2 = document.getElementById('multiBlockReasonPreset');
+    if (p2) handleMultiBlockReasonPresetChange(p2.value);
+
+    const f1 = document.getElementById('courtBlockForm');
+    if (f1) {
+      f1.addEventListener('submit', function() {
+        const preset = document.getElementById('blockReasonPreset')?.value;
+        const hidden = document.getElementById('blockReasonInput');
+        const custom = document.getElementById('blockCustomReasonInput');
+        if (preset === 'OTHER') {
+          hidden.value = custom?.value.trim() || 'Custom Block';
+        } else if (preset) {
+          hidden.value = preset;
+        }
+      });
+    }
+
+    const f2 = document.getElementById('multiSlotBlockForm');
+    if (f2) {
+      f2.addEventListener('submit', function() {
+        const preset = document.getElementById('multiBlockReasonPreset')?.value;
+        const hidden = document.getElementById('multiBlockReasonInput');
+        const custom = document.getElementById('multiBlockCustomReasonInput');
+        if (preset === 'OTHER') {
+          hidden.value = custom?.value.trim() || 'Custom Block';
+        } else if (preset) {
+          hidden.value = preset;
+        }
+      });
+    }
   });
 </script>
