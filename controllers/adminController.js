@@ -1081,6 +1081,7 @@ const adminController = {
   async showCourtBlocks(req, res, next) {
     try {
       const today = formatDate(new Date());
+      const inspectedDate = req.query.date && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date) ? req.query.date : today;
       const courts = await Court.findAll({
         where: { is_active: true },
         order: [['court_number', 'ASC'], ['id', 'ASC']]
@@ -1104,6 +1105,7 @@ const adminController = {
         courts,
         blocks,
         today,
+        inspectedDate,
         todayCount: todayBlocks.length,
         allDayCount: allDayBlocks.length,
         totalCount: blocks.length,
@@ -1194,7 +1196,7 @@ const adminController = {
           } catch (e) {}
 
           req.flash('success', `Successfully blocked ${totalSlots} selected slot${totalSlots === 1 ? '' : 's'} on ${targetDate}.`);
-          return res.redirect('/admin/blocks');
+          return res.redirect('/admin/blocks?date=' + encodeURIComponent(targetDate));
         }
       }
 
@@ -1226,7 +1228,7 @@ const adminController = {
         actualEndTime = end_time || '24:00';
         if (actualStartTime >= actualEndTime) {
           req.flash('error', 'Start time must be before end time.');
-          return res.redirect('/admin/blocks');
+          return res.redirect('/admin/blocks?date=' + encodeURIComponent(targetDate));
         }
         const generatedSlots = generateTimeSlots(actualStartTime, actualEndTime, 60);
         slotsJson = JSON.stringify(generatedSlots.map(s => s.startTime));
@@ -1263,7 +1265,7 @@ const adminController = {
       } catch (e) {}
 
       req.flash('success', `Successfully blocked ${isAllCourts ? 'all courts' : 'court'} on ${targetDate}.`);
-      res.redirect('/admin/blocks');
+      res.redirect('/admin/blocks?date=' + encodeURIComponent(targetDate));
     } catch (err) {
       next(err);
     }
@@ -1301,7 +1303,7 @@ const adminController = {
       } catch (e) {}
 
       req.flash('success', `Unblocked successfully. Those court slots on ${blockedDate} are now open for player bookings.`);
-      res.redirect('/admin/blocks');
+      res.redirect('/admin/blocks?date=' + encodeURIComponent(blockedDate));
     } catch (err) {
       next(err);
     }

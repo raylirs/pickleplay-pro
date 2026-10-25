@@ -53,14 +53,14 @@
             </button>
             <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-bold text-dark" id="inspectorDateDisplayBtn" onclick="openInspectorDatePicker()">
               <i class="bi bi-calendar3 me-1.5 text-primary"></i>
-              <span id="inspectorDateLabel"><%= today %></span>
+              <span id="inspectorDateLabel"><%= typeof inspectedDate !== 'undefined' && inspectedDate ? inspectedDate : today %></span>
             </button>
             <button type="button" class="btn btn-outline-secondary btn-sm rounded-end-pill px-3" onclick="navigateInspectorDate(1)" title="Next Day">
               <i class="bi bi-chevron-right"></i>
             </button>
           </div>
 
-          <input type="date" id="inspectorDateInput" class="visually-hidden" value="<%= today %>" onchange="jumpInspectorDate(this.value)">
+          <input type="date" id="inspectorDateInput" class="visually-hidden" value="<%= typeof inspectedDate !== 'undefined' && inspectedDate ? inspectedDate : today %>" onchange="jumpInspectorDate(this.value)">
 
           <!-- Quick Day Jump Pills -->
           <div class="d-flex align-items-center gap-1">
@@ -525,7 +525,7 @@
 </div>
 
 <script>
-  let currentInspectedDate = '<%= today %>';
+  let currentInspectedDate = '<%= typeof inspectedDate !== "undefined" && inspectedDate ? inspectedDate : today %>';
   let selectedSlotsMap = new Map(); // key: `${courtId}_${startTime}`, value: { courtId, courtName, startTime, endTime, startLabel, endLabel }
   let lastLoadedCourts = [];
 
@@ -702,6 +702,9 @@
     selectedSlotsMap.clear();
     updateMultiSelectBar();
     document.getElementById('inspectorDateInput').value = dateYmd;
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', `/admin/blocks?date=${encodeURIComponent(dateYmd)}`);
+    }
     loadInspectorSchedule(dateYmd);
   }
 
