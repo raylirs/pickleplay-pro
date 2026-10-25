@@ -997,14 +997,9 @@
       col.innerHTML = `
         <div class="admin-court-card h-100 shadow-sm d-flex flex-column">
           <div class="admin-court-card-header d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center gap-2">
-              <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold font-monospace shadow-xs" style="width: 28px; height: 28px; font-size: 13px;">
-                ${court.court_number || court.id}
-              </div>
-              <div>
-                <strong class="text-dark d-block fs-6 lh-1 mb-0.5">${court.name}</strong>
-                <span class="text-muted fw-semibold" style="font-size: 11px;">₱${court.pricePerHour}/hr</span>
-              </div>
+            <div>
+              <strong class="text-dark d-block fs-6 lh-1 mb-1">${court.name}</strong>
+              <span class="text-muted fw-semibold" style="font-size: 11px;">₱${court.pricePerHour}/hr</span>
             </div>
             <div class="d-flex align-items-center gap-1.5">
               <button type="button" class="btn btn-soft-primary btn-sm rounded-pill px-2.5 py-1 fw-bold" style="font-size: 10.5px;" onclick="selectAllOpenForCourt(${court.id})" title="Select all open slots for this court">
