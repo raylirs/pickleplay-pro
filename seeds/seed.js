@@ -24,6 +24,7 @@ async function seedDatabase() {
       }
     }
 
+    const isPostgres = sequelize.getDialect() === 'postgres';
     const userColumns = [
       { name: 'full_name', type: 'VARCHAR(200)' },
       { name: 'email', type: 'VARCHAR(200)' },
@@ -32,7 +33,7 @@ async function seedDatabase() {
       { name: 'binding_code', type: 'VARCHAR(20)' },
       { name: 'email_verified', type: 'BOOLEAN DEFAULT FALSE' },
       { name: 'otp_code', type: 'VARCHAR(20)' },
-      { name: 'otp_expires_at', type: 'TIMESTAMP' },
+      { name: 'otp_expires_at', type: isPostgres ? 'TIMESTAMP WITH TIME ZONE' : 'TIMESTAMP' },
       { name: 'otp_purpose', type: 'VARCHAR(50)' }
     ];
 
@@ -41,6 +42,14 @@ async function seedDatabase() {
         await sequelize.query(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type};`);
       } catch (colErr) {
         // Ignored if column already exists
+      }
+    }
+
+    if (isPostgres) {
+      try {
+        await sequelize.query(`ALTER TABLE users ALTER COLUMN otp_expires_at TYPE TIMESTAMP WITH TIME ZONE USING otp_expires_at AT TIME ZONE 'UTC';`);
+      } catch (colErr) {
+        // Ignored if already timestamptz
       }
     }
 

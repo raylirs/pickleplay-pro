@@ -7,6 +7,23 @@ const { sendEmailVerificationOTP, sendPasswordResetOTP } = require('../services/
 
 const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
 
+function isOtpExpired(expiresAt) {
+  if (!expiresAt) return false;
+  let expDate = expiresAt instanceof Date ? expiresAt : new Date(expiresAt);
+  if (isNaN(expDate.getTime())) return false;
+
+  // Safeguard: If the timestamp was stored in UTC but parsed as local time (e.g. UTC+8 in Philippines),
+  // check if string representation lacked timezone offset and parse explicitly in UTC
+  if (typeof expiresAt === 'string' && !expiresAt.endsWith('Z') && !/[+-]\d{2}(:\d{2})?$/.test(expiresAt.trim())) {
+    const utcDate = new Date(expiresAt.trim().replace(' ', 'T') + 'Z');
+    if (!isNaN(utcDate.getTime())) {
+      expDate = utcDate;
+    }
+  }
+
+  return Date.now() > expDate.getTime();
+}
+
 function generateOtpCode() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
@@ -484,7 +501,7 @@ const authController = {
         return sendError('Invalid OTP code. Please check the 6-digit code sent to your email and try again.');
       }
 
-      if (user.otp_expires_at && new Date() > new Date(user.otp_expires_at)) {
+      if (user.otp_expires_at && isOtpExpired(user.otp_expires_at)) {
         return sendError('This OTP code has expired. Please click "Resend OTP" to get a new code.');
       }
 
@@ -723,7 +740,7 @@ const authController = {
         return sendError('Invalid recovery OTP code. Please check the 6-digit code sent to your email.');
       }
 
-      if (user.otp_expires_at && new Date() > new Date(user.otp_expires_at)) {
+      if (user.otp_expires_at && isOtpExpired(user.otp_expires_at)) {
         return sendError('This recovery OTP code has expired. Please request a new code.');
       }
 
