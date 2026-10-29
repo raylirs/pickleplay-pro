@@ -78,7 +78,7 @@
             <% reservations.forEach(function(res) { %>
               <tr class="<%= res.status === 'AWAITING_CONFIRMATION' ? 'table-warning' : '' %>">
                 <td>
-                  <a href="/admin/reservations/<%= res.id %>" class="fw-bold font-monospace text-primary text-decoration-none">
+                  <a href="/admin/reservations/<%= res.id %>?return_to=<%= encodeURIComponent(currentUrl) %>" class="fw-bold font-monospace text-primary text-decoration-none">
                     <%= res.reference_number %>
                   </a>
                 </td>
@@ -129,13 +129,14 @@
                   <div class="d-flex justify-content-end gap-1">
                     <% if (res.status !== 'CONFIRMED') { %>
                       <form action="/admin/reservations/<%= res.id %>/confirm" method="POST" onsubmit="return confirm('Confirm and approve booking <%= res.reference_number %>?');">
+                        <input type="hidden" name="return_to" value="<%= currentUrl %>">
                         <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold" title="Approve Booking">
                           <i class="bi bi-check-lg me-1"></i>Approve
                         </button>
                       </form>
                     <% } %>
 
-                    <a href="/admin/reservations/<%= res.id %>" class="btn btn-sm btn-light border rounded-pill px-2" title="Details">
+                    <a href="/admin/reservations/<%= res.id %>?return_to=<%= encodeURIComponent(currentUrl) %>" class="btn btn-sm btn-light border rounded-pill px-2" title="Details">
                       <i class="bi bi-eye"></i>
                     </a>
 
@@ -151,6 +152,7 @@
                     <div class="modal-dialog">
                       <div class="modal-content rounded-4">
                         <form action="/admin/reservations/<%= res.id %>/cancel" method="POST">
+                          <input type="hidden" name="return_to" value="<%= currentUrl %>">
                           <div class="modal-header">
                             <h5 class="modal-title fw-bold">Cancel Reservation <%= res.reference_number %></h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

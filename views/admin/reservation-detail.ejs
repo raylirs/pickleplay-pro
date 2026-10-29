@@ -3,7 +3,7 @@
     <nav aria-label="breadcrumb" class="mb-3">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="/admin/reservations">Reservations</a></li>
+        <li class="breadcrumb-item"><a href="<%= typeof returnTo !== 'undefined' && returnTo ? returnTo : '/admin/reservations' %>"><%= typeof returnTo !== 'undefined' && returnTo.includes('AWAITING_CONFIRMATION') ? 'Pending Approvals' : 'Reservations' %></a></li>
         <li class="breadcrumb-item active"><%= reservation.reference_number %></li>
       </ol>
     </nav>
@@ -92,6 +92,7 @@
       <div class="d-flex flex-wrap gap-2 pt-3 border-top">
         <% if (reservation.status !== 'CONFIRMED') { %>
           <form action="/admin/reservations/<%= reservation.id %>/confirm" method="POST" onsubmit="return confirm('Approve and confirm this reservation? The player will receive confirmation and the slot will be locked.');">
+            <input type="hidden" name="return_to" value="<%= currentUrl %>">
             <button type="submit" class="btn btn-success btn-lg rounded-pill fw-bold px-4 shadow-sm">
               <i class="bi bi-check2-circle me-1"></i>Approve & Confirm Reservation
             </button>
@@ -104,8 +105,8 @@
           </button>
         <% } %>
 
-        <a href="/admin/reservations" class="btn btn-outline-secondary btn-lg rounded-pill px-4 ms-auto">
-          Back to List
+        <a href="<%= typeof returnTo !== 'undefined' && returnTo ? returnTo : '/admin/reservations' %>" class="btn btn-outline-secondary btn-lg rounded-pill px-4 ms-auto">
+          <i class="bi bi-arrow-left me-1"></i><%= typeof returnTo !== 'undefined' && returnTo.includes('AWAITING_CONFIRMATION') ? 'Back to Pending Approvals' : 'Back to List' %>
         </a>
       </div>
     </div>
@@ -137,6 +138,7 @@
   <div class="modal-dialog">
     <div class="modal-content rounded-4">
       <form action="/admin/reservations/<%= reservation.id %>/cancel" method="POST">
+        <input type="hidden" name="return_to" value="<%= currentUrl %>">
         <div class="modal-header">
           <h5 class="modal-title fw-bold">Reject / Cancel Reservation</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

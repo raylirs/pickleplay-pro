@@ -449,6 +449,8 @@ const adminController = {
         order: [['created_at', 'DESC']]
       });
 
+      const returnTo = req.query.return_to || req.headers.referer || '/admin/reservations';
+
       res.render('admin/reservation-detail', {
         title: `Reservation ${reservation.reference_number} - PicklePlay Pro`,
         layout: 'layouts/admin',
@@ -457,6 +459,7 @@ const adminController = {
         siblingReservations,
         totalOrderAmount,
         auditLogs,
+        returnTo,
         formatCurrency,
         formatDate,
         formatTime12,
@@ -530,7 +533,8 @@ const adminController = {
       } catch (e) {}
 
       req.flash('success', `Reservation order ${masterRef} cancelled.`);
-      res.redirect(req.headers.referer || '/admin/reservations');
+      const returnTo = req.body.return_to || req.query.return_to || req.headers.referer || '/admin/reservations';
+      res.redirect(returnTo);
     } catch (err) {
       next(err);
     }
@@ -615,7 +619,8 @@ const adminController = {
       } catch (e) {}
 
       req.flash('success', `Reservation order ${masterRef} confirmed manually.`);
-      res.redirect(req.headers.referer || '/admin/reservations');
+      const returnTo = req.body.return_to || req.query.return_to || req.headers.referer || '/admin/reservations';
+      res.redirect(returnTo);
     } catch (err) {
       next(err);
     }

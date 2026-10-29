@@ -28,7 +28,8 @@ initSocket(server);
 app.use(
   helmet({
     contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false
+    crossOriginEmbedderPolicy: false,
+    referrerPolicy: { policy: 'same-origin' }
   })
 );
 
@@ -74,6 +75,7 @@ app.use((req, res, next) => {
   res.locals.formatCurrency = formatCurrency;
   res.locals.formatTime12 = formatTime12;
   res.locals.formatDate = formatDate;
+  res.locals.currentUrl = req.originalUrl || req.url;
   next();
 });
 
