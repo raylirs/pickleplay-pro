@@ -1,6 +1,23 @@
 <% 
   const defaultRate = (courts && courts.length > 0 && courts[0].category) ? parseFloat(courts[0].category.price_per_hour) : 350;
   const totalCourtsCount = courts ? courts.length : 4;
+  const facilityRules = [
+    { num: '01', icon: 'bi-clock-fill', color: 'primary', title: 'Operating Hours', text: 'The Playground is open daily from 6:00 AM to 12:00 Midnight.' },
+    { num: '02', icon: 'bi-calendar-x-fill', color: 'danger', title: 'Court Reservations and Cancellations', text: 'All confirmed court bookings are non-refundable. However, rescheduling may be allowed if requested at least 48 hours before the scheduled booking, subject to court availability.' },
+    { num: '03', icon: 'bi-alarm-fill', color: 'warning', title: 'Strict Observance of Booking Schedule', text: 'Players and organizers must strictly observe their confirmed booking schedules. Extensions beyond the reserved time are highly discouraged to avoid inconvenience to succeeding bookings.' },
+    { num: '04', icon: 'bi-trash3-fill', color: 'success', title: 'Cleanliness and Proper Waste Disposal', text: 'Everyone is encouraged to help maintain the cleanliness of the facility. Please do not throw napkins, tissue papers, or other waste materials into the toilets. Trash bins are provided beside the toilet rooms and near the counter for proper waste disposal.' },
+    { num: '05', icon: 'bi-person-walking', color: 'info', title: 'Proper Footwear', text: 'All players must wear clean footwear when entering the court to help maintain its cleanliness and playing condition.' },
+    { num: '06', icon: 'bi-ban', color: 'danger', title: 'No Spitting or Littering', text: 'Spitting and littering are strictly prohibited within The Playground premises.' },
+    { num: '07', icon: 'bi-slash-circle-fill', color: 'danger', title: 'Prohibition of Smoking and Alcoholic Beverages', text: 'Smoking, including cigarettes and vapes, and the consumption of alcoholic beverages are strictly prohibited inside the court and designated standby areas. These activities are permitted only in the designated smoking and drinking areas.' },
+    { num: '08', icon: 'bi-speaker-fill', color: 'primary', title: 'Use of Sound System for Open Play', text: 'Open Play organizers may use The Playground\'s speaker and microphone free of charge, subject to availability. If these are unavailable, organizers may bring their own speaker and microphone without additional electricity charges.' },
+    { num: '09', icon: 'bi-droplet-fill', color: 'info', title: 'Water Dispensers', text: 'Organizers are not allowed to bring their own electric water dispensers. However, bringing personal water containers, water jars, or gallons is permitted.' },
+    { num: '10', icon: 'bi-bag-check-fill', color: 'warning', title: 'Corkage Fee', text: 'A corkage fee of ₱250.00/tray shall be charged for outside food or delicacies brought into the premises.' },
+    { num: '11', icon: 'bi-volume-down-fill', color: 'secondary', title: 'Noise Management', text: 'To avoid disturbing nearby residents, all players and organizers are requested to minimize music and speaker volume starting at 10:00 PM until closing time.' },
+    { num: '12', icon: 'bi-shield-lock-fill', color: 'dark', title: 'Personal Belongings', text: 'Please take care of your personal belongings and valuables at all times. The management shall not be held responsible for any lost, stolen, or unattended items.' },
+    { num: '13', icon: 'bi-p-circle-fill', color: 'success', title: 'Parking Area', text: 'The Playground provides a FREE parking area for its customers. Please park responsibly and ensure that other vehicles are not obstructed.' },
+    { num: '14', icon: 'bi-qr-code-scan', color: 'primary', title: 'Payment Options', text: 'For convenience and faster transactions, customers are encouraged to settle payments through GCash, bank transfer, or QR code.' },
+    { num: '15', icon: 'bi-exclamation-octagon-fill', color: 'danger', title: 'Prohibition of Monoblock Chairs', text: 'Bringing and using monoblock chairs inside the court are strictly prohibited.' }
+  ];
 %>
 
 <!-- =========================================================
@@ -177,7 +194,40 @@
         <i class="bi bi-search"></i>
         <span>Find Booking</span>
       </button>
+
+      <button class="courtogo-tab-btn" id="tab-btn-rules" onclick="switchVenueTab('rules')">
+        <i class="bi bi-journal-check text-success"></i>
+        <span>Rules &amp; Services</span>
+      </button>
     </div>
+
+    <!-- Mobile Quick Secondary Tabs Strip (< 768px) -->
+    <div class="d-flex d-md-none align-items-center gap-1.5 pt-2 pb-1 overflow-x-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
+      <button type="button" class="btn btn-sm rounded-pill px-3 py-1 fw-bold flex-shrink-0 mobile-top-pill active" id="mobile-top-tab-book" onclick="switchVenueTab('book')" style="font-size: 12px;">
+        <i class="bi bi-calendar2-check-fill me-1"></i>Book Court
+      </button>
+      <button type="button" class="btn btn-sm rounded-pill px-3 py-1 fw-bold flex-shrink-0 mobile-top-pill" id="mobile-top-tab-rules" onclick="switchVenueTab('rules')" style="font-size: 12px;">
+        <i class="bi bi-journal-check me-1 text-success"></i>Rules &amp; Services
+      </button>
+      <button type="button" class="btn btn-sm rounded-pill px-3 py-1 fw-bold flex-shrink-0 mobile-top-pill" id="mobile-top-tab-photos" onclick="switchVenueTab('photos')" style="font-size: 12px;">
+        <i class="bi bi-images me-1 text-primary"></i>Photos
+      </button>
+      <button type="button" class="btn btn-sm rounded-pill px-3 py-1 fw-bold flex-shrink-0 mobile-top-pill" id="mobile-top-tab-lookup" onclick="switchVenueTab('lookup')" style="font-size: 12px;">
+        <i class="bi bi-search me-1"></i>Find Booking
+      </button>
+    </div>
+    <style>
+      .mobile-top-pill {
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+      }
+      .mobile-top-pill.active {
+        background: #0B2545;
+        color: #ffffff;
+        border-color: #0B2545;
+      }
+    </style>
 
     <!-- ROW 2: Dedicated 1-Line Dynamic Action Row (Web & Mobile — All Icons + Text Visible) -->
     <div class="venue-action-row">
@@ -741,6 +791,219 @@
   </div>
 
   <!-- =========================================================
+       TAB 6B: RULES, REGULATIONS & SERVICES
+  ========================================================= -->
+  <div id="tab-content-rules" class="venue-tab-pane d-none">
+    <!-- SECTION 1: RULES AND REGULATIONS -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
+      <div class="p-4 p-md-5 text-white" style="background: linear-gradient(135deg, #0B2545 0%, #134074 100%); border-bottom: 3px solid #D4AF37;">
+        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+          <div>
+            <span class="badge rounded-pill px-3 py-1 fw-bold text-uppercase mb-2" style="background: rgba(212, 175, 55, 0.2); color: #FDE047; border: 1px solid rgba(212, 175, 55, 0.45); font-size: 11px; letter-spacing: 0.06em;">
+              <i class="bi bi-shield-check me-1"></i>THE PLAYGROUND · FACILITY GUIDELINES
+            </span>
+            <h2 class="fw-extrabold font-display text-white mb-1">Rules and Regulations</h2>
+            <p class="text-white-50 small mb-0" style="max-width: 720px;">
+              To ensure a safe, clean, comfortable, and enjoyable playing environment for everyone, all players, organizers, and visitors are kindly requested to observe the following rules and regulations:
+            </p>
+          </div>
+          <button type="button" class="btn btn-book-now-gold rounded-pill px-4 py-2 fw-bold flex-shrink-0 shadow-sm" onclick="switchVenueTab('book')">
+            <i class="bi bi-calendar2-check-fill me-1"></i>Book a Court
+          </button>
+        </div>
+      </div>
+
+      <div class="p-4 p-md-5">
+        <div class="row g-3">
+          <% facilityRules.forEach(function(rule) { %>
+            <div class="col-12 col-md-6">
+              <div class="h-100 p-3.5 rounded-4 border bg-light bg-opacity-50 d-flex align-items-start gap-3" style="border-color: #e2e8f0 !important;">
+                <div class="flex-shrink-0 d-flex flex-column align-items-center">
+                  <span class="badge bg-<%= rule.color %>-subtle text-<%= rule.color === 'warning' ? 'dark' : rule.color %> border border-<%= rule.color %>-subtle rounded-circle d-inline-flex align-items-center justify-content-center fw-bold" style="width: 38px; height: 38px; font-size: 15px;">
+                    <i class="bi <%= rule.icon %>"></i>
+                  </span>
+                  <span class="text-muted fw-bold font-monospace mt-1" style="font-size: 10px;">#<%= rule.num %></span>
+                </div>
+                <div>
+                  <h6 class="fw-bold text-dark mb-1" style="font-size: 14.5px;"><%= rule.title %></h6>
+                  <p class="text-secondary small mb-0" style="line-height: 1.55;"><%= rule.text %></p>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+
+        <div class="mt-4 p-3.5 rounded-4 border d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2" style="background: #fffbeb; border-color: #fde047 !important;">
+          <div class="d-flex align-items-start gap-2.5">
+            <i class="bi bi-heart-fill text-warning fs-5 flex-shrink-0 mt-0.5"></i>
+            <div>
+              <strong class="text-dark d-block" style="font-size: 14px;">THANK YOU FOR YOUR COOPERATION!</strong>
+              <span class="text-secondary small">Let's work together to keep The Playground clean, safe, and enjoyable for everyone. We appreciate your cooperation and continued support!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: OUR SERVICES AND OFFERS -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
+      <div class="p-4 p-md-5 border-bottom bg-light">
+        <span class="badge bg-warning-subtle text-dark border border-warning rounded-pill px-3 py-1 fw-bold text-uppercase mb-2" style="font-size: 11px; letter-spacing: 0.06em;">
+          <i class="bi bi-stars text-warning me-1"></i>AMENITIES &amp; RATES
+        </span>
+        <h2 class="fw-extrabold font-display text-dark mb-1">Our Services and Offers</h2>
+        <p class="text-secondary small mb-0">
+          Make your playing experience more convenient and enjoyable! Check out the services and amenities we offer:
+        </p>
+      </div>
+
+      <div class="p-4 p-md-5">
+        <div class="row g-3 g-md-4">
+          <!-- 1. Online Court Booking -->
+          <div class="col-12 col-md-6 col-lg-4">
+            <div class="h-100 p-4 rounded-4 border shadow-xs bg-white d-flex flex-column justify-content-between">
+              <div>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                  <span class="badge bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                    <i class="bi bi-laptop"></i>
+                  </span>
+                  <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1 fw-bold font-monospace">01</span>
+                </div>
+                <h5 class="fw-bold text-dark font-display mb-2">Online Court Booking</h5>
+                <p class="text-secondary small mb-3">
+                  Skip the hassle and book your preferred court schedule online!
+                </p>
+                <div class="p-2.5 rounded-3 bg-light border small mb-3">
+                  <span class="text-muted d-block" style="font-size: 11px;">Booking Platform:</span>
+                  <a href="https://pickleplay-pro.onrender.com" target="_blank" rel="noopener noreferrer" class="fw-bold text-primary text-break text-decoration-none">
+                    https://pickleplay-pro.onrender.com
+                  </a>
+                </div>
+              </div>
+              <button type="button" class="btn btn-book-now-gold btn-sm rounded-pill fw-bold w-100 py-2" onclick="switchVenueTab('book')">
+                <i class="bi bi-calendar2-check-fill me-1"></i>Book Schedule Now
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. Food Catering Services -->
+          <div class="col-12 col-md-6 col-lg-4">
+            <div class="h-100 p-4 rounded-4 border shadow-xs bg-white d-flex flex-column justify-content-between">
+              <div>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                  <span class="badge bg-warning-subtle text-dark rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                    <i class="bi bi-egg-fried"></i>
+                  </span>
+                  <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1 fw-bold font-monospace">02</span>
+                </div>
+                <h5 class="fw-bold text-dark font-display mb-2">Food Catering Services</h5>
+                <p class="text-secondary small mb-3">
+                  Planning an event, tournament, or Open Play session? We accept food catering arrangements to make your gathering more convenient.
+                </p>
+              </div>
+              <div class="p-3 rounded-3 border" style="background: #fffbeb; border-color: #fde68a !important;">
+                <span class="text-muted d-block small mb-1">For inquiries and arrangements, call or text:</span>
+                <a href="tel:09272412576" class="fw-extrabold text-dark text-decoration-none font-monospace d-inline-flex align-items-center gap-1.5 fs-6">
+                  <i class="bi bi-telephone-fill text-warning"></i> 0927-241-2576
+                </a>
+                <div class="small text-secondary mt-1">Look for <strong class="text-dark">Xy-zsa</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Paddle Rental -->
+          <div class="col-12 col-md-6 col-lg-4">
+            <div class="h-100 p-4 rounded-4 border shadow-xs bg-white d-flex flex-column justify-content-between">
+              <div>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                  <span class="badge bg-success-subtle text-success rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                    <i class="bi bi-trophy-fill"></i>
+                  </span>
+                  <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1 fw-bold font-monospace">03</span>
+                </div>
+                <h5 class="fw-bold text-dark font-display mb-2">Paddle Rental</h5>
+                <p class="text-secondary small mb-3">
+                  No paddle? No problem! We offer paddle rentals at the following rate:
+                </p>
+              </div>
+              <div class="d-flex flex-column gap-2">
+                <div class="p-2.5 rounded-3 bg-success-subtle border border-success-subtle d-flex justify-content-between align-items-center">
+                  <span class="small fw-semibold text-success-emphasis">Rental Rate (Entire Game)</span>
+                  <span class="fw-extrabold text-success fs-6">₱100.00 <span class="fw-normal small">/ paddle</span></span>
+                </div>
+                <div class="p-2.5 rounded-3 bg-danger-subtle border border-danger-subtle small text-danger-emphasis">
+                  <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                  In case of damage, replacement cost is <strong>₱2,000.00 per paddle</strong>.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. The Loft – Exclusive Rental -->
+          <div class="col-12 col-md-6">
+            <div class="h-100 p-4 rounded-4 border shadow-xs bg-white d-flex flex-column justify-content-between">
+              <div>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                  <span class="badge bg-info-subtle text-info-emphasis rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                    <i class="bi bi-building-fill"></i>
+                  </span>
+                  <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1 fw-bold font-monospace">04</span>
+                </div>
+                <h5 class="fw-bold text-dark font-display mb-2">The Loft – Exclusive Rental</h5>
+                <p class="text-secondary small mb-3">
+                  Looking for a private space for your gathering, meetings, or special events? The Loft is available for exclusive use.
+                </p>
+              </div>
+              <div class="row g-2">
+                <div class="col-sm-6">
+                  <div class="p-2.5 rounded-3 bg-light border h-100">
+                    <span class="text-muted d-block" style="font-size: 11px;">Rental Rate</span>
+                    <strong class="text-dark">₱1,000.00</strong> <span class="small text-secondary">for every 4 hours</span>
+                  </div>
+                </div>
+                <div class="col-sm-6">
+                  <div class="p-2.5 rounded-3 bg-light border h-100">
+                    <span class="text-muted d-block" style="font-size: 11px;">Maximum Capacity</span>
+                    <strong class="text-dark">40 persons</strong> <span class="small text-secondary">only</span>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="p-2.5 rounded-3 bg-warning-subtle border border-warning-subtle small text-dark">
+                    <i class="bi bi-info-circle-fill text-warning me-1"></i>
+                    Any excess hour, even if used for less than one (1) hour, shall be charged an additional <strong>₱1,000.00</strong>.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Freshly Prepared Food and Refreshments -->
+          <div class="col-12 col-md-6">
+            <div class="h-100 p-4 rounded-4 border shadow-xs bg-white d-flex flex-column justify-content-between">
+              <div>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                  <span class="badge bg-danger-subtle text-danger rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                    <i class="bi bi-cup-straw"></i>
+                  </span>
+                  <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1 fw-bold font-monospace">05</span>
+                </div>
+                <h5 class="fw-bold text-dark font-display mb-2">Freshly Prepared Food and Refreshments</h5>
+                <p class="text-secondary small mb-3">
+                  Enjoy freshly cooked meals, delicious snacks, and refreshing drinks, conveniently available at our counter.
+                </p>
+              </div>
+              <div class="p-3 rounded-3 bg-light border d-flex align-items-center gap-2.5">
+                <i class="bi bi-shop-window text-primary fs-4"></i>
+                <span class="small text-secondary mb-0">Available daily during operating hours (<strong class="text-dark">6:00 AM – 12:00 Midnight</strong>) right at the facility counter.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
        TAB 6: MY BOOKINGS (Authenticated Player Dashboard)
   ========================================================= -->
   <div id="tab-content-my-bookings" class="venue-tab-pane d-none">
@@ -1166,9 +1429,30 @@
 
           <div id="checkoutSubmitErrorBox" class="alert alert-danger py-2 px-3 small rounded-3 mb-3 d-none"></div>
 
-          <div class="mb-4">
+          <div class="mb-3">
             <label class="form-label small fw-bold text-dark">Special Requests / Notes <span class="text-muted fw-normal">(Optional)</span></label>
             <input type="text" name="special_requests" id="checkoutSpecialRequests" class="form-control rounded-3" placeholder="Paddle rentals, ball tubes, coaching, etc.">
+          </div>
+
+          <div class="rounded-3 border p-2.5 px-3 mb-3 bg-light">
+            <div class="d-flex align-items-center justify-content-between gap-2">
+              <div class="small text-secondary" style="font-size: 11.5px;">
+                <i class="bi bi-shield-check text-primary me-1"></i>
+                Confirmed bookings are <strong>non-refundable</strong> (rescheduling allowed &ge;48h before).
+              </div>
+              <button type="button" class="btn btn-link btn-sm p-0 fw-bold text-decoration-none flex-shrink-0" style="font-size: 11.5px;" data-bs-toggle="collapse" data-bs-target="#checkoutRulesCollapse" aria-expanded="false" aria-controls="checkoutRulesCollapse">
+                View Rules
+              </button>
+            </div>
+            <div class="collapse mt-2 pt-2 border-top" id="checkoutRulesCollapse">
+              <div style="max-height: 180px; overflow-y: auto; font-size: 11.5px;" class="pe-1 text-secondary">
+                <% facilityRules.forEach(function(rule) { %>
+                  <div class="mb-1.5">
+                    <strong class="text-dark"><%= rule.num %>. <%= rule.title %>:</strong> <%= rule.text %>
+                  </div>
+                <% }); %>
+              </div>
+            </div>
           </div>
 
           <div class="sticky-bottom bg-white pt-3 pb-1 border-top mt-3 d-flex gap-2" style="z-index: 10;">
@@ -1617,7 +1901,9 @@
     // 6. Handle direct tab routing via URL hash
     if (window.location.hash) {
       const targetTab = window.location.hash.replace('#', '');
-      if (['book', 'my-bookings', 'about', 'photos', 'location', 'lookup'].includes(targetTab)) {
+      if (targetTab === 'services' || targetTab === 'rules-and-services') {
+        switchVenueTab('rules');
+      } else if (['book', 'my-bookings', 'about', 'photos', 'location', 'lookup', 'rules'].includes(targetTab)) {
         switchVenueTab(targetTab);
       } else if (targetTab === 'chat' && currentPlayerUser) {
         openAccountChatModal();
@@ -1633,14 +1919,17 @@
     document.querySelectorAll('.venue-tab-pane').forEach(el => el.classList.add('d-none'));
     document.querySelectorAll('.courtogo-tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.mobile-appbar-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.mobile-top-pill').forEach(btn => btn.classList.remove('active'));
 
     const contentPane = document.getElementById('tab-content-' + tabName);
     const btn = document.getElementById('tab-btn-' + tabName);
     const mobileBtn = document.getElementById('mobile-nav-' + tabName);
+    const mobileTopBtn = document.getElementById('mobile-top-tab-' + tabName);
 
     if (contentPane) contentPane.classList.remove('d-none');
     if (btn) btn.classList.add('active');
     if (mobileBtn) mobileBtn.classList.add('active');
+    if (mobileTopBtn) mobileTopBtn.classList.add('active');
 
     // Manage bottom floating booking rail visibility
     const rail = document.getElementById('bookingActionBar');
