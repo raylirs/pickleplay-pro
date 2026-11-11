@@ -817,24 +817,24 @@
         <div class="row g-3">
           <% facilityRules.forEach(function(rule) { %>
             <div class="col-12 col-md-6">
-              <div class="h-100 p-3.5 rounded-4 border bg-light bg-opacity-50 d-flex align-items-start gap-3" style="border-color: #e2e8f0 !important;">
-                <div class="flex-shrink-0">
-                  <span class="badge bg-<%= rule.color %>-subtle text-<%= rule.color === 'warning' ? 'dark' : rule.color %> border border-<%= rule.color %>-subtle rounded-circle d-inline-flex align-items-center justify-content-center fw-bold" style="width: 38px; height: 38px; font-size: 15px;">
+              <div class="h-100 p-3 p-md-4 rounded-4 border bg-light bg-opacity-50" style="border-color: #e2e8f0 !important;">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                  <span class="rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0 bg-<%= rule.color %>-subtle text-<%= rule.color === 'warning' ? 'dark' : rule.color %> border border-<%= rule.color %>-subtle" style="width: 40px; height: 40px; font-size: 16px; line-height: 1;">
                     <i class="bi <%= rule.icon %>"></i>
                   </span>
+                  <h6 class="fw-bold text-dark mb-0" style="font-size: 14.5px; line-height: 1.35;"><%= rule.title %></h6>
                 </div>
-                <div>
-                  <h6 class="fw-bold text-dark mb-1" style="font-size: 14.5px;"><%= rule.title %></h6>
-                  <p class="text-secondary small mb-0" style="line-height: 1.55;"><%= rule.text %></p>
-                </div>
+                <p class="text-secondary small mb-0" style="line-height: 1.6;"><%= rule.text %></p>
               </div>
             </div>
           <% }); %>
         </div>
 
-        <div class="mt-4 p-3.5 rounded-4 border d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2" style="background: #fffbeb; border-color: #fde047 !important;">
-          <div class="d-flex align-items-start gap-2.5">
-            <i class="bi bi-heart-fill text-warning fs-5 flex-shrink-0 mt-0.5"></i>
+        <div class="mt-4 p-3 p-md-4 rounded-4 border d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2" style="background: #fffbeb; border-color: #fde047 !important;">
+          <div class="d-flex align-items-center gap-3">
+            <span class="rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0 bg-warning-subtle text-warning border border-warning-subtle" style="width: 40px; height: 40px; font-size: 16px; line-height: 1;">
+              <i class="bi bi-heart-fill"></i>
+            </span>
             <div>
               <strong class="text-dark d-block" style="font-size: 14px;">THANK YOU FOR YOUR COOPERATION!</strong>
               <span class="text-secondary small">Let's work together to keep The Playground clean, safe, and enjoyable for everyone. We appreciate your cooperation and continued support!</span>
@@ -862,17 +862,17 @@
           <div class="col-12 col-md-6 col-lg-4">
             <div class="h-100 p-4 rounded-4 border shadow-xs bg-white d-flex flex-column justify-content-between">
               <div>
-                <div class="mb-3">
-                  <span class="badge bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                  <span class="rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0 bg-primary-subtle text-primary border border-primary-subtle" style="width: 44px; height: 44px; font-size: 18px; line-height: 1;">
                     <i class="bi bi-laptop"></i>
                   </span>
+                  <h5 class="fw-bold text-dark font-display mb-0" style="line-height: 1.3;">Online Court Booking</h5>
                 </div>
-                <h5 class="fw-bold text-dark font-display mb-2">Online Court Booking</h5>
                 <p class="text-secondary small mb-3">
                   Skip the hassle and book your preferred court schedule online!
                 </p>
-                <div class="p-2.5 rounded-3 bg-light border small mb-3">
-                  <span class="text-muted d-block" style="font-size: 11px;">Booking Platform:</span>
+                <div class="p-3 rounded-3 bg-light border small mb-3">
+                  <span class="text-muted d-block mb-1" style="font-size: 11px;">Booking Platform:</span>
                   <a href="https://pickleplay-pro.onrender.com" target="_blank" rel="noopener noreferrer" class="fw-bold text-primary text-break text-decoration-none">
                     https://pickleplay-pro.onrender.com
                   </a>
@@ -888,19 +888,19 @@
           <div class="col-12 col-md-6 col-lg-4">
             <div class="h-100 p-4 rounded-4 border shadow-xs bg-white d-flex flex-column justify-content-between">
               <div>
-                <div class="mb-3">
-                  <span class="badge bg-warning-subtle text-dark rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                  <span class="rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0 bg-warning-subtle text-dark border border-warning-subtle" style="width: 44px; height: 44px; font-size: 18px; line-height: 1;">
                     <i class="bi bi-egg-fried"></i>
                   </span>
+                  <h5 class="fw-bold text-dark font-display mb-0" style="line-height: 1.3;">Food Catering Services</h5>
                 </div>
-                <h5 class="fw-bold text-dark font-display mb-2">Food Catering Services</h5>
                 <p class="text-secondary small mb-3">
                   Planning an event, tournament, or Open Play session? We accept food catering arrangements to make your gathering more convenient.
                 </p>
               </div>
               <div class="p-3 rounded-3 border" style="background: #fffbeb; border-color: #fde68a !important;">
                 <span class="text-muted d-block small mb-1">For inquiries and arrangements, call or text:</span>
-                <a href="tel:09272412576" class="fw-extrabold text-dark text-decoration-none font-monospace d-inline-flex align-items-center gap-1.5 fs-6">
+                <a href="tel:09272412576" class="fw-extrabold text-dark text-decoration-none font-monospace d-inline-flex align-items-center gap-2 fs-6">
                   <i class="bi bi-telephone-fill text-warning"></i> 0927-241-2576
                 </a>
                 <div class="small text-secondary mt-1">Look for <strong class="text-dark">Xy-zsa</strong></div>
@@ -912,22 +912,22 @@
           <div class="col-12 col-md-6 col-lg-4">
             <div class="h-100 p-4 rounded-4 border shadow-xs bg-white d-flex flex-column justify-content-between">
               <div>
-                <div class="mb-3">
-                  <span class="badge bg-success-subtle text-success rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                  <span class="rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0 bg-success-subtle text-success border border-success-subtle" style="width: 44px; height: 44px; font-size: 18px; line-height: 1;">
                     <i class="bi bi-trophy-fill"></i>
                   </span>
+                  <h5 class="fw-bold text-dark font-display mb-0" style="line-height: 1.3;">Paddle Rental</h5>
                 </div>
-                <h5 class="fw-bold text-dark font-display mb-2">Paddle Rental</h5>
                 <p class="text-secondary small mb-3">
                   No paddle? No problem! We offer paddle rentals at the following rate:
                 </p>
               </div>
               <div class="d-flex flex-column gap-2">
-                <div class="p-2.5 rounded-3 bg-success-subtle border border-success-subtle d-flex justify-content-between align-items-center">
+                <div class="p-3 rounded-3 bg-success-subtle border border-success-subtle d-flex justify-content-between align-items-center gap-2">
                   <span class="small fw-semibold text-success-emphasis">Rental Rate (Entire Game)</span>
-                  <span class="fw-extrabold text-success fs-6">₱100.00 <span class="fw-normal small">/ paddle</span></span>
+                  <span class="fw-extrabold text-success fs-6 flex-shrink-0">₱100.00 <span class="fw-normal small">/ paddle</span></span>
                 </div>
-                <div class="p-2.5 rounded-3 bg-danger-subtle border border-danger-subtle small text-danger-emphasis">
+                <div class="p-3 rounded-3 bg-danger-subtle border border-danger-subtle small text-danger-emphasis">
                   <i class="bi bi-exclamation-triangle-fill me-1"></i>
                   In case of damage, replacement cost is <strong>₱2,000.00 per paddle</strong>.
                 </div>
@@ -939,31 +939,31 @@
           <div class="col-12 col-md-6">
             <div class="h-100 p-4 rounded-4 border shadow-xs bg-white d-flex flex-column justify-content-between">
               <div>
-                <div class="mb-3">
-                  <span class="badge bg-info-subtle text-info-emphasis rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                  <span class="rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0 bg-info-subtle text-info-emphasis border border-info-subtle" style="width: 44px; height: 44px; font-size: 18px; line-height: 1;">
                     <i class="bi bi-building-fill"></i>
                   </span>
+                  <h5 class="fw-bold text-dark font-display mb-0" style="line-height: 1.3;">The Loft – Exclusive Rental</h5>
                 </div>
-                <h5 class="fw-bold text-dark font-display mb-2">The Loft – Exclusive Rental</h5>
                 <p class="text-secondary small mb-3">
                   Looking for a private space for your gathering, meetings, or special events? The Loft is available for exclusive use.
                 </p>
               </div>
               <div class="row g-2">
                 <div class="col-sm-6">
-                  <div class="p-2.5 rounded-3 bg-light border h-100">
-                    <span class="text-muted d-block" style="font-size: 11px;">Rental Rate</span>
+                  <div class="p-3 rounded-3 bg-light border h-100">
+                    <span class="text-muted d-block mb-1" style="font-size: 11px;">Rental Rate</span>
                     <strong class="text-dark">₱1,000.00</strong> <span class="small text-secondary">for every 4 hours</span>
                   </div>
                 </div>
                 <div class="col-sm-6">
-                  <div class="p-2.5 rounded-3 bg-light border h-100">
-                    <span class="text-muted d-block" style="font-size: 11px;">Maximum Capacity</span>
+                  <div class="p-3 rounded-3 bg-light border h-100">
+                    <span class="text-muted d-block mb-1" style="font-size: 11px;">Maximum Capacity</span>
                     <strong class="text-dark">40 persons</strong> <span class="small text-secondary">only</span>
                   </div>
                 </div>
                 <div class="col-12">
-                  <div class="p-2.5 rounded-3 bg-warning-subtle border border-warning-subtle small text-dark">
+                  <div class="p-3 rounded-3 bg-warning-subtle border border-warning-subtle small text-dark">
                     <i class="bi bi-info-circle-fill text-warning me-1"></i>
                     Any excess hour, even if used for less than one (1) hour, shall be charged an additional <strong>₱1,000.00</strong>.
                   </div>
@@ -976,18 +976,18 @@
           <div class="col-12 col-md-6">
             <div class="h-100 p-4 rounded-4 border shadow-xs bg-white d-flex flex-column justify-content-between">
               <div>
-                <div class="mb-3">
-                  <span class="badge bg-danger-subtle text-danger rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                  <span class="rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0 bg-danger-subtle text-danger border border-danger-subtle" style="width: 44px; height: 44px; font-size: 18px; line-height: 1;">
                     <i class="bi bi-cup-straw"></i>
                   </span>
+                  <h5 class="fw-bold text-dark font-display mb-0" style="line-height: 1.3;">Freshly Prepared Food and Refreshments</h5>
                 </div>
-                <h5 class="fw-bold text-dark font-display mb-2">Freshly Prepared Food and Refreshments</h5>
                 <p class="text-secondary small mb-3">
                   Enjoy freshly cooked meals, delicious snacks, and refreshing drinks, conveniently available at our counter.
                 </p>
               </div>
-              <div class="p-3 rounded-3 bg-light border d-flex align-items-center gap-2.5">
-                <i class="bi bi-shop-window text-primary fs-4"></i>
+              <div class="p-3 rounded-3 bg-light border d-flex align-items-center gap-3">
+                <i class="bi bi-shop-window text-primary fs-4 flex-shrink-0"></i>
                 <span class="small text-secondary mb-0">Available daily during operating hours (<strong class="text-dark">6:00 AM – 12:00 Midnight</strong>) right at the facility counter.</span>
               </div>
             </div>
@@ -1428,7 +1428,7 @@
             <input type="text" name="special_requests" id="checkoutSpecialRequests" class="form-control rounded-3" placeholder="Paddle rentals, ball tubes, coaching, etc.">
           </div>
 
-          <div class="rounded-3 border p-2.5 px-3 mb-3 bg-light">
+          <div class="rounded-3 border p-2 px-3 mb-3 bg-light">
             <div class="d-flex align-items-center justify-content-between gap-2">
               <div class="small text-secondary" style="font-size: 11.5px;">
                 <i class="bi bi-shield-check text-primary me-1"></i>
@@ -1441,7 +1441,7 @@
             <div class="collapse mt-2 pt-2 border-top" id="checkoutRulesCollapse">
               <div style="max-height: 180px; overflow-y: auto; font-size: 11.5px;" class="pe-1 text-secondary">
                 <% facilityRules.forEach(function(rule) { %>
-                  <div class="mb-1.5">
+                  <div class="mb-2">
                     <strong class="text-dark"><%= rule.num %>. <%= rule.title %>:</strong> <%= rule.text %>
                   </div>
                 <% }); %>
