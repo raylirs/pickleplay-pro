@@ -3,7 +3,7 @@
   const totalCourtsCount = courts ? courts.length : 4;
   const facilityRules = [
     { num: '01', icon: 'bi-clock-fill', color: 'primary', title: 'Operating Hours', text: 'The Playground is open daily from 6:00 AM to 12:00 Midnight.' },
-    { num: '02', icon: 'bi-calendar-x-fill', color: 'danger', title: 'Court Reservations and Cancellations', text: 'All confirmed court bookings are non-refundable. However, rescheduling may be allowed if requested at least 48 hours before the scheduled booking, subject to court availability.' },
+    { num: '02', icon: 'bi-calendar-x-fill', color: 'danger', title: 'Paid Reservations', text: 'Refund/Cancellation/Rescheduling of paid reservation is not allowed' },
     { num: '03', icon: 'bi-alarm-fill', color: 'warning', title: 'Strict Observance of Booking Schedule', text: 'Players and organizers must strictly observe their confirmed booking schedules. Extensions beyond the reserved time are highly discouraged to avoid inconvenience to succeeding bookings.' },
     { num: '04', icon: 'bi-trash3-fill', color: 'success', title: 'Cleanliness and Proper Waste Disposal', text: 'Everyone is encouraged to help maintain the cleanliness of the facility. Please do not throw napkins, tissue papers, or other waste materials into the toilets. Trash bins are provided beside the toilet rooms and near the counter for proper waste disposal.' },
     { num: '05', icon: 'bi-person-walking', color: 'info', title: 'Proper Footwear', text: 'All players must wear clean footwear when entering the court to help maintain its cleanliness and playing condition.' },
@@ -1428,25 +1428,41 @@
             <input type="text" name="special_requests" id="checkoutSpecialRequests" class="form-control rounded-3" placeholder="Paddle rentals, ball tubes, coaching, etc.">
           </div>
 
-          <div class="rounded-3 border p-2 px-3 mb-3 bg-light">
-            <div class="d-flex align-items-center justify-content-between gap-2">
-              <div class="small text-secondary" style="font-size: 11.5px;">
-                <i class="bi bi-shield-check text-primary me-1"></i>
-                Confirmed bookings are <strong>non-refundable</strong> (rescheduling allowed &ge;48h before).
+          <!-- Facility Policy Box & Rules Notice -->
+          <div class="rounded-3 border border-danger-subtle p-3 mb-3" style="background: #FFF5F5;">
+            <div class="d-flex align-items-start gap-2.5">
+              <i class="bi bi-exclamation-octagon-fill text-danger fs-5 flex-shrink-0 mt-0.5"></i>
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-1">
+                  <strong class="text-danger" style="font-size: 13px;">Important: Paid Reservations Policy</strong>
+                  <button type="button" class="btn btn-link btn-sm p-0 fw-bold text-danger text-decoration-none" style="font-size: 11.5px;" data-bs-toggle="collapse" data-bs-target="#checkoutRulesCollapse" aria-expanded="false" aria-controls="checkoutRulesCollapse">
+                    <i class="bi bi-journal-text me-1"></i>View All 15 Rules
+                  </button>
+                </div>
+                <div class="text-dark small" style="font-size: 12px; line-height: 1.45;">
+                  Refund, cancellation, or rescheduling of paid reservation is <strong>strictly not allowed</strong>.
+                </div>
               </div>
-              <button type="button" class="btn btn-link btn-sm p-0 fw-bold text-decoration-none flex-shrink-0" style="font-size: 11.5px;" data-bs-toggle="collapse" data-bs-target="#checkoutRulesCollapse" aria-expanded="false" aria-controls="checkoutRulesCollapse">
-                View Rules
-              </button>
             </div>
-            <div class="collapse mt-2 pt-2 border-top" id="checkoutRulesCollapse">
-              <div style="max-height: 180px; overflow-y: auto; font-size: 11.5px;" class="pe-1 text-secondary">
+
+            <!-- Expandable 15 Rules List -->
+            <div class="collapse mt-2.5 pt-2 border-top border-danger-subtle" id="checkoutRulesCollapse">
+              <div class="pe-1 text-secondary" style="max-height: 200px; overflow-y: auto; font-size: 11.5px; line-height: 1.5;">
                 <% facilityRules.forEach(function(rule) { %>
-                  <div class="mb-2">
+                  <div class="mb-2 pb-1 border-bottom border-light">
                     <strong class="text-dark"><%= rule.num %>. <%= rule.title %>:</strong> <%= rule.text %>
                   </div>
                 <% }); %>
               </div>
             </div>
+          </div>
+
+          <!-- Mandatory Agreement Checkbox Before Booking -->
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="agreeRulesCheck" name="agree_rules" required>
+            <label class="form-check-label small fw-semibold text-dark" for="agreeRulesCheck" style="font-size: 11.5px; line-height: 1.4;">
+              I have read and agree to <a href="/#rules" target="_blank" class="text-primary text-decoration-underline" onclick="if (typeof switchVenueTab === 'function') { switchVenueTab('rules'); }">The Playground Rules &amp; Regulations</a>, acknowledging that paid bookings cannot be refunded, cancelled, or rescheduled. <span class="text-danger">*</span>
+            </label>
           </div>
 
           <div class="sticky-bottom bg-white pt-3 pb-1 border-top mt-3 d-flex gap-2" style="z-index: 10;">
@@ -3099,6 +3115,16 @@
     const submitBtn = document.getElementById('checkoutSubmitBtn');
     const errBox = document.getElementById('checkoutSubmitErrorBox');
     if (errBox) errBox.classList.add('d-none');
+
+    const agreeCheck = document.getElementById('agreeRulesCheck');
+    if (agreeCheck && !agreeCheck.checked) {
+      if (errBox) {
+        errBox.textContent = 'Please confirm that you agree to The Playground Rules and Regulations (including the strict no-refund / no-cancellation / no-rescheduling policy for paid reservations) before proceeding.';
+        errBox.classList.remove('d-none');
+      }
+      agreeCheck.focus();
+      return;
+    }
 
     const payload = {
       court_id: document.getElementById('formCourtId').value,
