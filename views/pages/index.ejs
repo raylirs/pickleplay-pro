@@ -304,7 +304,12 @@
     </div>
 
     <!-- =========================================================
-         STEP 1: CURRENT MONTH CALENDAR VIEW (Shown First)
+         RULES AND REGULATIONS (Shown First Before Booking)
+    ========================================================= -->
+    <%- include('../partials/rules-card', { facilityRules, compact: true, ctaMode: 'scroll' }) %>
+
+    <!-- =========================================================
+         STEP 1: CURRENT MONTH CALENDAR VIEW (Shown After Rules)
     ========================================================= -->
     <style>
       html, body {
@@ -795,54 +800,7 @@
   ========================================================= -->
   <div id="tab-content-rules" class="venue-tab-pane d-none">
     <!-- SECTION 1: RULES AND REGULATIONS -->
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
-      <div class="p-4 p-md-5 text-white" style="background: linear-gradient(135deg, #0B2545 0%, #134074 100%); border-bottom: 3px solid #D4AF37;">
-        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
-          <div>
-            <span class="badge rounded-pill px-3 py-1 fw-bold text-uppercase mb-2" style="background: rgba(212, 175, 55, 0.2); color: #FDE047; border: 1px solid rgba(212, 175, 55, 0.45); font-size: 11px; letter-spacing: 0.06em;">
-              <i class="bi bi-shield-check me-1"></i>THE PLAYGROUND · FACILITY GUIDELINES
-            </span>
-            <h2 class="fw-extrabold font-display text-white mb-1">Rules and Regulations</h2>
-            <p class="text-white-50 small mb-0" style="max-width: 720px;">
-              To ensure a safe, clean, comfortable, and enjoyable playing environment for everyone, all players, organizers, and visitors are kindly requested to observe the following rules and regulations:
-            </p>
-          </div>
-          <button type="button" class="btn btn-book-now-gold rounded-pill px-4 py-2 fw-bold flex-shrink-0 shadow-sm" onclick="switchVenueTab('book')">
-            <i class="bi bi-calendar2-check-fill me-1"></i>Book a Court
-          </button>
-        </div>
-      </div>
-
-      <div class="p-4 p-md-5">
-        <div class="row g-3">
-          <% facilityRules.forEach(function(rule) { %>
-            <div class="col-12 col-md-6">
-              <div class="h-100 p-3 p-md-4 rounded-4 border bg-light bg-opacity-50" style="border-color: #e2e8f0 !important;">
-                <div class="d-flex align-items-center gap-3 mb-2">
-                  <span class="rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0 bg-<%= rule.color %>-subtle text-<%= rule.color === 'warning' ? 'dark' : rule.color %> border border-<%= rule.color %>-subtle" style="width: 40px; height: 40px; font-size: 16px; line-height: 1;">
-                    <i class="bi <%= rule.icon %>"></i>
-                  </span>
-                  <h6 class="fw-bold text-dark mb-0" style="font-size: 14.5px; line-height: 1.35;"><%= rule.title %></h6>
-                </div>
-                <p class="text-secondary small mb-0" style="line-height: 1.6;"><%= rule.text %></p>
-              </div>
-            </div>
-          <% }); %>
-        </div>
-
-        <div class="mt-4 p-3 p-md-4 rounded-4 border d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2" style="background: #fffbeb; border-color: #fde047 !important;">
-          <div class="d-flex align-items-center gap-3">
-            <span class="rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0 bg-warning-subtle text-warning border border-warning-subtle" style="width: 40px; height: 40px; font-size: 16px; line-height: 1;">
-              <i class="bi bi-heart-fill"></i>
-            </span>
-            <div>
-              <strong class="text-dark d-block" style="font-size: 14px;">THANK YOU FOR YOUR COOPERATION!</strong>
-              <span class="text-secondary small">Let's work together to keep The Playground clean, safe, and enjoyable for everyone. We appreciate your cooperation and continued support!</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <%- include('../partials/rules-card', { facilityRules, compact: false, ctaMode: 'tab' }) %>
 
     <!-- SECTION 2: OUR SERVICES AND OFFERS -->
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
