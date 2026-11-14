@@ -133,9 +133,9 @@ const courtController = {
       const operatingSlots = [
         '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
         '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
-        '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'
+        '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'
       ];
-      const slotsPerDayPerCourt = operatingSlots.length; // 18
+      const slotsPerDayPerCourt = operatingSlots.length; // 19
       const totalCourtSlotsPerDay = (courts.length || 4) * slotsPerDayPerCourt; // e.g. 72
 
       // 2. Fetch court blocks for the month
@@ -172,7 +172,7 @@ const courtController = {
           } catch(e) {}
         }
         const startH = parseInt((item.start_time || '06:00').split(':')[0], 10);
-        const endH = parseInt((item.end_time || '24:00').split(':')[0], 10);
+        const endH = parseInt((item.end_time || '25:00').split(':')[0], 10);
         const sArr = [];
         for (let h = startH; h < endH; h++) {
           const hh = String(h).padStart(2, '0') + ':00';

@@ -1219,13 +1219,13 @@ const adminController = {
       const isAllDay = time_mode === 'all_day';
 
       let actualStartTime = '06:00';
-      let actualEndTime = '24:00';
+      let actualEndTime = '25:00';
       let slotsJson = null;
 
       if (isAllDay) {
         actualStartTime = '06:00';
-        actualEndTime = '24:00';
-        const generatedSlots = generateTimeSlots('06:00', '24:00', 60);
+        actualEndTime = '25:00';
+        const generatedSlots = generateTimeSlots('06:00', '25:00', 60);
         slotsJson = JSON.stringify(generatedSlots.map(s => s.startTime));
       } else if (rawSlots.length > 0) {
         actualStartTime = rawSlots[0];
@@ -1233,7 +1233,7 @@ const adminController = {
         slotsJson = JSON.stringify(rawSlots);
       } else {
         actualStartTime = start_time || '06:00';
-        actualEndTime = end_time || '24:00';
+        actualEndTime = end_time || '25:00';
         if (actualStartTime >= actualEndTime) {
           req.flash('error', 'Start time must be before end time.');
           return res.redirect('/admin/blocks?date=' + encodeURIComponent(targetDate));

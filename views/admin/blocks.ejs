@@ -212,7 +212,7 @@
                 <td>
                   <% if (b.is_all_day) { %>
                     <span class="badge bg-danger text-white rounded-pill px-2.5 py-1.5 fw-bold">
-                      <i class="bi bi-sun-fill me-1"></i>Entire Day (6AM - 12MN)
+                      <i class="bi bi-sun-fill me-1"></i>Entire Day (6AM - 1AM)
                     </span>
                   <% } else { %>
                     <% 
@@ -378,7 +378,7 @@
                   <span class="text-secondary small fw-semibold" style="font-size: 11px;">Duration:</span>
                   <% if (b.is_all_day) { %>
                     <span class="badge bg-danger text-white rounded-pill px-2.5 py-1 fw-bold" style="font-size: 10.5px;">
-                      <i class="bi bi-sun-fill me-1"></i>Entire Day (6AM - 12MN)
+                      <i class="bi bi-sun-fill me-1"></i>Entire Day (6AM - 1AM)
                     </span>
                   <% } else { %>
                     <span class="badge bg-white text-dark border rounded-pill px-2.5 py-1 fw-bold font-monospace shadow-xs" style="font-size: 11px;">
@@ -541,13 +541,13 @@
               <button type="button" class="btn btn-sm btn-white bg-white border py-0 px-2 small text-secondary" onclick="presetModalSlots('all')">All Hours</button>
               <button type="button" class="btn btn-sm btn-white bg-white border py-0 px-2 small text-secondary" onclick="presetModalSlots('morning')">Morning (6AM–12NN)</button>
               <button type="button" class="btn btn-sm btn-white bg-white border py-0 px-2 small text-secondary" onclick="presetModalSlots('afternoon')">Afternoon (12NN–6PM)</button>
-              <button type="button" class="btn btn-sm btn-white bg-white border py-0 px-2 small text-secondary" onclick="presetModalSlots('evening')">Evening (6PM–12MN)</button>
+              <button type="button" class="btn btn-sm btn-white bg-white border py-0 px-2 small text-secondary" onclick="presetModalSlots('evening')">Evening (6PM–1AM)</button>
               <button type="button" class="btn btn-sm btn-white bg-white border py-0 px-2 small text-danger" onclick="presetModalSlots('clear')">Clear</button>
             </div>
 
             <!-- Interactive Slot Chips -->
             <div id="modalSlotChipsGrid" class="d-flex flex-wrap gap-1.5 mb-2">
-              <% for(let h = 6; h <= 23; h++) { 
+              <% for(let h = 6; h <= 24; h++) { 
                 const hh = String(h).padStart(2, '0') + ':00'; 
               %>
                 <input type="checkbox" class="btn-check modal-slot-checkbox" name="selected_slots[]" id="modalSlot_<%= h %>" value="<%= hh %>" autocomplete="off" onchange="updateModalSlotCount()">
@@ -565,7 +565,7 @@
               <div class="col-6">
                 <label class="form-label small fw-semibold text-dark mb-1">Start Time</label>
                 <select name="start_time" id="blockStartTime" class="form-select form-select-sm rounded-3">
-                  <% for(let h = 6; h <= 23; h++) { const hh = String(h).padStart(2, '0') + ':00'; %>
+                  <% for(let h = 6; h <= 24; h++) { const hh = String(h).padStart(2, '0') + ':00'; %>
                     <option value="<%= hh %>"><%= formatTime12(hh) %></option>
                   <% } %>
                 </select>
@@ -573,7 +573,7 @@
               <div class="col-6">
                 <label class="form-label small fw-semibold text-dark mb-1">End Time</label>
                 <select name="end_time" id="blockEndTime" class="form-select form-select-sm rounded-3">
-                  <% for(let h = 7; h <= 24; h++) { const hh = String(h).padStart(2, '0') + ':00'; %>
+                  <% for(let h = 7; h <= 25; h++) { const hh = String(h).padStart(2, '0') + ':00'; %>
                     <option value="<%= hh %>" <%= h === 12 ? 'selected' : '' %>><%= formatTime12(hh) %></option>
                   <% } %>
                 </select>

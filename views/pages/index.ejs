@@ -2,7 +2,7 @@
   const defaultRate = (courts && courts.length > 0 && courts[0].category) ? parseFloat(courts[0].category.price_per_hour) : 350;
   const totalCourtsCount = courts ? courts.length : 4;
   const facilityRules = [
-    { num: '01', icon: 'bi-clock-fill', color: 'primary', title: 'Operating Hours', text: 'The Playground is open daily from 6:00 AM to 12:00 Midnight.' },
+    { num: '01', icon: 'bi-clock-fill', color: 'primary', title: 'Operating Hours', text: 'The Playground is open daily from 6:00 AM to 1:00 AM.' },
     { num: '02', icon: 'bi-calendar-x-fill', color: 'danger', title: 'Paid Reservations', text: 'Refund/Cancellation/Rescheduling of paid reservation is not allowed' },
     { num: '03', icon: 'bi-alarm-fill', color: 'warning', title: 'Strict Observance of Booking Schedule', text: 'Players and organizers must strictly observe their confirmed booking schedules. Extensions beyond the reserved time are highly discouraged to avoid inconvenience to succeeding bookings.' },
     { num: '04', icon: 'bi-trash3-fill', color: 'success', title: 'Cleanliness and Proper Waste Disposal', text: 'Everyone is encouraged to help maintain the cleanliness of the facility. Please do not throw napkins, tissue papers, or other waste materials into the toilets. Trash bins are provided beside the toilet rooms and near the counter for proper waste disposal.' },
@@ -70,8 +70,8 @@
             <i class="bi bi-clock-fill text-success"></i> Operating Hours
           </div>
           <div class="stat-pill-value">
-            <span class="d-none d-sm-inline">6AM – 12 Midnight</span>
-            <span class="d-inline d-sm-none">6AM – 12MN</span>
+            <span class="d-none d-sm-inline">6AM – 1AM</span>
+            <span class="d-inline d-sm-none">6AM – 1AM</span>
           </div>
         </div>
       </div>
@@ -233,7 +233,7 @@
     <div class="venue-action-row">
       <div class="d-none d-md-inline-flex align-items-center gap-2 text-secondary small fw-semibold flex-shrink-0">
         <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 fw-bold" style="font-size: 11px;">
-          <i class="bi bi-circle-fill me-1" style="font-size: 7px; vertical-align: middle;"></i>Open Today · 6AM – 12MN
+          <i class="bi bi-circle-fill me-1" style="font-size: 7px; vertical-align: middle;"></i>Open Today · 6AM – 1AM
         </span>
       </div>
 
@@ -946,7 +946,7 @@
               </div>
               <div class="p-3 rounded-3 bg-light border d-flex align-items-center gap-3">
                 <i class="bi bi-shop-window text-primary fs-4 flex-shrink-0"></i>
-                <span class="small text-secondary mb-0">Available daily during operating hours (<strong class="text-dark">6:00 AM – 12:00 Midnight</strong>) right at the facility counter.</span>
+                <span class="small text-secondary mb-0">Available daily during operating hours (<strong class="text-dark">6:00 AM – 1:00 AM</strong>) right at the facility counter.</span>
               </div>
             </div>
           </div>
@@ -2332,7 +2332,7 @@
       const m = parts[1] ? parseInt(parts[1], 10) : 0;
       if (h === 0 || h === 24) return m > 0 ? `12:${m < 10 ? '0' + m : m} AM` : '12 MN';
       if (h === 12 && m === 0) return '12 PM';
-      const ampm = h >= 12 ? 'PM' : 'AM';
+      const ampm = (h >= 12 && h < 24) ? 'PM' : 'AM';
       const h12 = h % 12 || 12;
       return m > 0 ? `${h12}:${m < 10 ? '0' + m : m} ${ampm}` : `${h12} ${ampm}`;
     }
@@ -2696,7 +2696,7 @@
     const parts = timeStr.split(':');
     let h = parseInt(parts[0], 10);
     const m = parts[1] || '00';
-    const ampm = h >= 12 ? 'PM' : 'AM';
+    const ampm = (h >= 12 && h < 24) ? 'PM' : 'AM';
     h = h % 12 || 12;
     return `${h}:${m} ${ampm}`;
   }

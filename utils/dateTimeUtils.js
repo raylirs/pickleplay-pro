@@ -37,8 +37,9 @@ function formatTime12(time24) {
   if (hour === 24) {
     return `12:${mStr} Midnight`;
   }
-  if (hour === 0) {
-    return `12:${mStr} AM`;
+  if (hour === 0 || hour >= 25) {
+    const h12 = (hour % 12) || 12;
+    return `${h12}:${mStr} AM`;
   }
   const ampm = hour >= 12 ? 'PM' : 'AM';
   hour = hour % 12;
@@ -48,7 +49,7 @@ function formatTime12(time24) {
 
 function generateTimeSlots(start, end, intervalMinutes) {
   if (!start) start = '06:00';
-  if (!end) end = '24:00';
+  if (!end) end = '25:00';
   if (!intervalMinutes) intervalMinutes = 60;
 
   const slots = [];
